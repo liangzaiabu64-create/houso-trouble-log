@@ -13,6 +13,7 @@
   ・その日のトラブルを記録する（設備・場所・症状・原因・対処・交換部品の型式と写真）
   ・記録が増えると、同じ設備の同じトラブルが自動で「フロー」にまとまる
   ・起きていることを文章で送ると、過去の記録から原因と対処を探す（チャット検索）
+  ・その場で撮った写真も送れる（AIの設定があれば、写真から設備・見える異常・型式を読み取って探す）
   保存：端末内（IndexedDB）に控えを持ち、GAS_URL を設定するとスプレッドシート＋ドライブで共有する
 -->
 <style>
@@ -71,8 +72,21 @@
     background:var(--card);border:1px solid var(--line2);border-radius:24px;box-shadow:0 1px 3px rgba(30,28,24,.06)}
   .chatbar form:focus-within{border-color:var(--ink3)}
   .chatbar input{flex:1;min-width:0;height:44px;border:0;outline:none;background:transparent;padding:0}
-  .chatbar button{flex:none;width:44px;height:44px;border:0;border-radius:50%;padding:0;background:var(--accent);color:#fff;
+  .chatbar form button{flex:none;width:44px;height:44px;border:0;border-radius:50%;padding:0;background:var(--accent);color:#fff;
     display:flex;align-items:center;justify-content:center}
+  /* 写真を撮って送る（入力欄の左のカメラ・送る前の確認） */
+  .crow{max-width:780px;margin:0 auto;display:flex;align-items:center;gap:8px}
+  .crow form{flex:1;min-width:0;margin:0}
+  .cambtn{flex:none;width:48px;height:48px;border-radius:50%;border:1px solid var(--line2);background:var(--card);color:var(--ink2);
+    padding:0;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(30,28,24,.06)}
+  .camprev{max-width:780px;margin:0 auto 8px;display:flex;align-items:center;gap:12px;padding:8px 8px 8px 8px;
+    background:var(--card);border:1px solid var(--line);border-radius:16px}
+  .camprev[hidden]{display:none}
+  .camprev img{width:56px;height:56px;object-fit:cover;border-radius:10px;flex:none;display:block}
+  .camprev .ct{flex:1;min-width:0;font-size:13px;line-height:1.55;color:var(--ink3)}
+  .camprev .ct b{display:block;color:var(--ink);font-size:14px}
+  .camprev .x2{width:44px;flex:none}
+  body.chat.campending main{padding-bottom:calc(var(--tabh) + 180px + env(safe-area-inset-bottom))}
 
   /* ---------- 共通部品 ---------- */
   .ttl{font-family:var(--serif);font-weight:600;font-size:26px;line-height:1.4;margin:4px 0 6px}
@@ -127,6 +141,9 @@
   .msg.me{justify-content:flex-end}
   .bub{max-width:86%;min-width:0}
   .msg.me .bub{background:var(--me);padding:12px 16px;border-radius:18px 18px 6px 18px;white-space:pre-wrap;line-height:1.6}
+  .msg.me .bub.img{padding:6px;width:232px}
+  .msg.me .bub.img .ct{padding:6px 10px 4px}
+  .chatimg{display:block;width:100%;max-height:300px;object-fit:cover;border-radius:13px 13px 4px 13px;background:var(--fill);cursor:zoom-in}
   .msg.bot .bub{width:100%;max-width:100%;font-size:16.5px;line-height:1.8}
   .hello{font-family:var(--serif);font-weight:600;font-size:28px;line-height:1.4;margin:12px 0 8px}
   .hello-sub{margin:0;color:var(--ink3);font-size:15px;line-height:1.75}
@@ -174,6 +191,20 @@
   .aisafe{display:flex;gap:10px;padding:12px 14px;border-radius:12px;background:var(--warn-soft);color:#3D2A12;font-size:15px;line-height:1.7}
   .aisafe svg{margin-top:3px}
   .aifoot{font-size:12px;line-height:1.7;color:var(--ink4)}
+  /* 写真から読み取ったこと */
+  .vbox{margin:0 0 18px;padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--card);
+    display:flex;flex-direction:column;gap:10px;line-height:1.7}
+  .vbox .chips{margin-top:0}
+  .vbox.err{border-color:transparent;background:var(--ng-soft);color:#5C1F18;font-size:15px}
+  .vbox.err .aih,.vbox.err .aih svg{color:var(--ng)}
+  .vbox.plain{background:transparent;border-style:dashed;font-size:15px;color:var(--ink2)}
+  .vbox.busy .aih svg{animation:pulse 1.4s ease-in-out infinite}
+  .vrow{display:flex;align-items:baseline;gap:4px;font-size:16px;line-height:1.7}
+  .vrow .k{flex:none}
+  .vrow .v{flex:1;min-width:0;overflow-wrap:anywhere}
+  .vrow .pchips{margin-top:0}
+  .vretake{padding:10px 12px;border-radius:12px;background:var(--soft);font-size:15px;line-height:1.7;color:var(--ink2)}
+  .vq{font-size:13px;color:var(--ink3);margin:-4px 0 12px;overflow-wrap:anywhere}
 
   /* ---------- フロー ---------- */
   .flow{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:12px 0;overflow:hidden}
@@ -248,6 +279,55 @@
   .err{color:var(--ng);font-weight:700;font-size:14px;margin:12px 0}
   .err:empty{display:none}
   @media (max-width:360px){ .part{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 48px 30px} }
+  /* 詳細の「そのほかの項目」（設定で足した項目） */
+  .xbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:4px 16px;margin:8px 0 16px}
+  .xrow{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:16px;line-height:1.6}
+  .xrow:last-child{border-bottom:0}
+  .xk{flex:none;width:38%;color:var(--ink3);font-size:14px}
+  .xv{flex:1;min-width:0;overflow-wrap:anywhere}
+
+  /* ---------- 設定 ---------- */
+  .setbtn{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid var(--line2);background:var(--card);color:var(--ink2);
+    padding:0;display:flex;align-items:center;justify-content:center}
+  .setbtn.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+  .sec{margin:32px 0}
+  .sh{font-family:var(--serif);font-weight:600;font-size:20px;line-height:1.4;margin:0 0 4px}
+  .sd{margin:0 0 10px;color:var(--ink3);font-size:14px;line-height:1.7}
+  .slist{border-top:1px solid var(--line)}
+  .srow{display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .sname{flex:1;min-width:0;font-size:16px;line-height:1.5;overflow-wrap:anywhere}
+  .mb{flex:none;min-height:40px;min-width:40px;padding:0 10px;border:1px solid var(--line2);border-radius:10px;background:var(--card);font-size:14px;color:var(--ink)}
+  .mb:disabled{opacity:.3;cursor:default}
+  .sadd{display:flex;gap:8px;margin-top:10px}
+  .sadd .inp{flex:1;min-width:0;min-height:44px}
+  .sarea{border-bottom:1px solid var(--line)}
+  .sarea>summary{list-style:none;display:flex;align-items:center;gap:10px;min-height:52px;cursor:pointer}
+  .sarea>summary::-webkit-details-marker{display:none}
+  .sarea>summary::after{content:"";width:8px;height:8px;border-right:1.8px solid var(--ink3);border-bottom:1.8px solid var(--ink3);transform:rotate(45deg);margin:0 6px 4px 0}
+  .sarea[open]>summary::after{transform:rotate(-135deg);margin-bottom:-4px}
+  .sarea[open]{padding-bottom:16px}
+  .scount{font-family:var(--mono);font-size:13px;color:var(--ink3)}
+  .sarea .srow{border-bottom:0;padding-top:0}
+  .sarea .chips{margin-top:2px}
+  .chip.xc{padding-right:4px;gap:2px}
+  .cx{border:0;background:none;width:36px;height:36px;border-radius:50%;padding:0;color:var(--ink3);font-size:13px;flex:none}
+  .fld{padding:12px 0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+  .fld.off .fl1 b{color:var(--ink4)}
+  .fl1{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:16px;line-height:1.5}
+  .fl1 .badge{margin-left:0}
+  .badge.req2{background:var(--accent-soft);color:var(--accent);font-weight:700}
+  .fl2{display:flex;flex-wrap:wrap;gap:6px}
+  .fnote{font-size:12px;line-height:1.6;color:var(--ink4)}
+  .addf{margin-top:18px;border:1.5px dashed var(--line2);border-radius:14px;padding:0 14px}
+  .addf>summary{min-height:52px;display:flex;align-items:center;font-weight:700;cursor:pointer;list-style:none}
+  .addf>summary::-webkit-details-marker{display:none}
+  .addf[open]{padding-bottom:14px}
+  .addf .f{margin:14px 0}
+  .chip.rad{cursor:pointer}
+  .chip.rad:has(input:checked){background:var(--ink);border-color:var(--ink);color:#fff;font-weight:700}
+  .chip.rad input{margin:0 6px 0 0;width:18px;height:18px}
+  .chk{display:flex;align-items:center;gap:10px;min-height:44px;font-size:15px;margin:4px 0 12px}
+  .chk input{width:20px;height:20px;margin:0}
 
   /* ---------- 横長の画面（ライン端末・PC）：タブを左のメニューにする ---------- */
   @media (min-width:1024px){
@@ -261,25 +341,33 @@
     .tabs button.on .ic{color:var(--accent)}
     main{padding:28px 40px 48px}
     body.chat main{padding-bottom:128px}
+    body.chat.campending main{padding-bottom:210px}
     .chatbar{left:var(--side);bottom:0;padding:12px 40px 20px}
     .savebar{bottom:0;margin:24px -40px 0;padding:12px 40px 16px}
     .top{padding-left:40px;padding-right:40px}
   }
-  @media (prefers-reduced-motion:reduce){ .aibox.busy .aih svg{animation:none} .toast{transition:none} }
+  @media (prefers-reduced-motion:reduce){ .aibox.busy .aih svg,.vbox.busy .aih svg{animation:none} .toast{transition:none} }
 </style>
 </head>
 <body class="chat">
 <header class="top"><div class="in">
   <div class="brand">トラブル記録<small>包装工程</small></div>
   <button id="syncChip" class="sync" type="button">…</button>
+  <button id="setBtn" class="setbtn" type="button" data-tab="settings" aria-label="設定（号機・場所・設備・入力項目）"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h9"/><path d="M17 7h3"/><circle cx="15" cy="7" r="2"/><path d="M4 17h3"/><path d="M11 17h9"/><circle cx="9" cy="17" r="2"/></svg></button>
 </div></header>
 
 <main id="view"><noscript>JavaScript を有効にしてください。</noscript></main>
 
-<div class="chatbar"><form id="chatForm" autocomplete="off">
-  <input id="chatIn" type="text" enterkeyhint="send" maxlength="200" placeholder="例：3号 充填部で袋を吸わない" aria-label="起きているトラブルや設備を入力">
-  <button type="submit" aria-label="送信"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg></button>
-</form></div>
+<div class="chatbar">
+  <div id="camPrev" class="camprev" hidden></div>
+  <div class="crow">
+    <button type="button" id="camBtn" class="cambtn" aria-label="写真を撮って送る"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
+    <form id="chatForm" autocomplete="off">
+      <input id="chatIn" type="text" enterkeyhint="send" maxlength="200" placeholder="例：3号 充填部で袋を吸わない" aria-label="起きているトラブルや設備を入力">
+      <button type="submit" aria-label="送信"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg></button>
+    </form>
+  </div>
+</div>
 
 <nav class="tabs" aria-label="画面の切り替え"><div class="in">
   <button type="button" data-tab="search"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg></span>探す</button>
@@ -288,6 +376,7 @@
 </div></nav>
 
 <input id="fileIn" type="file" accept="image/*" hidden>
+<input id="camIn" type="file" accept="image/*" capture="environment" hidden>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="lb" class="lb" role="dialog" aria-label="写真の拡大表示"></div>
 
@@ -312,10 +401,12 @@ const GAS_URL = '';
 
 /* =========================================================
    2. マスタ（外装工程 日常点検チェックリストの言葉に合わせています）
-   ここを書き換えればラインや設備を増やせます（編集画面は作りません）
+   ここにあるのは「最初の値」です。号機（ライン）・場所・設備・症状の言葉・入力項目は、
+   アプリの「設定」（右上）でいつでも追加・削除できます。共有しているときは、
+   スプレッドシートのシート「設定」に保存され、チーム全員のアプリに反映されます（4-2）
    ========================================================= */
-const LINES = ['2号ライン', '3号ライン', '4号ライン', '5号ライン'];
-const AREAS = {
+const DEFAULT_LINES = ['2号ライン', '3号ライン', '4号ライン', '5号ライン'];
+const DEFAULT_AREAS = {
   '製袋部': ['ボビン', 'ボビンブレーキ', 'フィルム繰出し', '熱電対', 'ヒーターカートリッジ', '後サーボローラー', '後サーボギア',
     'Rカット', '駆動チェーン', '減速機チェーン', 'シール', 'メクリ吸引', '受渡し吸引', 'テンション', 'チャック繰出しテンションバー', '印字検査装置'],
   '充填部': ['チャック開口吸盤', 'チャック開口鉄爪', 'レギュレーター', '第3開口吸盤', '案内ベラ', 'アーム爪', '6工程ユニット',
@@ -332,7 +423,23 @@ const EQUIP_ALIASES = {
   '印字検査装置': ['印字検査'], 'タイミングベルト': ['タイミングベルト'], 'ケースシーラー': ['シーラー'], 'Rカット': ['アールカット'],
 };
 /* 症状をすばやく入れるための言葉 */
-const SYMPTOM_WORDS = ['異音', '吸着しない', '開口しない', '破れ', 'シール不良', '停止', '噛み込み', 'ズレ・蛇行', '漏れ', '汚れ'];
+const DEFAULT_SYMPTOMS = ['異音', '吸着しない', '開口しない', '破れ', 'シール不良', '停止', '噛み込み', 'ズレ・蛇行', '漏れ', '汚れ'];
+/* 入力項目。ここにあるのは、もともとある項目（「設定」で名前を変えたり、使わないようにしたりできる）。
+   core は検索とフローの土台なので、消したり任意にしたりできない。「設定」で足した項目の id は x_ で始まる */
+const BUILTIN_FIELDS = [
+  { id: 'occurredAt', label: '発生日時', short: '発生日時', core: true },
+  { id: 'line', label: 'ライン', short: 'ライン' },
+  { id: 'area', label: '場所', short: '場所', core: true },
+  { id: 'equipment', label: '設備・部位', short: '設備', core: true },
+  { id: 'symptom', label: '起きたこと（症状）', short: '症状', core: true },
+  { id: 'cause', label: '原因', short: '原因' },
+  { id: 'action', label: '対処したこと', short: '対処' },
+  { id: 'parts', label: '交換した部品（型式・写真）', short: '部品' },
+  { id: 'photos', label: '写真（4枚まで）', short: '写真' },
+  { id: 'author', label: '記録者', short: '記録者' },
+];
+// いま使っている値（設定から作り直す。4-2 の applyConfig）
+let LINES = DEFAULT_LINES, AREAS = DEFAULT_AREAS, SYMPTOM_WORDS = DEFAULT_SYMPTOMS, FIELDS = [];
 /* 言い方が違っても同じ意味として探すための辞書 */
 const CONCEPTS = [
   // 語の一部だけで当たらないよう注意（例：「ぶれ」は「ブレーキ」に、「詰まり」は「目詰まり」に当たってしまう）
@@ -418,6 +525,176 @@ const metaGet = k => idb('meta', 'readonly', s => s.get(k));
 const metaSet = (k, v) => idb('meta', 'readwrite', s => s.put(v, k));
 
 /* =========================================================
+   4-2. 設定（号機・場所・設備・症状の言葉・入力項目）
+   設定の変更は「操作」（例：号機「6号ライン」を追加）として持ち、確定している設定にかけて使う。
+   共有しているときは、変えた設定を「もとにした版」と一緒に送る。その間にほかの人が変えていたら
+   サーバーは保存せずに最新の設定を返すので、それに同じ操作をかけ直して送り直す（同時に変えても両方の変更が残る）。
+   消しても、これまでの記録の中身は消さない（記録には、そのときの名前のまま残る）
+   ========================================================= */
+const CFG = { base: null, rev: 0, pending: [], msg: '' };   // base：確定した設定（共有先。端末内のみのときは端末）、pending：まだ送れていない操作
+let CONF = null;
+const CUSTOM_ID = /^x_[a-z0-9]{4,20}$/;
+const builtinOf = id => BUILTIN_FIELDS.find(f => f.id === id);
+const isCustom = f => !!f && f.type !== 'builtin';
+const fieldById = id => (CONF ? CONF.fields.find(f => f.id === id) : null) || null;
+const inForm = f => !!f && !f.hidden && !f.deleted;                  // 記録する画面に出す項目
+const shown = id => inForm(fieldById(id));
+/* 短い名前（詳細の「設備」「症状」の札など）。名前を変えていなければ短い名前、変えていればその名前 */
+function shortLabel(f) { const b = builtinOf(f.id); return b && f.label === b.label ? b.short : f.label; }
+function defaultConfig() {
+  return {
+    v: 1, lines: DEFAULT_LINES.slice(), areas: Object.keys(DEFAULT_AREAS).map(name => ({ name, equip: DEFAULT_AREAS[name].slice() })),
+    symptoms: DEFAULT_SYMPTOMS.slice(),
+    fields: BUILTIN_FIELDS.map(f => ({ id: f.id, type: 'builtin', label: f.label, required: !!f.core, hidden: false, deleted: false, options: [] })),
+  };
+}
+/* 設定の形を確かめて整える（サーバーの cleanConfig_ と同じ決まり）。もともとの項目が抜けていたら、元の並びの位置に足す */
+function cleanConfig(c) {
+  if (!c || typeof c !== 'object' || Array.isArray(c)) return null;
+  const t = (x, n) => (typeof x === 'string' || typeof x === 'number' ? String(x) : '').replace(/\s+/g, ' ').trim().slice(0, n);
+  const list = (v, max, n) => { const out = []; (Array.isArray(v) ? v : []).forEach(x => { x = t(x, n); if (x && !out.includes(x) && out.length < max) out.push(x); }); return out; };
+  const areas = [];
+  (Array.isArray(c.areas) ? c.areas : []).forEach(a => {
+    const name = a && typeof a === 'object' ? t(a.name, 20) : '';
+    if (name && areas.length < 20 && !areas.some(x => x.name === name)) areas.push({ name, equip: list(a.equip, 60, 40) });
+  });
+  const fields = [], seen = new Set();
+  (Array.isArray(c.fields) ? c.fields : []).forEach(f => {
+    if (!f || typeof f !== 'object' || fields.length >= 40) return;
+    const id = String(f.id || ''), b = builtinOf(id), label = t(f.label, 20), core = !!(b && b.core);
+    if (seen.has(id) || (!b && (!CUSTOM_ID.test(id) || !label))) return;
+    seen.add(id);
+    const type = b ? 'builtin' : (['text', 'number', 'choice'].includes(f.type) ? f.type : 'text');
+    fields.push({ id, type, label: label || b.label, required: core || f.required === true, hidden: !core && f.hidden === true,
+      deleted: !b && f.deleted === true, options: type === 'choice' ? list(f.options, 30, 30) : [] });
+  });
+  BUILTIN_FIELDS.forEach((b, i) => {
+    if (seen.has(b.id)) return;
+    const prev = BUILTIN_FIELDS.slice(0, i).map(x => x.id).reverse().find(id => seen.has(id));
+    fields.splice(prev ? fields.findIndex(f => f.id === prev) + 1 : 0, 0, { id: b.id, type: 'builtin', label: b.label, required: !!b.core, hidden: false, deleted: false, options: [] });
+    seen.add(b.id);
+  });
+  return { v: 1, lines: list(c.lines, 30, 20), areas, symptoms: list(c.symptoms, 40, 20), fields };
+}
+/* 並べ替えできる一覧と、その見分け方 */
+const orderList = (c, list) => (list === 'areas' ? c.areas : list === 'fields' ? c.fields : list === 'lines' ? c.lines : list === 'symptoms' ? c.symptoms : null);
+const orderKey = list => (list === 'areas' ? x => x.name : list === 'fields' ? x => x.id : x => x);
+/* となり（入力項目は、消した項目を飛ばして、見えているとなり） */
+function neighborOf(c, list, value, dir) {
+  const arr = orderList(c, list), key = orderKey(list), d = dir > 0 ? 1 : -1;
+  if (!arr) return null;
+  let j = arr.findIndex(x => key(x) === value);
+  if (j < 0) return null;
+  do j += d; while (list === 'fields' && j >= 0 && j < arr.length && arr[j].deleted);
+  return j >= 0 && j < arr.length ? key(arr[j]) : null;
+}
+/* 操作を設定にかける（元の設定は変えない）。同じ名前がある・見つからない などのときは何も変えない */
+function applyOp(conf, op) {
+  const c = clone(conf), t = v => String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
+  const area = name => c.areas.find(a => a.name === name), field = id => c.fields.find(f => f.id === id);
+  const listOf = k => (k === 'lines' ? c.lines : k === 'symptoms' ? c.symptoms : null);
+
+  switch (op && op.op) {
+    case 'add': { const l = listOf(op.list), v = t(op.value); if (l && v && !l.includes(v)) l.push(v); break; }
+    case 'remove': { const l = listOf(op.list); if (l && l.includes(op.value)) l.splice(l.indexOf(op.value), 1); break; }
+    case 'move': {
+      // 並べ替え：となり（target）の前か後ろに置く。同じ操作を2回かけても結果は同じ（送り直しても2つ動かない）
+      const arr = orderList(c, op.list), key = orderKey(op.list);
+      const i = arr ? arr.findIndex(x => key(x) === op.value) : -1;
+      const target = op.target !== undefined ? op.target : neighborOf(c, op.list, op.value, op.dir);
+      if (i < 0 || target == null || target === op.value) break;
+      const [item] = arr.splice(i, 1);
+      const j = arr.findIndex(x => key(x) === target);
+      arr.splice(j < 0 ? i : (op.dir > 0 ? j + 1 : j), 0, item);
+      break;
+    }
+    case 'addArea': { const v = t(op.value); if (v && !area(v)) c.areas.push({ name: v, equip: [] }); break; }
+    case 'removeArea': if (c.areas.length > 1) c.areas = c.areas.filter(a => a.name !== op.value); break;
+    case 'addEquip': { const a = area(op.area), v = t(op.value); if (a && v && !a.equip.includes(v)) a.equip.push(v); break; }
+    case 'removeEquip': { const a = area(op.area); if (a) a.equip = a.equip.filter(e => e !== op.value); break; }
+    case 'addField': {
+      const f = op.field || {};
+      if (!CUSTOM_ID.test(String(f.id)) || field(f.id) || c.fields.filter(x => !x.deleted).length >= 40) break;
+      if (c.fields.length >= 40) c.fields.splice(c.fields.findIndex(x => x.deleted), 1);
+      {
+        c.fields.push({ id: f.id, type: f.type, label: t(f.label), required: f.required === true, hidden: false, deleted: false, options: Array.isArray(f.options) ? f.options : [] });
+      }
+      break;
+    }
+    case 'setField': {
+      const f = field(op.id);
+      if (f && op.label !== undefined && t(op.label)) f.label = t(op.label);
+      if (f && op.required !== undefined) f.required = op.required === true;
+      break;
+    }
+    case 'removeField': { const f = field(op.id); if (f) { if (isCustom(f)) f.deleted = true; else f.hidden = true; } break; }
+    case 'restoreField': { const f = field(op.id); if (f) { f.hidden = false; f.deleted = false; } break; }
+    case 'addOption': { const f = field(op.id), v = t(op.value); if (f && f.type === 'choice' && v && !f.options.includes(v)) f.options.push(v); break; }
+    case 'removeOption': { const f = field(op.id); if (f) f.options = f.options.filter(o => o !== op.value); break; }
+  }
+  return cleanConfig(c);
+}
+/* 確定している設定に操作をかけて、使う設定を作る。
+   seed：「端末内のみ」で試していたときの設定。共有先にまだ設定が無いときだけ、それを最初の設定にする（チームの設定を上書きしない） */
+function buildConfig(base, ops) {
+  let c = cleanConfig(base);
+  const fresh = !c;
+  c = c || defaultConfig();
+  for (const op of ops) c = op.op === 'seed' ? (fresh ? cleanConfig(op.config) || c : c) : applyOp(c, op);
+  return c;
+}
+/* 確定している設定に、まだ送れていない操作をかけて、いま使う設定を作る */
+function applyConfig() {
+  const c = buildConfig(CFG.base, CFG.pending);
+  CONF = c;
+  LINES = c.lines;
+  AREAS = Object.fromEntries(c.areas.map(a => [a.name, a.equip]));
+  SYMPTOM_WORDS = c.symptoms;
+  FIELDS = c.fields;
+}
+const saveCfg = () => metaSet('config', { base: CFG.base, rev: CFG.rev, pending: CFG.pending, local: !GAS_URL });
+/* 設定を変える（設定の画面から）。変わらなかった（同じ名前がある・上限 など）ときは false */
+const CONFIG_MAX_CHARS = 45000;   // サーバーと同じ上限（シートの1つのセルに入る量）
+function editConfig(op) {
+  const before = JSON.stringify(CONF), next = applyOp(CONF, op);
+  if (JSON.stringify(next) === before) return false;
+  if (JSON.stringify(next).length > CONFIG_MAX_CHARS) { toast('設定が大きすぎて保存できません（選択肢や項目を減らしてください）'); return null; }
+  if (GAS_URL) CFG.pending.push(op); else CFG.base = next;   // 端末内のみ：その場で確定
+  applyConfig();
+  saveCfg();
+  render();
+  if (GAS_URL) syncNow();
+  return true;
+}
+/* 共有先の設定を受け取る（一覧を読んだとき）。いま使う設定が変わったら true */
+function takeServerConfig(config, rev) {
+  const before = JSON.stringify(CONF);
+  const got = config && typeof config === 'object' ? config : null;
+  if (!got && CFG.base && !CFG.pending.some(o => o.op === 'seed')) CFG.pending.unshift({ op: 'seed', config: CFG.base });
+  CFG.base = got;
+  CFG.rev = Math.max(0, Math.floor(Number(rev)) || 0);
+  applyConfig();
+  saveCfg();
+  return JSON.stringify(CONF) !== before;
+}
+/* まだ送れていない操作を送る。ほかの人が先に変えていたら、最新の設定にかけ直して送り直す */
+async function pushConfig() {
+  for (let i = 0; i < 4 && CFG.pending.length; i++) {
+    const sending = CFG.pending.slice();
+    const conf = buildConfig(CFG.base, sending);
+    if (JSON.stringify(conf) === JSON.stringify(buildConfig(CFG.base, []))) { CFG.pending = CFG.pending.slice(sending.length); saveCfg(); continue; }
+    const res = await gasFetch({ method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'config', key: KEY, base: CFG.rev, config: conf, by: META.author || '' }) });
+    CFG.base = res.config && typeof res.config === 'object' ? res.config : null;
+    CFG.rev = Math.max(0, Math.floor(Number(res.rev)) || 0);
+    if (!res.conflict) CFG.pending = CFG.pending.slice(sending.length);   // 送っている間に増えた操作は残す
+    saveCfg();
+  }
+  applyConfig();
+}
+applyConfig();   // 読み込み前は最初の値で動く
+
+/* =========================================================
    5. 状態
    ========================================================= */
 let RECORDS = [];                 // 本物の記録（削除済みも含む。削除は deleted=true）
@@ -426,6 +703,7 @@ const META = { author: '', lastLine: '', showSamples: true };
 let KEY = '';                     // 共有の合言葉
 let TAB = 'search', DETAIL = null, SAVED = '';
 let CHAT = [];
+let PENDING = null;               // 撮って、まだ送っていない写真（入力欄の上に出す）
 let FORM = null;
 const FT = { mode: 'flow', area: '' };
 
@@ -584,9 +862,19 @@ function parseQuery(text) {
   for (const f of FILLERS) cleaned = cleaned.split(f).join(' ');
   cleaned = cleaned.trim();
   const qn = norm(cleaned);
-  const areas = Object.keys(AREAS).filter(a => [a, ...(AREA_ALIASES[a] || [])].some(x => qn.includes(norm(x))));
-  const lines = [...new Set([...String(text).normalize('NFKC').matchAll(/([2-5])\s*(号|ライン)/g)].map(m => m[1] + '号ライン'))];
+  const areas = Object.keys(AREAS).filter(a => [a, ...(own(AREA_ALIASES, a) || [])].some(x => qn.includes(norm(x))));
+  const lines = linesIn(text);
   return { text, cleaned, qn, grams: grams(cleaned), concepts: concepts(cleaned), areas, lines, equip: detectEquip(qn, areas) };
+}
+/* 文の中の号機（ライン）。設定の号機が「3号ライン」「3号機」なら、「3号」「3号機」「3号ライン」のどの書き方でも当てはめる */
+function linesIn(text) {
+  const t = String(text || '').normalize('NFKC');
+  return LINES.filter(l => {
+    const n = /^(\d+)\s*号/.exec(String(l).normalize('NFKC'));
+    if (n) return new RegExp('(^|[^0-9])' + n[1] + '\\s*(号|ライン)').test(t);
+    const w = norm(l);
+    return w.length >= 2 && norm(t).includes(w);
+  });
 }
 function detectEquip(qn, areas) {
   let best = null, len = 0;
@@ -607,7 +895,19 @@ function equipScore(rec, qn) {
   if (sub.length >= 3 || (sub.length === 2 && /^[一-龯々]+$/.test(sub))) return Math.min(0.8, sub.length / Math.max(3, e.length * 0.6));
   return 0;
 }
-function recordText(r) { return [r.line, r.area, r.equipment, r.symptom, r.cause, r.action, ...(r.parts || []).map(p => p.name + ' ' + p.model)].join(' '); }
+function recordText(r) { return [r.line, r.area, r.equipment, r.symptom, r.cause, r.action, ...(r.parts || []).map(p => p.name + ' ' + p.model), ...Object.values(r.extra || {})].join(' '); }
+/* 「設定」で足した項目の値 { 項目のID: 値 }。形と長さを確かめる */
+function cleanExtra(v) {
+  const out = {};
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return out;
+  for (const k of Object.keys(v).slice(0, 40)) {
+    const x = typeof v[k] === 'string' || typeof v[k] === 'number' ? String(v[k]).trim().slice(0, 200) : '';
+    if (CUSTOM_ID.test(k) && x) out[k] = x;
+  }
+  return out;
+}
+/* 追加項目を「停止時間（分）: 15、シフト: 夜勤」の形に（AIに渡すとき） */
+const extraText = r => Object.entries(r.extra || {}).map(([k, v]) => { const f = fieldById(k); return (f ? f.label : '') + ': ' + v; }).join('、');
 function scoreRecord(r, Q) {
   const eq = equipScore(r, Q.qn);
   const areaHit = Q.areas.includes(r.area) ? 1 : 0;
@@ -633,10 +933,11 @@ function search(text, excludeId) {
 /* チャットの入力から「記録する」の下書きを作る */
 function prefillFrom(Q) {
   let sym = Q.cleaned;
-  const drop = [...Q.areas, ...Q.areas.flatMap(a => AREA_ALIASES[a] || [])];
+  const drop = [...Q.areas, ...Q.areas.flatMap(a => own(AREA_ALIASES, a) || [])];
   if (Q.equip) drop.push(Q.equip.word, Q.equip.equipment);
+  drop.push(...Q.lines);
   for (const w of drop.sort((a, b) => b.length - a.length)) sym = sym.split(w).join(' ');
-  sym = sym.replace(/[2-5２-５]\s*(号ライン|号|ライン)/g, ' ').replace(/^[\sのでがはを、,]+|[\sのでがはを、,]+$/g, '').replace(/\s+/g, ' ').trim();
+  sym = sym.replace(/[0-9０-９]+\s*(号ライン|号機|号|ライン)/g, ' ').replace(/^[\sのでがはを、,]+|[\sのでがはを、,]+$/g, '').replace(/\s+/g, ' ').trim();
   return { line: Q.lines[0] || META.lastLine || '', area: Q.areas[0] || (Q.equip ? Q.equip.area : ''), equipment: Q.equip ? Q.equip.equipment : '', symptom: sym };
 }
 function answer(text) {
@@ -656,7 +957,7 @@ function answer(text) {
    ・記録するとまず端末に保存 → 送れるときに送る（未送信は自動で再送）
    ・他の人の記録は、開いたとき／画面に戻ったときに取り込む
    ========================================================= */
-const SYNC = { state: 'idle', at: '', msg: '', ai: false };   // ai：サーバーにAIの鍵が登録されているか
+const SYNC = { state: 'idle', at: '', msg: '', ai: false, configOk: null };   // configOk：サーバーが設定の共有に対応しているか（前の版の Code.gs は false）   // ai：サーバーにAIの鍵が登録されているか
 const AUTO_SYNC_MS = 5 * 60 * 1000;   // 開きっぱなしの端末でも、他の人の記録を取り込み、未送信を送り直す間隔
 let syncBusy = false, syncAgain = false, lastSyncTry = 0;
 async function gasFetch(opts, query, timeoutMs) {
@@ -678,7 +979,7 @@ function toWire(r) {
   return {
     id: r.id, occurredAt: r.occurredAt, line: r.line, area: r.area, equipment: r.equipment, symptom: r.symptom,
     cause: r.cause, action: r.action, author: r.author, createdAt: r.createdAt, updatedAt: r.updatedAt, deleted: !!r.deleted,
-    parts: (r.parts || []).map(p => ({ name: p.name, model: p.model, photo: ph(p.photo) })), photos: (r.photos || []).map(ph),
+    parts: (r.parts || []).map(p => ({ name: p.name, model: p.model, photo: ph(p.photo) })), photos: (r.photos || []).map(ph), extra: cleanExtra(r.extra),
   };
 }
 function fromWire(x) {
@@ -690,7 +991,7 @@ function fromWire(x) {
     symptom: s(x.symptom, 300), cause: s(x.cause, 300), action: s(x.action, 300), author: s(x.author, 20),
     createdAt: s(x.createdAt, 30), updatedAt: s(x.updatedAt, 30), deleted: x.deleted === true || /^true$/i.test(String(x.deleted)),
     parts: (Array.isArray(x.parts) ? x.parts : []).slice(0, 5).map(p => ({ name: s(p && p.name, 40), model: s(p && p.model, 40), photo: ph(p && p.photo) })),
-    photos: (Array.isArray(x.photos) ? x.photos : []).slice(0, 4).map(ph).filter(Boolean),
+    photos: (Array.isArray(x.photos) ? x.photos : []).slice(0, 4).map(ph).filter(Boolean), extra: cleanExtra(x.extra),
     _dirty: false, _synced: true,
   };
 }
@@ -700,10 +1001,11 @@ function keepImages(target, local) {
   allPhotos(target).forEach(p => { const l = m.get(p.id); if (l) { p.thumb = p.thumb || l.thumb; if (!p.driveId) p.data = l.data; } });
 }
 const signature = r => JSON.stringify([r.occurredAt, r.line, r.area, r.equipment, r.symptom, r.cause, r.action, r.author, r.updatedAt, r.deleted,
-  (r.parts || []).map(p => [p.name, p.model, p.photo && p.photo.driveId]), (r.photos || []).map(p => p.driveId)]);
+  (r.parts || []).map(p => [p.name, p.model, p.photo && p.photo.driveId]), (r.photos || []).map(p => p.driveId), cleanExtra(r.extra)]);
 function applySaved(local, srvRaw, sentAt) {
   const srv = fromWire(srvRaw);
   if (!srv) return;
+  if (!('extra' in srvRaw)) srv.extra = clone(local.extra || {});   // 前の版の Code.gs は追加項目を返さない（端末の値を消さない）
   if (srv.updatedAt > sentAt) {             // 他の端末でより新しく直されていた
     local._synced = true;
     if (local.updatedAt !== sentAt) return;  // 応答を待つ間にこの端末でも直した・消した → そちらが最新なので残して送り直す
@@ -725,6 +1027,7 @@ function mergeList(list) {
     const i = RECORDS.findIndex(r => r.id === srv.id);
     if (i === -1) { RECORDS.push(srv); dbPut(srv); changed = true; continue; }
     const local = RECORDS[i];
+    if (!('extra' in raw)) srv.extra = clone(local.extra || {});   // 前の版の Code.gs は追加項目を返さない（端末の値を消さない）
     if (local._dirty || signature(local) === signature(srv)) continue;   // 未送信の編集がある間は端末側を優先
     keepImages(srv, local); RECORDS[i] = srv; dbPut(srv); changed = true;
   }
@@ -741,6 +1044,7 @@ async function syncNow(manual) {
   syncBusy = true; lastSyncTry = Date.now();
   SYNC.state = 'syncing'; renderSync();
   let changed = false;
+  const cfgBefore = CFG.pending.length + '|' + CFG.msg;
   try {
     for (const r of RECORDS.filter(x => x._dirty)) {
       const sentAt = r.updatedAt;
@@ -752,6 +1056,22 @@ async function syncNow(manual) {
     const res = await gasFetch({ method: 'GET' }, { action: 'list', key: KEY });
     if (mergeList(res.records)) changed = true;
     if (SYNC.ai !== !!res.ai) { SYNC.ai = !!res.ai; changed = true; }   // AIボタンを出すかどうか
+    // 設定（号機・場所・入力項目など）。前の版の Code.gs は設定を返さないので、そのときは共有しない
+    SYNC.configOk = res.configRev !== undefined;
+    if (res.configRev !== undefined) {
+      if (takeServerConfig(res.config, res.configRev)) changed = true;
+      if (CFG.pending.length) {
+        const before = JSON.stringify(CONF);
+        try { await pushConfig(); CFG.msg = ''; } catch (e) {
+          if (e.code === 'key' || e.code === 'setup') throw e;
+          if (/大きすぎ|形が正しくありません/.test(e.message)) {
+            CFG.pending = []; applyConfig(); saveCfg();
+            CFG.msg = '設定の変更を保存できなかったので、取り消しました（' + e.message + '）';
+          } else CFG.msg = '設定の変更をまだ送れていません（' + e.message + '）。次の同期で送り直します';
+        }
+        if (JSON.stringify(CONF) !== before) changed = true;
+      } else CFG.msg = '';
+    } else CFG.msg = OLD_CONFIG_MSG;
     SYNC.state = 'idle'; SYNC.at = fmtDate(nowLocal()).split(' ')[1]; SYNC.msg = '';
     if (manual) toast('最新の状態になりました');
   } catch (e) {
@@ -760,10 +1080,23 @@ async function syncNow(manual) {
     if (manual || SYNC.state === 'key') toast(e.message);
   } finally {
     syncBusy = false;
-    if (changed && !(TAB === 'record' && !DETAIL)) render();   // 入力中の画面は書き換えない
+    if (CFG.pending.length + '|' + CFG.msg !== cfgBefore) changed = true;
+    // 入力中の画面は書き換えない（記録する画面・設定の画面で文字を入れている途中）
+    if (changed && !(TAB === 'record' && !DETAIL) && !(TAB === 'settings' && !DETAIL && typingInView())) renderKeepFocus();
     renderSync();
     if (syncAgain) { syncAgain = false; syncNow(); }
   }
+}
+const OLD_CONFIG_MSG = 'サーバーの Code.gs が前の版のため、設定をチームで共有できません（この端末には反映されています）。Code.gs を新しい版に貼り替えて、デプロイを更新してください（管理者へ）';
+/* 文字を入れている途中か（入力欄に文字がある）。選ぶ欄（ラジオ・チェック）は数えない */
+const typingInView = () => [...document.querySelectorAll('#view input, #view textarea')].some(i => i.type !== 'radio' && i.type !== 'checkbox' && i.value);
+/* 描き直しても、カーソルのあった「追加」の入力欄に戻す（設定の画面で続けて追加しているとき） */
+function renderKeepFocus() {
+  const a = document.activeElement, f = a && a.closest ? a.closest('form.sadd') : null;
+  const was = f ? [f.dataset.add, f.dataset.key || ''] : null;
+  render();
+  const g = was && [...document.querySelectorAll('form.sadd')].find(x => x.dataset.add === was[0] && (x.dataset.key || '') === was[1]);
+  if (g) g.querySelector('input').focus({ preventScroll: true });
 }
 function dirtyCount() { return GAS_URL ? RECORDS.filter(r => r._dirty).length : 0; }
 function renderSync() {
@@ -799,7 +1132,7 @@ async function askKey() {
 const aiAvailable = () => !!(GAS_URL && KEY && SYNC.ai && SYNC.state !== 'key');
 const aiRecord = r => ({
   date: r.occurredAt, line: r.line, area: r.area, equipment: r.equipment, symptom: r.symptom, cause: r.cause, action: r.action,
-  parts: (r.parts || []).map(p => [p.name, p.model ? '（' + p.model + '）' : ''].join('')).filter(Boolean).join('、'), sample: !!r.sample,
+  parts: (r.parts || []).map(p => [p.name, p.model ? '（' + p.model + '）' : ''].join('')).filter(Boolean).join('、'), extra: extraText(r), sample: !!r.sample,
 });
 /* AIに渡す記録（最大15件）と集計。吹き出しの「これまでに○件」「まず確認」と同じまとまりの内訳を渡し、
    記録は原因ごとの代表（新しい順）を先に入れる（似ている順の上位だけだと、多い原因が抜けることがあるため） */
@@ -839,8 +1172,10 @@ async function askAi(m) {
   if (box) box.scrollIntoView({ block: 'nearest' });
   try {
     // サーバーは80秒以内に必ず返す（AIの時間切れも理由つきで返る）ので、それより長く待つ
+    // 写真を送ったときは、本人のひとこと（無ければその旨）を質問にし、写真から読み取ったことを添える（写真そのものは送らない）
+    const question = m.photo ? (m.text || PHOTO_ONLY_Q) : m.query;
     const res = await gasFetch({ method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'suggest', key: KEY, question: m.query, records: recs.map(aiRecord), stats }) }, null, 100000);
+      body: JSON.stringify({ action: 'suggest', key: KEY, question, records: recs.map(aiRecord), stats, vision: visionWire(m) }) }, null, 100000);
     m.ai = { state: 'done', refIds, data: res.suggestion, by: typeof res.by === 'string' ? res.by : '' };
   } catch (e) {
     m.ai = { state: 'error', refIds, msg: e.message };
@@ -848,9 +1183,11 @@ async function askAi(m) {
   }
   if (TAB === 'search' && !DETAIL) render();   // 別の画面を見ていたら書き換えない（戻ったときに表示される）
 }
+/* 写真を送ったときは、写真の読み取りが終わってから（探す言葉があるときだけ）対処案を聞ける */
+const canAsk = m => !m.photo || (m.kind !== 'photo' && !(m.vision && m.vision.state === 'loading'));
 function aiBlock(m) {
   const mi = CHAT.indexOf(m), a = m.ai;
-  if (!a) return aiAvailable() ? `<div class="chips"><button type="button" class="chip aichip" data-act="ai" data-mi="${mi}">${ICON.bulb}AIに対処案を聞く</button></div>` : '';
+  if (!a) return aiAvailable() && canAsk(m) ? `<div class="chips"><button type="button" class="chip aichip" data-act="ai" data-mi="${mi}">${ICON.bulb}AIに対処案を聞く</button></div>` : '';
   if (a.state === 'loading') return `<div class="aibox busy" id="ai-${mi}"><div class="aih">${ICON.bulb}AIが記録を読んで考えています…</div><div class="muted" style="font-size:14px">10〜60秒ほどかかります</div></div>`;
   if (a.state === 'error') {
     return `<div class="aibox err" id="ai-${mi}"><div class="aih">${ICON.bulb}AIの対処案を出せませんでした</div><div>${esc(a.msg)}</div>
@@ -875,6 +1212,138 @@ function aiBlock(m) {
 }
 
 /* =========================================================
+   9-3. 写真を撮って送る・写真の読み取り
+   「探す」の入力欄の左のカメラで撮ると、入力欄の上に写真が出る。ひとことを添えて（なくてもよい）送る。
+   AIが使えるときは、写真をサーバー（GAS）経由でAIに渡して、写っている設備・見える異常・読める文字（型式など）を
+   読み取ってもらい、それとひとことで過去の記録を探し直す。写真は「この内容で記録する」で記録にも付けられる。
+   ========================================================= */
+const PHOTO_ONLY_Q = '（ひとことはありません。写真から読み取ったことをもとに考えてください）';
+function renderCam() {
+  const box = $('#camPrev'), p = PENDING;
+  document.body.classList.toggle('campending', !!p);
+  $('#chatIn').placeholder = p ? 'ひとこと（なくてもOK）' : '例：3号 充填部で袋を吸わない';
+  if (!p) { box.hidden = true; box.textContent = ''; return; }
+  box.hidden = false;
+  box.innerHTML = `<img src="${esc(thumbSrc(p))}" alt="送る写真"><div class="ct"><b>この写真を送ります</b>${aiAvailable()
+    ? 'AIが設備や異常を読み取って、過去の記録を探します（人の顔は写さないでください）' : '何が起きているかも書くと、過去の記録を探せます'}</div>
+    <button type="button" class="x2" data-act="cam-clear" aria-label="この写真をやめる">✕</button>`;
+}
+function openCamera() {
+  const ci = $('#camIn');
+  ci.value = '';
+  ci.click();
+}
+function photoAnswer(text, photo) {
+  const m = text ? answer(text) : { role: 'bot', kind: 'photo', query: '', ids: [], total: 0, prefill: prefillFrom(parseQuery('')) };
+  m.text = text;
+  m.photo = photo;
+  m.vision = { state: !aiAvailable() ? 'off' : navigator.onLine ? 'loading' : 'offline' };
+  return m;
+}
+/* AIの読み取り結果を、画面で使う形にそろえる（サーバーでも整えているが、念のため形を確かめる） */
+function visionData(a) {
+  a = a && typeof a === 'object' ? a : {};
+  const s = (x, n) => (typeof x === 'string' ? x.replace(/\s+/g, ' ').trim().slice(0, n) : '');
+  const area = s(a.area, 20);
+  return {
+    area: own(AREAS, area) ? area : '', equipment: s(a.equipment, 40), seen: s(a.seen, 200), abnormality: s(a.abnormality, 200),
+    texts: (Array.isArray(a.texts) ? a.texts : []).map(x => s(x, 60)).filter(Boolean).slice(0, 8), query: s(a.query, 100),
+    confidence: ['high', 'medium', 'low'].includes(a.confidence) ? a.confidence : 'low', retake: s(a.retake, 200), safety: s(a.safety, 200),
+  };
+}
+/* 読み取り結果とひとことから、探す言葉と記録の下書きを作る。
+   ・ひとことで言った設備や場所と、写真の見立てが食い違うときは、ひとことを優先する（見立ては箱に出すだけ）
+   ・食い違いは、ひとことに実際に書いた場所・設備とだけ比べる（真空ポンプのように2か所にある設備から、アプリが推した場所とは比べない）
+   ・写真がはっきりしない（確かさ low）ときは、見立てを探す言葉にも下書きにも使わない */
+function visionSearch(text, d) {
+  const Q = parseQuery(text || ''), base = prefillFrom(Q);
+  const saidArea = Q.areas[0] || '', saidEquip = Q.equip ? Q.equip.equipment : '';
+  if (d.confidence === 'low') return { q: String(text || '').trim(), conflict: false, unsure: true, prefill: base };
+  const same = (a, b) => norm(canonEquip(a)) === norm(canonEquip(b));
+  const inArea = (a, e) => equipOfArea(a).some(x => same(x, e));
+  const conflict = !!((saidEquip && d.equipment && !same(saidEquip, d.equipment))
+    || (saidArea && d.area && saidArea !== d.area && !(d.equipment && inArea(saidArea, d.equipment))));
+  const useArea = !!(!saidArea && d.area && (!saidEquip || inArea(d.area, saidEquip)));   // 写真の場所は、ひとことと矛盾しないときだけ使う
+  const words = conflict ? [text] : [text, useArea ? d.area : '', d.equipment, d.query || d.abnormality];
+  const seen = new Set();
+  const q = words.join(' ').split(/\s+/).filter(w => w && !seen.has(w) && seen.add(w)).join(' ');
+  const prefill = {
+    line: base.line,
+    area: saidArea || (useArea ? d.area : base.area),
+    equipment: saidEquip || (conflict ? '' : d.equipment),
+    symptom: base.symptom || (conflict ? '' : d.abnormality),
+  };
+  return { q, conflict, unsure: false, prefill };
+}
+async function runVision(m) {
+  try {
+    // サーバーは80秒以内に必ず返すので、それより長く待つ
+    const res = await gasFetch({ method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'analyze', key: KEY, image: m.photo.data, question: m.text, masters: AREAS }) }, null, 100000);
+    const d = visionData(res.analysis);
+    const s = visionSearch(m.text, d);
+    m.vision = { state: 'done', data: d, by: typeof res.by === 'string' ? res.by : '', conflict: s.conflict, unsure: s.unsure };
+    if (s.q) {
+      const fresh = answer(s.q);
+      for (const k of ['kind', 'ids', 'total', 'near', 'nearLabel', 'query']) m[k] = fresh[k];
+    }
+    m.prefill = s.prefill;
+    // 読み取りに失敗したあとで、ひとことだけで対処案を聞いていた場合：探し直した記録と合わないので、写真の内容も添えて聞き直せるようにする
+    if (m.ai && m.ai.state !== 'loading') m.ai = null;
+  } catch (e) {
+    // アプリだけ新しくして、サーバーの Code.gs が前のままだと「知らない操作です」が返る
+    const old = /知らない操作/.test(e.message);
+    m.vision = { state: 'error', msg: old ? 'サーバーの Code.gs が前の版のため、写真を読み取れません。Code.gs を新しい版に貼り替えて、デプロイを更新してください（管理者へ）' : e.message };
+    if (e.code === 'key') SYNC.state = 'key';
+  }
+  if (TAB === 'search' && !DETAIL) render();   // 別の画面を見ていたら書き換えない（戻ったときに表示される）
+}
+/* 「読み取る」「もう一度読み取る」 */
+function analyzePhoto(m) {
+  if (!m || !m.photo || (m.vision && m.vision.state === 'loading')) return;
+  if (!aiAvailable()) { toast('いまはAIを使えないため、写真を読み取れません'); return; }
+  if (!navigator.onLine) { toast('オフラインのため、写真を読み取れません'); return; }
+  m.vision = { state: 'loading' };
+  render();
+  runVision(m);
+}
+/* 対処案を聞くときに添える「写真から読み取ったこと」（文字だけ。写真そのものは送らない） */
+function visionWire(m) {
+  if (!m.photo || !m.vision || m.vision.state !== 'done') return undefined;
+  const d = m.vision.data;
+  return { area: d.area, equipment: d.equipment, seen: d.seen, abnormality: d.abnormality, texts: d.texts, confidence: d.confidence };
+}
+function visionBlock(m) {
+  const v = m.vision || { state: 'off' }, mi = CHAT.indexOf(m);
+  const btn = label => `<div class="chips"><button type="button" class="chip" data-act="vision" data-mi="${mi}">${label}</button></div>`;
+  if (v.state === 'loading') {
+    return `<div class="vbox busy" id="vi-${mi}"><div class="aih">${ICON.camera}AIが写真を読み取っています…</div><div class="muted" style="font-size:14px">10〜30秒ほどかかります</div></div>`;
+  }
+  if (v.state === 'error') {
+    return `<div class="vbox err" id="vi-${mi}"><div class="aih">${ICON.camera}写真を読み取れませんでした</div><div>${esc(v.msg)}</div>${btn('もう一度読み取る')}</div>`;
+  }
+  if (v.state !== 'done') {   // 読み取っていない（端末内のみ・AIの設定なし・オフライン）
+    const why = v.state === 'offline' ? 'オフラインのため、写真はまだ読み取っていません。'
+      : aiAvailable() ? '' : GAS_URL ? '写真の読み取り（AI）は、いまは使えません（合言葉とAIの設定が必要です）。' : '写真の読み取り（AI）は、共有とAIの設定をすると使えます。';
+    return `<div class="vbox plain" id="vi-${mi}"><div class="aih">${ICON.camera}写真を受け取りました</div>
+      <div>${m.text ? '書いてくれた言葉で、過去の記録を探しました。' : '何が起きているかを文字でも送ると、過去の記録を探せます。'}${why}</div>
+      ${aiAvailable() ? btn('AIで写真を読み取る') : ''}</div>`;
+  }
+  const d = v.data, where = [d.area, d.equipment].filter(Boolean);
+  return `<div class="vbox" id="vi-${mi}">
+    <div class="aih">${ICON.camera}写真から読み取ったこと<span class="badge">参考</span></div>
+    <div class="vrow"><span class="k">設備</span><span class="v">${where.length ? `<b>${where.map(esc).join(' › ')}</b>` : '<span class="muted">分かりませんでした</span>'}</span></div>
+    <div class="vrow"><span class="k cau">異常</span><span class="v">${d.abnormality ? esc(d.abnormality) : '<span class="muted">写真でははっきり見えません</span>'}</span></div>
+    ${d.seen ? `<div class="vrow"><span class="k">写真</span><span class="v">${esc(d.seen)}</span></div>` : ''}
+    ${d.texts.length ? `<div class="vrow"><span class="k">文字</span><span class="v pchips">${d.texts.map(x => `<span class="pchip"><span class="mono">${esc(x)}</span></span>`).join('')}</span></div>` : ''}
+    ${d.confidence === 'low' || d.retake ? `<div class="vretake">${d.confidence === 'low' ? '<b>写真からは、はっきり分かりませんでした。</b>' : ''}${d.retake ? `撮り直すなら：${esc(d.retake)}` : ''}</div>
+      <div class="chips"><button type="button" class="chip" data-act="cam">${ICON.camera}撮り直す</button></div>` : ''}
+    ${d.safety ? `<div class="aisafe">${ICON.warn}<span>${esc(d.safety)}</span></div>` : ''}
+    <div class="aifoot">AIが写真から読み取った内容です。見まちがえることがあります。${v.by ? `<br>回答したAI：${esc(v.by)}` : ''}</div>
+  </div>`;
+}
+
+/* =========================================================
    10. 写真（縮小して保存。送信後は小さな縮小画像だけ端末に残す）
    ========================================================= */
 function loadImage(file) {
@@ -895,9 +1364,11 @@ function toJpeg(img, max, quality) {
   ctx.drawImage(img, 0, 0, w, h);
   return c.toDataURL('image/jpeg', quality);
 }
-async function makePhoto(file) {
+async function makePhoto(file, withView) {
   const img = await loadImage(file);
-  return { id: newId('p'), data: toJpeg(img, 1280, 0.8), thumb: toJpeg(img, 240, 0.7), driveId: null };
+  const p = { id: newId('p'), data: toJpeg(img, 1280, 0.8), thumb: toJpeg(img, 240, 0.7), driveId: null };
+  if (withView) p.view = toJpeg(img, 480, 0.75);   // 会話の吹き出し用（描き直すたびに大きな画像を並べ直さないため）
+  return p;
 }
 const safeData = u => (typeof u === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(u)) ? u : '';
 const driveUrl = (id, w) => /^[A-Za-z0-9_-]{10,100}$/.test(String(id || '')) ? `https://drive.google.com/thumbnail?id=${id}&sz=w${w}` : '';
@@ -905,6 +1376,7 @@ const thumbSrc = p => p ? (safeData(p.thumb) || driveUrl(p.driveId, 400) || safe
 const fullSrc = p => p ? (safeData(p.data) || driveUrl(p.driveId, 1600) || safeData(p.thumb)) : '';
 function resolvePhoto(ref) {
   const [src, kind, i] = String(ref).split(':');
+  if (src === 'chat') { const m = CHAT.find(x => x.role === 'me' && x.photo && x.photo.id === kind); return m ? m.photo : null; }   // 「探す」で送った写真
   const obj = src === 'form' ? FORM : findRec(src);
   if (!obj) return null;
   return kind === 'photo' ? (obj.photos || [])[+i] : ((obj.parts || [])[+i] || {}).photo;
@@ -986,10 +1458,14 @@ function renderSearch() {
       <button type="button" class="btn sub sm" data-act="key">合言葉を入力</button></div>`;
   }
   html += renderIntro();
-  html += CHAT.map(m => m.role === 'me'
-    ? `<div class="msg me"><div class="bub">${esc(m.text)}</div></div>`
-    : `<div class="msg bot"><div class="bub">${renderBot(m, flows)}</div></div>`).join('');
+  html += CHAT.map(m => m.role === 'me' ? renderMe(m) : `<div class="msg bot"><div class="bub">${renderBot(m, flows)}</div></div>`).join('');
   $('#view').innerHTML = html;
+}
+/* 送った吹き出し。写真があれば写真の下にひとことを出す（吹き出しは改行をそのまま出すので、中に余計な空白を入れない） */
+function renderMe(m) {
+  if (!m.photo) return `<div class="msg me"><div class="bub">${esc(m.text)}</div></div>`;
+  return `<div class="msg me"><div class="bub img"><img class="chatimg" src="${esc(safeData(m.photo.view) || thumbSrc(m.photo))}" alt="送った写真" data-photo="chat:${esc(m.photo.id)}">`
+    + (m.text ? `<div class="ct">${esc(m.text)}</div>` : '') + '</div></div>';
 }
 function renderIntro() {
   const recs = visibleRecords();
@@ -1004,7 +1480,7 @@ function renderIntro() {
   const recent = recs.slice().sort(byNewest).slice(0, 3);
   return `<div class="msg bot"><div class="bub">
     <h1 class="hello">いま、何が起きていますか？</h1>
-    <p class="hello-sub">起きているトラブルや設備名を送ると、過去の記録から<b>原因と対処</b>を探します。</p>
+    <p class="hello-sub">起きているトラブルや設備名を送ると、過去の記録から<b>原因と対処</b>を探します。入力欄の左のカメラで、その場の写真も送れます。</p>
     <div class="chips">${examples.map(q => `<button type="button" class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>
     <div class="h3">最近の記録</div>${recent.map(r => recCard(r)).join('')}
   </div></div>`;
@@ -1012,12 +1488,22 @@ function renderIntro() {
 function renderBot(m, flows) {
   const live = ids => (ids || []).map(findRec).filter(r => r && !r.deleted && (!r.sample || META.showSamples));
   const recs = live(m.ids);
-  const recBtn = aiBlock(m) + `<div class="chips"><button type="button" class="chip" data-act="rec-from-chat" data-mi="${CHAT.indexOf(m)}">${ICON.plus}この内容で記録する</button></div>`;
+  const recBtn = aiBlock(m) + `<div class="chips"><button type="button" class="chip" data-act="rec-from-chat" data-mi="${CHAT.indexOf(m)}">${ICON.plus}この内容で記録する${m.photo ? '（写真付き）' : ''}</button></div>`;
   const found = n => `<div class="found">過去の記録を探しました<span class="mono">${n}件</span></div>`;
+  // 写真を送ったときは、先頭に「写真から読み取ったこと」と、何の言葉で探したかを出す
+  const read = m.photo && m.vision && m.vision.state === 'done';
+  const how = !read || m.kind === 'photo' ? ''
+    : m.vision.conflict ? `ひとことの「${esc(m.query)}」で探しました（写真の見立てと設備・場所が違うため、ひとことを優先）`
+    : m.vision.unsure ? `写真がはっきりしないので、ひとことの「${esc(m.query)}」で探しました`
+    : `写真${m.text ? 'とひとこと' : ''}から「${esc(m.query)}」で探しました`;
+  const head = !m.photo ? '' : visionBlock(m) + (how ? `<div class="vq">${how}</div>` : '');
+  if (m.kind === 'photo') {   // 探す言葉がまだ無い（写真だけで、読み取る前・読み取れなかった）
+    return head + (read ? '<p class="lead">写真から探す手がかりが見つかりませんでした。何が起きているかを文字で送ってください。</p>' : '') + recBtn;
+  }
   if (m.kind === 'hit' && recs.length) {
     const fl = flowsOf(flows, recs.slice(0, 3).map(r => r.id)).slice(0, 2);
     const f = fl[0];
-    let html = found(m.total) + (f
+    let html = head + found(m.total) + (f
       ? `<p class="lead">「${esc(f.area)}・${esc(f.equipment)}」の「${esc(f.symptom)}」は、これまでに <b>${f.count}件</b> あります。</p>`
       : `<p class="lead">関連する記録が <b>${recs.length}件</b> 見つかりました。</p>`);
     if (f && f.causes[0]) {
@@ -1031,7 +1517,7 @@ function renderBot(m, flows) {
     html += `<div class="h3">該当する記録（${m.total}件${m.total > 6 ? '・上位6件を表示' : ''}）</div>` + recs.slice(0, 6).map(r => recCard(r)).join('');
     return html + recBtn;
   }
-  let html = found(0) + '<p class="lead">該当する記録は見つかりませんでした。</p>';
+  let html = head + found(0) + '<p class="lead">該当する記録は見つかりませんでした。</p>';
   const near = live(m.near);
   if (near.length) html += `<div class="h3">「${esc(m.nearLabel)}」の記録</div>` + near.map(r => recCard(r)).join('');
   else html += '<div class="muted" style="font-size:13px;margin-top:6px">設備名（例：ボビン、チャック開口吸盤）や症状（例：異音、吸着しない）を入れると見つかりやすくなります。</div>';
@@ -1048,52 +1534,83 @@ function breakdown(f) {
   const more = f.causes.length > 5 ? `<div class="muted" style="font-size:13px">ほかに ${f.causes.length - 5} 種類の原因（「フロー」で見られます）</div>` : '';
   return `<div class="bd">${rows}${more}</div>`;
 }
-function sendChat(text) {
+function sendChat(text, photo) {
   text = String(text || '').trim();
-  if (!text) return;
-  CHAT.push({ role: 'me', text });
-  CHAT.push(answer(text));
+  if (!text && !photo) return;
+  CHAT.push(photo ? { role: 'me', text, photo } : { role: 'me', text });
+  const bot = photo ? photoAnswer(text, photo) : answer(text);
+  CHAT.push(bot);
   if (CHAT.length > 40) CHAT = CHAT.slice(-40);
   DETAIL = null; TAB = 'search';
   render();
   const last = document.querySelectorAll('.msg.me');
   if (last.length) last[last.length - 1].scrollIntoView({ block: 'start' });
+  if (bot.vision && bot.vision.state === 'loading') runVision(bot);   // 写真はAIが使えるときだけ、送ったらすぐ読み取る
 }
 
 /* =========================================================
    13. 画面：記録する
    ========================================================= */
 function newForm(pre) {
-  return Object.assign({ editId: null, occurredAt: nowLocal(), author: META.author, line: META.lastLine, area: '', equipment: '', symptom: '', cause: '', action: '', parts: [], photos: [] }, pre || {});
+  return Object.assign({ editId: null, occurredAt: nowLocal(), author: shown('author') ? META.author : '', line: shown('line') ? META.lastLine : '',
+    area: '', equipment: '', symptom: '', cause: '', action: '', parts: [], photos: [], extra: {} }, pre || {});
 }
 function formFromRecord(r) {
   return { editId: r.id, occurredAt: r.occurredAt, author: r.author, line: r.line, area: r.area, equipment: r.equipment,
-    symptom: r.symptom, cause: r.cause, action: r.action, parts: clone(r.parts || []), photos: clone(r.photos || []) };
+    symptom: r.symptom, cause: r.cause, action: r.action, parts: clone(r.parts || []), photos: clone(r.photos || []), extra: clone(r.extra || {}) };
 }
-const formHasInput = () => FORM && !FORM.editId && !!(FORM.equipment || FORM.symptom || FORM.cause || FORM.action || FORM.parts.length || FORM.photos.length);
+const formHasInput = () => FORM && !FORM.editId && !!(FORM.equipment || FORM.symptom || FORM.cause || FORM.action || FORM.parts.length || FORM.photos.length
+  || Object.values(FORM.extra || {}).some(v => String(v).trim()));
 const chip = (kind, v, on, label, cls) => `<button type="button" class="chip${cls ? ' ' + cls : ''}${on ? ' on' : ''}" data-f="${kind}" data-v="${esc(v)}">${esc(label || v)}</button>`;
+const reqMark = f => (f.required ? '<span class="req">必須</span>' : '');
+const noOptions = '<p class="muted" style="font-size:14px;margin:4px 0 0">選択肢がありません（「設定」で追加できます）</p>';
+const withCurrent = (list, cur) => (cur && !list.includes(cur) ? list.concat(cur) : list);   // 設定から消した値の記録を直すときも、選んである値は出す
+/* 入力項目ごとの入力欄（もともとある項目）。並びと名前・必須は「設定」のとおり */
+const FORM_PARTS = {
+  occurredAt: (f, F) => `<div class="f"><label class="l" for="fDate">${esc(f.label)}</label><input id="fDate" class="inp mono" type="datetime-local" value="${esc(F.occurredAt)}"></div>`,
+  line: (f, F) => `<div class="f"><span class="l">${esc(f.label)}${reqMark(f)}</span>${LINES.length || F.line
+    ? `<div class="chips grid4">${withCurrent(LINES, F.line).map(l => chip('line', l, F.line === l, l.replace(/ライン$/, ''))).join('')}</div>` : noOptions}</div>`,
+  area: (f, F) => `<div class="f"><span class="l">${esc(f.label)}${reqMark(f)}</span>${Object.keys(AREAS).length || F.area
+    ? `<div class="chips">${withCurrent(Object.keys(AREAS), F.area).map(a => chip('area', a, F.area === a)).join('')}</div>` : noOptions}</div>`,
+  equipment: (f, F) => {
+    const eqList = equipOfArea(F.area);
+    return `<div class="f"><label class="l" for="fEquip">${esc(f.label)}${reqMark(f)}</label>
+      <input id="fEquip" class="inp" maxlength="40" placeholder="${F.area ? '下から選ぶか、入力してください' : '先に' + esc(shortLabel(fieldById('area'))) + 'を選ぶと候補が出ます'}" value="${esc(F.equipment)}">
+      ${eqList.length ? `<div class="chips" id="eqChips">${eqList.map(e => chip('equip', e, canonEquip(F.equipment) === e, '', 'sug')).join('')}</div>` : ''}
+    </div>`;
+  },
+  symptom: (f, F) => `<div class="f"><label class="l" for="fSym">${esc(f.label)}${reqMark(f)}</label>
+      <textarea id="fSym" class="inp" maxlength="300" placeholder="例）袋を吸わず、チャックが開かない">${esc(F.symptom)}</textarea>
+      ${SYMPTOM_WORDS.length ? `<div class="chips">${SYMPTOM_WORDS.map(w => chip('sym', w, false, '', 'sug')).join('')}</div>` : ''}
+      <div id="simHint"></div>
+    </div>`,
+  cause: (f, F) => `<div class="f"><label class="l" for="fCause">${esc(f.label)}${reqMark(f)}</label><input id="fCause" class="inp" maxlength="300" placeholder="${f.required ? '' : '分からなければ空欄でOK'}" value="${esc(F.cause)}"></div>`,
+  action: (f, F) => `<div class="f"><label class="l" for="fAction">${esc(f.label)}${reqMark(f)}</label><textarea id="fAction" class="inp" maxlength="300" placeholder="例）吸盤を新品に交換した">${esc(F.action)}</textarea></div>`,
+  parts: f => `<div class="f"><span class="l">${esc(f.label)}${reqMark(f)}</span><div id="partsBox">${partsHtml()}</div></div>`,
+  photos: f => `<div class="f"><span class="l">${esc(f.label)}${reqMark(f)}</span><div id="photoBox">${photosHtml()}</div></div>`,
+  author: (f, F) => `<div class="f"><label class="l" for="fAuthor">${esc(f.label)}${reqMark(f)}</label><input id="fAuthor" class="inp" maxlength="20" placeholder="名前" value="${esc(F.author)}"></div>`,
+};
+/* 「設定」で足した項目の入力欄 */
+function customPart(f, F) {
+  const v = String(F.extra[f.id] || '');
+  if (f.type === 'choice') {
+    return `<div class="f"><span class="l">${esc(f.label)}${reqMark(f)}</span>${f.options.length || v ? `<div class="chips">${withCurrent(f.options, v).map(o =>
+      `<button type="button" class="chip${v === o ? ' on' : ''}" data-f="x" data-xid="${esc(f.id)}" data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div>` : noOptions}</div>`;
+  }
+  const num = f.type === 'number';
+  return `<div class="f"><label class="l" for="fx_${esc(f.id)}">${esc(f.label)}${reqMark(f)}</label>
+    <input id="fx_${esc(f.id)}" class="inp${num ? ' mono' : ''}" type="text"${num ? ' inputmode="decimal"' : ''} maxlength="${num ? 20 : 200}" data-xf="${esc(f.id)}" value="${esc(v)}"></div>`;
+}
+let FORM_SHOWN = new Set();   // いま記録する画面に出している項目
 function renderForm() {
-  const F = FORM, eqList = equipOfArea(F.area);
+  const F = FORM;
+  FORM_SHOWN = new Set(FIELDS.filter(inForm).map(f => f.id));
+  const need = FIELDS.filter(f => inForm(f) && f.required && f.id !== 'occurredAt').map(shortLabel);
   $('#view').innerHTML = `
     <h2 class="ttl">${F.editId ? '記録を直す' : 'トラブルを記録する'}</h2>
-    <p class="sub">場所・設備・症状だけで保存できます。原因は後から書き足せます。</p>
-    <div class="f"><label class="l" for="fDate">発生日時</label><input id="fDate" class="inp mono" type="datetime-local" value="${esc(F.occurredAt)}"></div>
-    <div class="f"><span class="l">ライン</span><div class="chips grid4">${LINES.map(l => chip('line', l, F.line === l, l.replace(/ライン$/, ''))).join('')}</div></div>
-    <div class="f"><span class="l">場所<span class="req">必須</span></span><div class="chips">${Object.keys(AREAS).map(a => chip('area', a, F.area === a)).join('')}</div></div>
-    <div class="f"><label class="l" for="fEquip">設備・部位<span class="req">必須</span></label>
-      <input id="fEquip" class="inp" maxlength="40" placeholder="${F.area ? '下から選ぶか、入力してください' : '先に場所を選ぶと候補が出ます'}" value="${esc(F.equipment)}">
-      ${eqList.length ? `<div class="chips" id="eqChips">${eqList.map(e => chip('equip', e, canonEquip(F.equipment) === e, '', 'sug')).join('')}</div>` : ''}
-    </div>
-    <div class="f"><label class="l" for="fSym">起きたこと（症状）<span class="req">必須</span></label>
-      <textarea id="fSym" class="inp" maxlength="300" placeholder="例）袋を吸わず、チャックが開かない">${esc(F.symptom)}</textarea>
-      <div class="chips">${SYMPTOM_WORDS.map(w => chip('sym', w, false, '', 'sug')).join('')}</div>
-      <div id="simHint"></div>
-    </div>
-    <div class="f"><label class="l" for="fCause">原因</label><input id="fCause" class="inp" maxlength="300" placeholder="分からなければ空欄でOK" value="${esc(F.cause)}"></div>
-    <div class="f"><label class="l" for="fAction">対処したこと</label><textarea id="fAction" class="inp" maxlength="300" placeholder="例）吸盤を新品に交換した">${esc(F.action)}</textarea></div>
-    <div class="f"><span class="l">交換した部品（型式・写真）</span><div id="partsBox">${partsHtml()}</div></div>
-    <div class="f"><span class="l">写真（4枚まで）</span><div id="photoBox">${photosHtml()}</div></div>
-    <div class="f"><label class="l" for="fAuthor">記録者</label><input id="fAuthor" class="inp" maxlength="20" placeholder="名前" value="${esc(F.author)}"></div>
+    <p class="sub">${need.map(esc).join('・')}だけで保存できます。${shown('cause') && !fieldById('cause').required ? '原因は後から書き足せます。' : ''}</p>
+    <button type="button" class="linkbtn" data-tab="settings" style="margin-top:0">入力項目や選択肢を変える（設定）</button>
+    ${FIELDS.filter(inForm).map(f => (FORM_PARTS[f.id] || customPart)(f, F)).join('')}
     <div id="formErr" class="err" role="alert"></div>
     <div class="savebar">
       ${F.editId
@@ -1133,25 +1650,49 @@ function showHint() {
   box.innerHTML = `<button type="button" class="hint" data-act="hint" data-q="${esc(q)}"><span class="ht"><span class="hk">似たトラブルが過去に ${hits.length}件 あります</span>`
     + (c && c.label ? `<span class="hs">いちばん多い原因：${esc(c.label)}（${c.count}件）</span>` : '') + `</span>${ICON.next}<span class="vh">見る</span></button>`;
 }
+/* 数字の項目に入れた値（全角も可）を半角にそろえる。数字でなければ null */
+function numberOf(v) {
+  let t = String(v || '').normalize('NFKC').replace(/[\u2212\u2010\u2011\u2013\u2014ー]/g, '-').trim();
+  if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(t)) t = t.replace(/,/g, '');   // 3けた区切りのカンマだけ外す
+  return /^-?\d+(\.\d+)?$/.test(t) ? t : null;
+}
 async function saveForm() {
   const F = FORM, errs = [];
-  if (!F.area) errs.push('場所を選んでください');
-  if (!F.equipment.trim()) errs.push('設備・部位を入力してください');
-  if (!F.symptom.trim()) errs.push('起きたこと（症状）を入力してください');
+  const empty = f => (f.id === 'parts' ? !F.parts.some(p => p.name.trim() || p.model.trim() || p.photo)
+    : f.id === 'photos' ? !F.photos.length : !String((isCustom(f) ? F.extra[f.id] : F[f.id]) || '').trim());
+  // 記録する画面に出している項目だけを確かめる（発生日時は空なら今の時刻にする）
+  // 選べるものが無い項目（号機が0・選択肢が0）は、必須でも止めない（だれも保存できなくなるため）
+  const nothingToPick = f => (f.id === 'line' && !LINES.length && !F.line) || (f.id === 'area' && !Object.keys(AREAS).length && !F.area)
+    || (f.type === 'choice' && !f.options.length && !F.extra[f.id]);
+  for (const f of FIELDS.filter(f => FORM_SHOWN.has(f.id))) {
+    if (f.id === 'occurredAt') continue;
+    if (f.required && empty(f) && !nothingToPick(f)) {
+      errs.push(f.id === 'parts' ? f.label + 'を1つ以上入れてください' : f.id === 'photos' ? '写真を1枚以上付けてください'
+        : f.label + (f.id === 'line' || f.id === 'area' || f.type === 'choice' ? 'を選んでください' : 'を入力してください'));
+    } else if (f.type === 'number' && !empty(f) && numberOf(F.extra[f.id]) === null) errs.push(f.label + 'は数字で入れてください');
+  }
   if (errs.length) { const box = $('#formErr'); box.innerHTML = errs.map(esc).join('<br>'); box.scrollIntoView({ block: 'center' }); return; }
   const now = new Date().toISOString();
   let rec = F.editId ? RECORDS.find(r => r.id === F.editId) : null;
   if (F.editId && !rec) { toast('元の記録が見つかりません'); return; }
+  const isNew = !rec;
   if (!rec) { rec = { id: newId('r'), createdAt: now, _synced: false }; RECORDS.push(rec); }
+  // 使わない項目：新しい記録には入れない。直すときは元の値を残す（画面に出していないだけ）
+  const use = id => !isNew || FORM_SHOWN.has(id);
+  const extra = cleanExtra(F.extra);
+  for (const f of FIELDS.filter(isCustom)) {
+    if (isNew && !FORM_SHOWN.has(f.id)) delete extra[f.id];
+    else if (f.type === 'number' && extra[f.id] && numberOf(extra[f.id]) !== null) extra[f.id] = numberOf(extra[f.id]);
+  }
   Object.assign(rec, {
-    occurredAt: F.occurredAt || nowLocal(), author: F.author.trim(), line: F.line, area: F.area,
-    equipment: F.equipment.trim(), symptom: F.symptom.trim(), cause: F.cause.trim(), action: F.action.trim(),
-    parts: F.parts.map(p => ({ name: p.name.trim(), model: p.model.trim(), photo: p.photo || null })).filter(p => p.name || p.model || p.photo),
-    photos: F.photos.slice(0, 4), updatedAt: now, deleted: false, _dirty: true,
+    occurredAt: F.occurredAt || nowLocal(), author: use('author') ? F.author.trim() : '', line: use('line') ? F.line : '', area: F.area,
+    equipment: F.equipment.trim(), symptom: F.symptom.trim(), cause: use('cause') ? F.cause.trim() : '', action: use('action') ? F.action.trim() : '',
+    parts: use('parts') ? F.parts.map(p => ({ name: p.name.trim(), model: p.model.trim(), photo: p.photo || null })).filter(p => p.name || p.model || p.photo) : [],
+    photos: use('photos') ? F.photos.slice(0, 4) : [], extra, updatedAt: now, deleted: false, _dirty: true,
   });
   await dbPut(rec);
-  META.author = rec.author; META.lastLine = rec.line;
-  metaSet('author', rec.author); metaSet('lastLine', rec.line);
+  if (FORM_SHOWN.has('author')) { META.author = rec.author; metaSet('author', rec.author); }
+  if (FORM_SHOWN.has('line')) { META.lastLine = rec.line; metaSet('lastLine', rec.line); }
   SAVED = F.editId ? 'edit' : 'new';
   FORM = newForm();
   DETAIL = rec.id;
@@ -1168,7 +1709,7 @@ function renderFlowTab() {
   let html = `<h2 class="ttl">フロー</h2>
     <p class="sub">記録から自動で作ったまとめです。同じ設備の同じトラブルを1つにし、原因 → 対処 → 交換部品を多い順に並べています。</p>
     <div class="seg"><button type="button" data-act="ft-mode" data-v="flow" class="${FT.mode === 'flow' ? 'on' : ''}">フロー</button><button type="button" data-act="ft-mode" data-v="list" class="${FT.mode === 'list' ? 'on' : ''}">新しい順</button></div>
-    <div class="chips">${['', ...Object.keys(AREAS)].map(a => `<button type="button" class="chip pill${FT.area === a ? ' on' : ''}" data-act="ft-area" data-v="${esc(a)}">${esc(a || 'すべて')}</button>`).join('')}</div>`;
+    <div class="chips">${['', ...new Set([...Object.keys(AREAS), ...visibleRecords().map(r => r.area).filter(Boolean)])].map(a => `<button type="button" class="chip pill${FT.area === a ? ' on' : ''}" data-act="ft-area" data-v="${esc(a)}">${esc(a || 'すべて')}</button>`).join('')}</div>`;
   if (!recs.length) html += '<p class="muted" style="margin-top:16px">まだ記録がありません。</p>';
   else if (FT.mode === 'flow') html += buildFlows(recs).map(f => flowCard(f, false)).join('');
   else html += recs.slice().sort(byNewest).slice(0, 100).map(r => recCard(r)).join('');
@@ -1176,6 +1717,151 @@ function renderFlowTab() {
     html += `<button type="button" class="linkbtn" data-act="toggle-samples">${META.showSamples ? `サンプルの記録（${SAMPLES.length}件）を表示しない` : 'サンプルの記録を表示する'}</button>`;
   }
   $('#view').innerHTML = html;
+}
+
+/* =========================================================
+   14-2. 画面：設定（号機・場所・設備・症状の言葉・入力項目を追加・削除）
+   変えた内容はすぐ自分の画面に反映し、共有しているときはチーム全員に送る（4-2）
+   ========================================================= */
+const TYPE_LABEL = { text: '文字', number: '数字', choice: '選んで入力' };
+function renderSettings() {
+  const lineF = fieldById('line'), areaF = fieldById('area'), eqF = fieldById('equipment');
+  const pend = GAS_URL ? CFG.pending.length : 0;
+  const at = (k, v) => `data-${k}="${esc(v)}"`;
+  const btn = (act, label, attrs, extra) => `<button type="button" class="mb" data-act="${act}" ${attrs}${extra || ''}>${label}</button>`;
+  const moves = (list, v, i, n, name) => btn('cf-move', '↑', `${at('list', list)} ${at('v', v)} data-dir="-1"`, `${i === 0 ? ' disabled' : ''} aria-label="${esc(name)}を上へ"`)
+    + btn('cf-move', '↓', `${at('list', list)} ${at('v', v)} data-dir="1"`, `${i === n - 1 ? ' disabled' : ''} aria-label="${esc(name)}を下へ"`);
+  const xchip = (v, act, key, name) => `<span class="chip sug xc">${esc(v)}<button type="button" class="cx" data-act="${act}" ${at('key', key || '')} ${at('v', v)} aria-label="${esc(name || v)}を消す">✕</button></span>`;
+  const addForm = (kind, key, ph, label, max) => `<form class="sadd" data-add="${kind}" ${at('key', key || '')}><input class="inp" maxlength="${max}" placeholder="${esc(ph)}" aria-label="${esc(ph)}"><button type="submit" class="btn sub sm">${esc(label)}</button></form>`;
+  const live = FIELDS.filter(f => !f.deleted), gone = FIELDS.filter(f => f.deleted);
+  const fieldRow = (f, i) => {
+    const b = builtinOf(f.id), core = !!(b && b.core);
+    const badges = (f.required ? '<span class="badge req2">必須</span>' : '') + (f.hidden ? '<span class="badge">使っていない</span>' : '')
+      + (isCustom(f) ? `<span class="badge">${TYPE_LABEL[f.type]}</span>` : '');
+    return `<div class="fld${f.hidden ? ' off' : ''}">
+      <div class="fl1"><b>${esc(f.label)}</b>${badges}</div>
+      <div class="fl2">${btn('cf-rename', '名前を変える', at('id', f.id))}${core ? '' : btn('cf-req', f.required ? '任意にする' : '必須にする', at('id', f.id))}${moves('fields', f.id, i, live.length, f.label)}${
+        core ? '' : !isCustom(f) ? btn(f.hidden ? 'cf-show' : 'cf-hide', f.hidden ? '使う' : '使わない', at('id', f.id)) : btn('cf-del-field', '消す', at('id', f.id), ' style="color:var(--ng);border-color:var(--ng)"')}</div>
+      ${core ? '<div class="fnote">検索とフローに使う項目なので、消せません（名前は変えられます）</div>' : ''}
+      ${f.type === 'choice' ? `<div class="chips">${f.options.map(o => xchip(o, 'cf-rm-opt', f.id)).join('') || '<span class="muted" style="font-size:14px">選択肢がありません</span>'}</div>${addForm('opt', f.id, f.label + 'の選択肢を追加', '追加', 30)}` : ''}
+    </div>`;
+  };
+  $('#view').innerHTML = `
+    <h2 class="ttl">設定</h2>
+    <p class="sub">号機・場所・設備・症状の言葉と、記録する画面の入力項目を、いつでも追加・削除できます。${GAS_URL ? '変えた内容は<b>チーム全員のアプリ</b>に反映されます。' : 'この端末だけの設定です（共有の設定をしていないため）。'}消しても、これまでの記録はそのまま残ります。</p>
+    ${CFG.msg ? `<div class="banner">${esc(CFG.msg)}</div>` : pend ? `<div class="banner">まだ送れていない設定の変更が ${pend}件 あります（電波が戻ると自動で送ります）</div>` : ''}
+
+    <section class="sec">
+      <h3 class="sh">${esc(lineF.label)}</h3>
+      <p class="sd">記録するときに選ぶ${esc(lineF.label)}です。${inForm(lineF) ? '' : '（いまは記録する画面に出していません。下の「入力項目」の「使う」で出せます）'}</p>
+      <div class="slist">${LINES.map((v, i) => `<div class="srow"><span class="sname">${esc(v)}</span>${moves('lines', v, i, LINES.length, v)}${btn('cf-remove', '消す', `${at('list', 'lines')} ${at('v', v)}`)}</div>`).join('')
+        || '<p class="muted" style="font-size:14px">まだありません</p>'}</div>
+      ${addForm('lines', '', '例：6号ライン', '追加', 20)}
+    </section>
+
+    <section class="sec">
+      <h3 class="sh">${esc(shortLabel(areaF))}と${esc(shortLabel(eqF))}</h3>
+      <p class="sd">${esc(shortLabel(areaF))}ごとに、記録するときの${esc(shortLabel(eqF))}の候補を登録します（候補に無い${esc(shortLabel(eqF))}も、記録するときに文字で入れられます）。</p>
+      ${CONF.areas.map((ar, i) => `<details class="sarea" ${at('area', ar.name)}${OPEN_AREAS.has(ar.name) ? ' open' : ''}>
+        <summary><b class="sname">${esc(ar.name)}</b><span class="scount">${esc(shortLabel(eqF))} ${ar.equip.length}</span></summary>
+        <div class="srow">${moves('areas', ar.name, i, CONF.areas.length, ar.name)}<span class="sname"></span>${btn('cf-rm-area', 'この' + esc(shortLabel(areaF)) + 'を消す', at('v', ar.name))}</div>
+        <div class="chips">${ar.equip.map(e => xchip(e, 'cf-rm-equip', ar.name)).join('')}</div>
+        ${addForm('equip', ar.name, ar.name + 'に' + shortLabel(eqF) + 'を追加', '追加', 40)}
+      </details>`).join('')}
+      ${addForm('areas', '', '例：検査機', shortLabel(areaF) + 'を追加', 20)}
+    </section>
+
+    <section class="sec">
+      <h3 class="sh">症状の言葉</h3>
+      <p class="sd">記録するときに、押して入れられる言葉です。</p>
+      <div class="chips">${SYMPTOM_WORDS.map(w => xchip(w, 'cf-remove', 'symptoms')).join('') || '<span class="muted" style="font-size:14px">まだありません</span>'}</div>
+      ${addForm('symptoms', '', '例：焦げ', '追加', 20)}
+    </section>
+
+    <section class="sec">
+      <h3 class="sh">入力項目</h3>
+      <p class="sd">記録する画面に、この順に出ます。「使わない」「消す」にしても、これまでの記録に入っている値は残ります。</p>
+      ${live.map(fieldRow).join('')}
+      ${gone.length ? `<div class="h3">消した項目（元に戻せます）</div><div class="slist">${gone.map(f => `<div class="srow"><span class="sname">${esc(f.label)}</span>${btn('cf-restore', '元に戻す', at('id', f.id))}</div>`).join('')}</div>` : ''}
+      <details class="addf"${SET_ADD_OPEN ? ' open' : ''}><summary>＋ 入力項目を追加</summary>
+        <form class="fadd" data-add="field">
+          <div class="f"><label class="l" for="nfLabel">項目の名前</label><input id="nfLabel" class="inp" maxlength="20" placeholder="例：停止時間（分）"></div>
+          <div class="f"><span class="l">入れ方</span><div class="chips">${Object.keys(TYPE_LABEL).map((t, i) =>
+            `<label class="chip rad"><input type="radio" name="nfType" value="${t}"${i === 0 ? ' checked' : ''}>${TYPE_LABEL[t]}</label>`).join('')}</div></div>
+          <div class="f"><label class="l" for="nfOpts">選択肢（「選んで入力」のとき。「、」か改行で区切る）</label><textarea id="nfOpts" class="inp" placeholder="例：日勤、夜勤"></textarea></div>
+          <label class="chk"><input type="checkbox" id="nfReq">必須にする（入れないと保存できない）</label>
+          <button type="submit" class="btn pri">この項目を追加</button>
+        </form>
+      </details>
+    </section>`;
+}
+let SET_ADD_OPEN = false;
+const OPEN_AREAS = new Set();   // 設定の画面で開いている場所（描き直しても閉じない）   // 「入力項目を追加」を開いたままにする（追加のあと描き直しても閉じない）
+/* 設定の画面の「追加」 */
+function addFromForm(form) {
+  const kind = form.dataset.add, key = form.dataset.key || '';
+  if (kind === 'field') { addField(); return; }
+  const v = form.querySelector('input').value.replace(/\s+/g, ' ').trim();
+  if (!v) { toast('名前を入れてください'); return; }
+  const op = kind === 'lines' || kind === 'symptoms' ? { op: 'add', list: kind, value: v }
+    : kind === 'areas' ? (OPEN_AREAS.add(v), { op: 'addArea', value: v })
+    : kind === 'equip' ? { op: 'addEquip', area: key, value: v }
+    : { op: 'addOption', id: key, value: v };
+  const ok = editConfig(op);
+  if (!ok) { if (ok === false) toast('追加できませんでした（同じ名前があるか、登録できる数の上限です）'); return; }
+  toast(`「${v}」を追加しました`);
+  // 続けて追加できるよう、同じ入力欄に戻る
+  const again = [...document.querySelectorAll('form.sadd')].find(f => f.dataset.add === kind && (f.dataset.key || '') === key);
+  if (again) again.querySelector('input').focus();
+}
+function addField() {
+  const label = $('#nfLabel').value.replace(/\s+/g, ' ').trim();
+  const type = (document.querySelector('input[name="nfType"]:checked') || {}).value || 'text';
+  const options = type === 'choice' ? [...new Set($('#nfOpts').value.split(/[、,，\n]/).map(x => x.replace(/\s+/g, ' ').trim()).filter(Boolean))] : [];
+  if (GAS_URL && SYNC.configOk === false) { toast('サーバーの Code.gs が前の版のため、入力項目は足せません（先に Code.gs を新しい版にしてください）'); return; }
+  if (!label) { toast('項目の名前を入れてください'); return; }
+  if (FIELDS.some(f => !f.deleted && f.label === label)) { toast('同じ名前の項目があります'); return; }
+  if (type === 'choice' && !options.length) { toast('選択肢を1つ以上入れてください'); return; }
+  const id = 'x_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  SET_ADD_OPEN = false;
+  const ok = editConfig({ op: 'addField', field: { id, label, type, options, required: $('#nfReq').checked } });
+  if (ok) toast(`項目「${label}」を追加しました`);
+  else if (ok === false) toast('追加できませんでした（入力項目は40個までです）');
+}
+/* 設定の画面のボタン（消す・並べ替え・名前・必須・使う/使わない） */
+function onSettingsAct(act, t) {
+  const v = t.dataset.v, f = t.dataset.id ? fieldById(t.dataset.id) : null;
+  const keep = '（これまでの記録は消えません）';
+  switch (act) {
+    case 'cf-move': {
+      const target = neighborOf(CONF, t.dataset.list, v, +t.dataset.dir);
+      if (target != null) editConfig({ op: 'move', list: t.dataset.list, value: v, dir: +t.dataset.dir, target });
+      break;
+    }
+    case 'cf-remove': if (confirm(`「${v}」を消しますか？${keep}`)) editConfig({ op: 'remove', list: t.dataset.list || t.dataset.key, value: v }); break;
+    case 'cf-rm-area': {
+      const ar = CONF.areas.find(x => x.name === v);
+      if (!ar) break;
+      if (CONF.areas.length <= 1) { toast(shortLabel(fieldById('area')) + 'は1つ以上必要です'); break; }
+      if (confirm(`「${v}」と、その${shortLabel(fieldById('equipment'))}の候補${ar.equip.length}件を消しますか？${keep}`)) editConfig({ op: 'removeArea', value: v });
+      break;
+    }
+    case 'cf-rm-equip': if (confirm(`「${t.dataset.key}」の「${v}」を消しますか？${keep}`)) editConfig({ op: 'removeEquip', area: t.dataset.key, value: v }); break;
+    case 'cf-rm-opt': if (confirm(`選択肢「${v}」を消しますか？${keep}`)) editConfig({ op: 'removeOption', id: t.dataset.key, value: v }); break;
+    case 'cf-rename': {
+      if (!f) break;
+      const name = prompt('新しい名前（20文字まで）', f.label);
+      const nv = name == null ? '' : name.replace(/\s+/g, ' ').trim().slice(0, 20);
+      if (!nv || nv === f.label) break;
+      if (FIELDS.some(x => x !== f && !x.deleted && x.label === nv)) { toast('同じ名前の項目があります'); break; }
+      editConfig({ op: 'setField', id: f.id, label: nv });
+      break;
+    }
+    case 'cf-req': if (f) editConfig({ op: 'setField', id: f.id, required: !f.required }); break;
+    case 'cf-hide': if (f && confirm(`「${f.label}」を、記録する画面に出さないようにしますか？（これまでの記録の値は残ります。「使う」で戻せます）`)) editConfig({ op: 'removeField', id: f.id }); break;
+    case 'cf-del-field': if (f && confirm(`項目「${f.label}」を消しますか？（これまでの記録の値は残ります。「消した項目」から元に戻せます）`)) editConfig({ op: 'removeField', id: f.id }); break;
+    case 'cf-show': case 'cf-restore': if (f) editConfig({ op: 'restoreField', id: f.id }); break;
+  }
 }
 
 /* =========================================================
@@ -1188,6 +1874,10 @@ function renderDetail() {
   const partsBlock = (r.parts || []).map((p, i) => `<div>${esc(p.name) || '<span class="muted">部品名なし</span>'}${p.model ? `　<b>型式：${esc(p.model)}</b>` : ''}
       ${p.photo ? `<div class="photos" style="margin-top:6px"><div class="ph">${imgHtml(p.photo, r.id + ':part:' + i, '部品の写真')}</div></div>` : ''}</div>`).join('');
   const photos = (r.photos || []).map((p, i) => `<div class="ph">${imgHtml(p, r.id + ':photo:' + i, '写真' + (i + 1))}</div>`).join('');
+  const tag = id => esc(shortLabel(fieldById(id)));
+  const extras = FIELDS.filter(f => isCustom(f) && (r.extra || {})[f.id]).map(f => `<div class="xrow"><span class="xk">${esc(f.label)}${f.deleted
+    ? '<br><span class="muted">（使っていない項目）</span>' : ''}</span><span class="xv">${esc(r.extra[f.id])}</span></div>`).join('')
+    + Object.keys(r.extra || {}).filter(k => !fieldById(k)).map(k => `<div class="xrow"><span class="xk">追加項目<br><span class="muted">（消した項目）</span></span><span class="xv">${esc(r.extra[k])}</span></div>`).join('');
   let banner = '';
   if (SAVED) {
     banner = `<div class="banner ok">${SAVED === 'edit' ? '直した内容を保存しました。' : '保存しました。'}${f && f.count > 1 ? `同じトラブルは <b>${f.count}件</b> になり、下のフローに加わりました。` : '下のフローに加わりました。'}</div>`;
@@ -1199,15 +1889,16 @@ function renderDetail() {
     <h2 class="ttl" style="margin-top:12px">${esc(r.equipment)}${r.sample ? '<span class="badge sample">サンプル</span>' : ''}${GAS_URL && r._dirty ? '<span class="badge dirty">未送信</span>' : ''}</h2>
     <div class="meta">${esc(fmtDate(r.occurredAt))}　${esc(r.line)}　${esc(r.area)}${r.author ? '　記録：' + esc(r.author) : ''}</div>
     <div class="steps">
-      <div class="step"><span class="k eq">設備</span><div class="v">${esc(r.area)} › <b>${esc(r.equipment)}</b></div></div>
+      <div class="step"><span class="k eq">${tag('equipment')}</span><div class="v">${esc(r.area)} › <b>${esc(r.equipment)}</b></div></div>
       <div class="arrow">↓</div>
-      <div class="step"><span class="k sym">症状</span><div class="v">${esc(r.symptom)}</div></div>
+      <div class="step"><span class="k sym">${tag('symptom')}</span><div class="v">${esc(r.symptom)}</div></div>
       <div class="arrow">↓</div>
-      <div class="step"><span class="k cau">原因</span><div class="v">${r.cause ? esc(r.cause) : '<span class="muted">未記入</span>'}</div></div>
+      <div class="step"><span class="k cau">${tag('cause')}</span><div class="v">${r.cause ? esc(r.cause) : '<span class="muted">未記入</span>'}</div></div>
       <div class="arrow">↓</div>
-      <div class="step"><span class="k act">対処</span><div class="v">${r.action ? esc(r.action) : '<span class="muted">未記入</span>'}</div></div>
-      ${partsBlock ? `<div class="arrow">↓</div><div class="step"><span class="k prt">部品</span><div class="v">${partsBlock}</div></div>` : ''}
+      <div class="step"><span class="k act">${tag('action')}</span><div class="v">${r.action ? esc(r.action) : '<span class="muted">未記入</span>'}</div></div>
+      ${partsBlock ? `<div class="arrow">↓</div><div class="step"><span class="k prt">${tag('parts')}</span><div class="v">${partsBlock}</div></div>` : ''}
     </div>
+    ${extras ? `<div class="h3">そのほかの項目</div><div class="xbox">${extras}</div>` : ''}
     ${photos ? `<div class="h3">写真</div><div class="photos">${photos}</div>` : ''}
     ${f ? `<div class="h3">このトラブルのフロー（同じ設備・同じ症状 ${f.count}件）</div>${flowCard(f, true, r.id)}` : ''}
     ${r.sample
@@ -1225,11 +1916,16 @@ function render() {
     if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
   document.body.classList.toggle('chat', TAB === 'search' && !DETAIL);
+  const sb = $('#setBtn'), onSet = TAB === 'settings' && !DETAIL;
+  sb.classList.toggle('on', onSet);
+  if (onSet) sb.setAttribute('aria-current', 'page'); else sb.removeAttribute('aria-current');
   if (DETAIL) renderDetail();
   else if (TAB === 'search') renderSearch();
   else if (TAB === 'record') renderForm();
+  else if (TAB === 'settings') renderSettings();
   else renderFlowTab();
   renderSync();
+  renderCam();
 }
 function goTab(tab) {
   TAB = tab; DETAIL = null;
@@ -1265,16 +1961,25 @@ document.addEventListener('click', e => {
   if ($('#lb').classList.contains('show')) { $('#lb').classList.remove('show'); return; }
   const t = e.target.closest('[data-tab],[data-rid],[data-q],[data-act],[data-f],[data-photo]');
   if (!t) return;
-  if (t.dataset.photo && t.closest('.ph') && !t.closest('[data-act]') && t.tagName === 'IMG') { openLightbox(t.dataset.photo); return; }
+  if (t.dataset.photo && (t.closest('.ph') || t.classList.contains('chatimg')) && !t.closest('[data-act]') && t.tagName === 'IMG') { openLightbox(t.dataset.photo); return; }
   if (t.dataset.tab) { goTab(t.dataset.tab); return; }
+  if (t.dataset.f === 'x') {   // 「設定」で足した「選んで入力」の項目（もう一度押すと外す）
+    FORM.extra[t.dataset.xid] = FORM.extra[t.dataset.xid] === t.dataset.v ? '' : t.dataset.v;
+    const y = window.scrollY; renderForm(); window.scrollTo(0, y);
+    return;
+  }
   if (t.dataset.f) { onFormChip(t.dataset.f, t.dataset.v); return; }
   const act = t.dataset.act;
+  if (act && act.startsWith('cf-')) { onSettingsAct(act, t); return; }
   if (act === 'hint' || (!act && t.dataset.q)) { sendChat(t.dataset.q); return; }
   if (!act && t.dataset.rid) { DETAIL = t.dataset.rid; SAVED = ''; render(); window.scrollTo(0, 0); return; }
   const i = +t.dataset.i;
   switch (act) {
     case 'key': askKey(); break;
     case 'ai': askAi(CHAT[+t.dataset.mi]); break;
+    case 'vision': analyzePhoto(CHAT[+t.dataset.mi]); break;
+    case 'cam': openCamera(); break;
+    case 'cam-clear': PENDING = null; renderCam(); break;
     case 'back': DETAIL = null; render(); if (TAB === 'search') window.scrollTo(0, document.body.scrollHeight); break;
     case 'edit': {
       const r = findRec(DETAIL);
@@ -1290,7 +1995,9 @@ document.addEventListener('click', e => {
       const m = CHAT[+t.dataset.mi];
       if (!m) break;
       if (formHasInput() && !confirm('入力中の記録があります。破棄して新しく書きますか？')) break;
-      FORM = newForm(m.prefill); TAB = 'record'; DETAIL = null; render(); window.scrollTo(0, 0);
+      FORM = newForm(m.prefill);
+      if (m.photo) FORM.photos = [{ id: newId('p'), data: m.photo.data, thumb: m.photo.thumb, driveId: null }];   // 送った写真も記録に付ける
+      TAB = 'record'; DETAIL = null; render(); window.scrollTo(0, 0);
       break;
     }
     case 'add-part': FORM.parts.push({ name: '', model: '', photo: null }); $('#partsBox').innerHTML = partsHtml(); break;
@@ -1334,9 +2041,42 @@ document.addEventListener('input', e => {
     if (t.id === 'fEquip' || t.id === 'fSym') updateHint();
   } else if (t.dataset.pf && FORM.parts[+t.dataset.i]) {
     FORM.parts[+t.dataset.i][t.dataset.pf] = t.value;
+  } else if (t.dataset.xf) {
+    FORM.extra[t.dataset.xf] = t.value;
   }
 });
-$('#chatForm').addEventListener('submit', e => { e.preventDefault(); const inp = $('#chatIn'); sendChat(inp.value); inp.value = ''; });
+/* 設定の画面の「追加」（号機・場所・設備・症状の言葉・選択肢・入力項目） */
+document.addEventListener('submit', e => {
+  const form = e.target.closest('form[data-add]');
+  if (!form) return;
+  e.preventDefault();
+  addFromForm(form);
+});
+document.addEventListener('toggle', e => {
+  const el = e.target;
+  if (!el.classList) return;
+  if (el.classList.contains('addf')) SET_ADD_OPEN = el.open;
+  if (el.classList.contains('sarea')) { if (el.open) OPEN_AREAS.add(el.dataset.area); else OPEN_AREAS.delete(el.dataset.area); }
+}, true);
+$('#chatForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const inp = $('#chatIn'), photo = PENDING;
+  if (!inp.value.trim() && !photo) return;
+  PENDING = null;
+  sendChat(inp.value, photo);
+  inp.value = '';
+});
+$('#camBtn').addEventListener('click', openCamera);
+$('#camIn').addEventListener('change', async e => {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  toast('写真を準備しています…');
+  try {
+    PENDING = await makePhoto(f, true);
+    renderCam();
+    $('#toast').classList.remove('show');   // 入力欄の上に写真が出たので「準備しています」は消す
+  } catch (err) { toast(err.message); }
+});
 $('#syncChip').addEventListener('click', () => {
   if (!GAS_URL) { toast('共有の設定がまだなので、この端末の中だけに保存しています'); return; }
   if (!KEY || SYNC.state === 'key') { askKey(); return; }
@@ -1401,6 +2141,15 @@ function buildSamples() {
     const ss = await metaGet('showSamples');
     META.showSamples = ss !== false;
     KEY = (await metaGet('key')) || '';
+    const cfg = await metaGet('config');
+    if (cfg && typeof cfg === 'object') {
+      CFG.base = cfg.base || null;
+      CFG.rev = Math.max(0, Math.floor(Number(cfg.rev)) || 0);
+      CFG.pending = Array.isArray(cfg.pending) ? cfg.pending : [];
+      // 「端末内のみ」で試していた設定は、共有を始めたら、共有先にまだ設定が無いときだけ最初の設定として送る
+      if (GAS_URL && cfg.local && CFG.base) { CFG.pending = [{ op: 'seed', config: CFG.base }]; CFG.base = null; CFG.rev = 0; }
+    }
+    applyConfig();
     if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
   } catch (e) {
     toast('この端末ではデータを保存できません（プライベートブラウズ等）');
