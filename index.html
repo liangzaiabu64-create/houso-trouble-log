@@ -285,6 +285,72 @@
   .xrow:last-child{border-bottom:0}
   .xk{flex:none;width:38%;color:var(--ink3);font-size:14px}
   .xv{flex:1;min-width:0;overflow-wrap:anywhere}
+  /* 文章で書く（AIが各欄に振り分け）。枠は AIの対処案（.aibox）と同じ */
+  .dbox{margin:16px 0 4px;padding:16px;gap:10px}
+  .dsub{margin:0;color:var(--ink3);font-size:14px;line-height:1.7}
+  .dctx{margin:0;padding:8px 12px;border-radius:10px;background:var(--soft);font-size:14px;line-height:1.6;color:var(--ink2);overflow-wrap:anywhere}
+  .dbox textarea.inp{min-height:112px}
+  .dbox .btn{width:100%}
+  .dbox .btn:disabled{opacity:.6;cursor:progress}
+  .dres{display:flex;flex-direction:column;gap:8px;font-size:15px;line-height:1.7}
+  .dres:empty{display:none}
+  .dmsg{padding:10px 12px;border-radius:12px;background:var(--ok-soft);color:#2F5E3B;font-weight:700}
+  .dmsg.none{background:var(--soft);color:var(--ink2);font-weight:400}
+  .dmsg.err{background:var(--ng-soft);color:#5C1F18;font-weight:400}
+  .dkept{display:flex;flex-direction:column;gap:6px;color:var(--ink2)}
+  .dkrow{display:flex;align-items:center;gap:8px}
+  .dkrow .dkv{flex:1;min-width:0;overflow-wrap:anywhere}
+  .dkrow .chip{flex:none;min-height:40px;font-size:14px}
+  .dnote{color:var(--ink2);overflow-wrap:anywhere}
+  /* AIが下書きした欄の印（人がその欄を直すと外れる） */
+  .aimark{display:inline-block;font-size:11px;font-weight:700;padding:0 6px;border-radius:5px;background:var(--accent-soft);color:var(--accent);
+    margin-left:6px;vertical-align:1px;line-height:1.6;letter-spacing:.04em}
+  .f.aifill .inp{border-color:var(--accent)}
+  .f.aifill .chip.on{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--accent)}
+  /* AIが選んだ症状の種類（症状の欄の中のチップ。見出しの印とは別に、チップの列の頭に小さく出す） */
+  .aitag{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:0 6px;border-radius:5px;background:var(--accent-soft);color:var(--accent);letter-spacing:.04em}
+  .chips.aitags .chip.on{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--accent)}
+  /* 記録の質を上げる欄（小さな案内・近い候補・前の記録へのつながり・写真から読み取ったこと・話す順番の案内） */
+  .lnote{font-size:12px;font-weight:400;color:var(--ink3);margin-left:8px}
+  .near{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;font-size:13px;color:var(--ink3)}
+  .near .chip{min-height:40px;font-size:14px}
+  .relbar{display:flex;align-items:center;gap:8px;margin:8px 0 4px;padding:10px 12px;border-radius:12px;background:var(--soft);font-size:14px;line-height:1.6;color:var(--ink2)}
+  .relbar .rv{flex:1;min-width:0;overflow-wrap:anywhere}
+  .relbar .chip{flex:none;min-height:40px;font-size:14px}
+  .ptext{display:flex;align-items:center;gap:6px;margin-top:8px;padding:6px 6px 6px 12px;border-radius:10px;background:var(--soft);font-size:13px;line-height:1.6;color:var(--ink2)}
+  .ptext span{flex:1;min-width:0;overflow-wrap:anywhere}
+  .ptext .x2{width:40px;flex:none}
+  .dguide{font-size:13px;line-height:1.7;color:var(--ink2)}
+  .dguide>summary{cursor:pointer;min-height:40px;display:flex;align-items:center;color:var(--ink3);font-weight:700}
+  .dguide ol{margin:2px 0 0;padding-left:22px}
+  /* AIの対処案への評価（任意） */
+  .aifb{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;font-size:13px;color:var(--ink3)}
+  .aifb .chip{min-height:40px;font-size:14px}
+  /* 詳細の新しい項目（症状の種類・原因の種類・効かなかった対処・結果・写真から読み取ったこと）・話した原文・確かめること */
+  .dv{font-size:14px;line-height:1.6;color:var(--ink2);margin-top:4px;overflow-wrap:anywhere}
+  .dk{color:var(--ink3)}
+  .dv.ptx{margin:8px 0 0}
+  .rs.fixed{color:var(--ok)} .rs.watch{color:var(--warn)} .rs.notfixed{color:var(--ng)}
+  .rawd{margin:0 0 16px;font-size:14px;color:var(--ink2)}
+  .rawd>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:var(--ink3);font-weight:700}
+  .rawt{margin:2px 0 0;padding:10px 12px;border-radius:12px;background:var(--soft);white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7;font-size:15px}
+  .dchk{display:flex;align-items:center;gap:8px;margin:10px 0 0;padding:8px 8px 8px 12px;border-radius:12px;background:var(--warn-soft);color:var(--warn);font-size:14px;line-height:1.6}
+  .dchk span{flex:1;min-width:0;overflow-wrap:anywhere}
+  .dchk .chip{flex:none;min-height:40px;font-size:14px}
+  .cnt.fixed{color:var(--ok)}
+  /* フローの「見直し待ち」（理由の札・その場で押すチップ） */
+  .rvfl{font-size:12px;font-weight:700;color:var(--ink3);margin:16px 0 -4px;letter-spacing:.04em}
+  .rvf .chip .mono{font-size:12.5px;color:inherit;opacity:.8}
+  .rvi{border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rvi .rc{border-bottom:0;padding-bottom:6px}
+  .rvw{display:flex;flex-wrap:wrap;gap:4px;padding:0 4px}
+  .rvw .badge{margin-left:0;background:var(--warn-soft);color:var(--warn)}
+  .rvw .badge.ok{background:var(--ok-soft);color:#2F5E3B}
+  .rvg{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;padding:0 4px}
+  .rvg .chip,.rva .chip{min-height:40px;font-size:14px}
+  .rvk{flex:0 0 100%;font-size:12px;font-weight:700;color:var(--ink3);line-height:1.4}
+  .rva{margin-top:8px;padding:0 4px;gap:6px}
+  .rvmore{width:100%;margin-top:16px}
 
   /* ---------- 設定 ---------- */
   .setbtn{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid var(--line2);background:var(--card);color:var(--ink2);
@@ -328,6 +394,14 @@
   .chip.rad input{margin:0 6px 0 0;width:18px;height:18px}
   .chk{display:flex;align-items:center;gap:10px;min-height:44px;font-size:15px;margin:4px 0 12px}
   .chk input{width:20px;height:20px;margin:0}
+  /* 設備の行（別の呼び方）。単位の欄は、入れ方が「数字」のときだけ出す */
+  .eqrow{padding:6px 0;border-top:1px solid var(--line)}
+  .eqrow:first-child{border-top:0}
+  .eqh{display:flex;align-items:center;gap:6px}
+  .eqa{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:2px 0 4px}
+  .eqcode{font-size:13px;color:var(--ink3);margin-right:4px}
+  .fadd:not(:has(input[name="nfType"][value="number"]:checked)) .nfunit{display:none}
+  @media (max-width:400px){ .seg button{padding:0 11px} }
 
   /* ---------- 横長の画面（ライン端末・PC）：タブを左のメニューにする ---------- */
   @media (min-width:1024px){
@@ -397,7 +471,7 @@ window.addEventListener('load', () => {
    チームで共有するには「セットアップ手順.md」に沿って
    Apps Script の URL を貼り付けてください。
    ========================================================= */
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbw2DcyGmKKJRNw_xKEVx6Ay-u89Q2dJDc-sW9_ZYdzXLrjDn_PEmBdhKFRpRlpsb_8/exec';
+const GAS_URL = '';
 
 /* =========================================================
    2. マスタ（外装工程 日常点検チェックリストの言葉に合わせています）
@@ -425,21 +499,56 @@ const EQUIP_ALIASES = {
 /* 症状をすばやく入れるための言葉 */
 const DEFAULT_SYMPTOMS = ['異音', '吸着しない', '開口しない', '破れ', 'シール不良', '停止', '噛み込み', 'ズレ・蛇行', '漏れ', '汚れ'];
 /* 入力項目。ここにあるのは、もともとある項目（「設定」で名前を変えたり、使わないようにしたりできる）。
-   core は検索とフローの土台なので、消したり任意にしたりできない。「設定」で足した項目の id は x_ で始まる */
+   core は検索とフローの土台なので、消したり任意にしたりできない。「設定」で足した項目の id は x_ で始まる。
+   req は既定で必須にする項目（結果・原因の種類・停止時間：AIの答えの精度のため。core と違い「設定」で任意にできる。
+   前の版の設定に無ければ、必須で足す） */
 const BUILTIN_FIELDS = [
   { id: 'occurredAt', label: '発生日時', short: '発生日時', core: true },
   { id: 'line', label: 'ライン', short: 'ライン' },
   { id: 'area', label: '場所', short: '場所', core: true },
   { id: 'equipment', label: '設備・部位', short: '設備', core: true },
   { id: 'symptom', label: '起きたこと（症状）', short: '症状', core: true },
+  { id: 'causeType', label: '原因の種類', short: '原因の種類', req: true },
   { id: 'cause', label: '原因', short: '原因' },
   { id: 'action', label: '対処したこと', short: '対処' },
+  { id: 'failed', label: '効かなかった対処', short: '効かなかった対処' },
+  { id: 'result', label: '結果', short: '結果', req: true },
+  { id: 'downtime', label: '停止時間', short: '停止時間', req: true },
   { id: 'parts', label: '交換した部品（型式・写真）', short: '部品' },
   { id: 'photos', label: '写真（4枚まで）', short: '写真' },
   { id: 'author', label: '記録者', short: '記録者' },
 ];
-// いま使っている値（設定から作り直す。4-2 の applyConfig）
-let LINES = DEFAULT_LINES, AREAS = DEFAULT_AREAS, SYMPTOM_WORDS = DEFAULT_SYMPTOMS, FIELDS = [];
+/* ---------------------------------------------------------
+   記録の質を上げる項目（AIの答えの精度のため）。値はサーバー（Code.gs）と同じ。
+   値（左）は記録・シートに残るので途中で変えないこと。名前（右）は画面に出す言葉
+   --------------------------------------------------------- */
+/* 原因の種類（固定の9つ。この順で出す。途中で変えないこと：前の記録と数え合わせられなくなる） */
+const CAUSE_TYPES = ['摩耗・劣化', '破れ・破損', '汚れ・詰まり', '緩み・ずれ', '設定値（圧・温度など）', '資材（フィルム・箱・テープ）', '操作・段取り', '電気・センサー', '不明'];
+/* 結果・停止時間・前の記録とのつながり・AIの対処案の評価 [値, 名前] */
+const RESULTS = [['fixed', '直った'], ['watch', '様子見'], ['notfixed', '直らなかった']];
+const DOWNTIMES = [['none', '止まらず'], ['5', '〜5分'], ['15', '〜15分'], ['60', '〜1時間'], ['over', '1時間以上']];
+const RELATIONS = [['continue', '続き'], ['recur', 'また起きた']];
+const RATINGS = [['good', '役に立った'], ['partly', '一部'], ['bad', '違った']];
+/* 1つだけ選ぶ欄の選択肢（記録する画面のチップ。[値, 名前]） */
+const PICKS = { causeType: CAUSE_TYPES.map(x => [x, x]), result: RESULTS, downtime: DOWNTIMES };
+const labelOf = (pairs, v) => (pairs.find(p => p[0] === v) || [])[1] || '';
+const MAX_TAGS = 5;                                  // 症状の種類（症状の言葉から選ぶ）の数の上限
+const AUTO_IDS = ['occurredAt', 'line'];             // 自動で入る欄（autoFields に入れられる ID）
+const AI_FILL_IDS = ['line', 'area', 'equipment', 'symptom', 'cause', 'action', 'parts', 'result', 'failed', 'causeType', 'symptomTags', 'downtime'];   // aiFilled に入れられる ID（ほかに x_ で始まる追加項目）
+/* 記録の新しいキーと既定値（toWire・fromWire・前の版のサーバーのときに端末の値を残す・記録する画面 で使う）。
+   failed：効かなかった対処、symptomTags：症状の種類、autoFields：自動で入ったまま保存した欄、rawText：文章で書いた原文、
+   context：チャットで聞いた内容、aiNote：文章の振り分けでAIが残したメモ、photoText：写真から読み取ったこと、
+   aiFilled：AIが入れて人が直していない欄、equipCanon：設備の正式名、relatedId・relation：前の記録とのつながり、aiHistoryId：AI履歴の ID */
+const REC_DEFAULTS = {
+  result: '', failed: '', causeType: '', symptomTags: [], downtime: '', autoFields: [], rawText: '', context: '', aiNote: '', photoText: '',
+  aiFilled: [], equipCanon: '', relatedId: '', relation: '', aiHistoryId: '',
+};
+const QUALITY_KEYS = Object.keys(REC_DEFAULTS);
+/* 記録する画面で、記録からそのまま写して直すキー（context・aiFilled・aiNote・rawText・autoFields・equipCanon は別に扱う） */
+const FORM_KEYS = ['result', 'failed', 'causeType', 'symptomTags', 'downtime', 'photoText', 'relatedId', 'relation', 'aiHistoryId'];
+// いま使っている値（設定から作り直す。4-2 の applyConfig）。ALIASES：「設定」で足した設備の別の呼び方 [{ equip: 正式名, words: [呼び方] }]
+let LINES = DEFAULT_LINES, AREAS = DEFAULT_AREAS, SYMPTOM_WORDS = DEFAULT_SYMPTOMS, FIELDS = [], ALIASES = [];
+let EQUIP_INDEX = null;   // 設備名の別名 → 正式名の引き方（equipIndex。設定が変わったら作り直す）
 /* 言い方が違っても同じ意味として探すための辞書 */
 const CONCEPTS = [
   // 語の一部だけで当たらないよう注意（例：「ぶれ」は「ブレーキ」に、「詰まり」は「目詰まり」に当たってしまう）
@@ -477,13 +586,15 @@ const ACTIONS = [
 const $ = s => document.querySelector(s);
 /* 辞書の引き方。記録の文字が「constructor」などでも誤って引かないよう、自前の項目だけを見る */
 const own = (obj, k) => (Object.prototype.hasOwnProperty.call(obj, k) ? obj[k] : undefined);
-const aliasesOf = e => own(EQUIP_ALIASES, e) || [];
+/* 設備の別名：コードの EQUIP_ALIASES と、「設定」で足した別の呼び方（equipIndex で、ほかの設備と重ならないものだけ） */
+const aliasesOf = e => (own(EQUIP_ALIASES, e) || []).concat(equipIndex().extra.get(e) || []);
 const equipOfArea = a => own(AREAS, a) || [];
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const newId = p => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const clone = o => JSON.parse(JSON.stringify(o));
 const pad = n => String(n).padStart(2, '0');
-function nowLocal() { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+const localStamp = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+function nowLocal() { return localStamp(new Date()); }
 function fmtDate(s) { const m = /^(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d)/.exec(s || ''); return m ? `${+m[2]}/${+m[3]} ${m[4]}:${m[5]}` : ''; }
 function fmtDay(s) { const m = /^(\d{4})-(\d\d)-(\d\d)/.exec(s || ''); return m ? `${+m[2]}/${+m[3]}` : ''; }
 /* シートで人が「2026/9/25 10:30」のように直しても読めるよう、日時の書き方をそろえる */
@@ -545,10 +656,14 @@ function defaultConfig() {
   return {
     v: 1, lines: DEFAULT_LINES.slice(), areas: Object.keys(DEFAULT_AREAS).map(name => ({ name, equip: DEFAULT_AREAS[name].slice() })),
     symptoms: DEFAULT_SYMPTOMS.slice(),
-    fields: BUILTIN_FIELDS.map(f => ({ id: f.id, type: 'builtin', label: f.label, required: !!f.core, hidden: false, deleted: false, options: [] })),
+    fields: BUILTIN_FIELDS.map(f => ({ id: f.id, type: 'builtin', label: f.label, required: !!(f.core || f.req), hidden: false, deleted: false, options: [] })),
+    aliases: [],
   };
 }
-/* 設定の形を確かめて整える（サーバーの cleanConfig_ と同じ決まり）。もともとの項目が抜けていたら、元の並びの位置に足す */
+/* 設定の形を確かめて整える（サーバーの cleanConfig_ と同じ決まり）。もともとの項目が抜けていたら、元の並びの位置に足す
+   （前の版の設定に無い 結果・原因の種類・停止時間 は、既定の必須で足す）。
+   数字の項目の単位（unit・10字）と、設備の別の呼び方（aliases：場所の一覧にある設備のものだけ・60件・呼び方は10個×20字）も残す
+   （ここで落とすと、設定を送ったときにサーバーからも消えるため） */
 function cleanConfig(c) {
   if (!c || typeof c !== 'object' || Array.isArray(c)) return null;
   const t = (x, n) => (typeof x === 'string' || typeof x === 'number' ? String(x) : '').replace(/\s+/g, ' ').trim().slice(0, n);
@@ -565,17 +680,31 @@ function cleanConfig(c) {
     if (seen.has(id) || (!b && (!CUSTOM_ID.test(id) || !label))) return;
     seen.add(id);
     const type = b ? 'builtin' : (['text', 'number', 'choice'].includes(f.type) ? f.type : 'text');
-    fields.push({ id, type, label: label || b.label, required: core || f.required === true, hidden: !core && f.hidden === true,
-      deleted: !b && f.deleted === true, options: type === 'choice' ? list(f.options, 30, 30) : [] });
+    const field = { id, type, label: label || b.label, required: core || f.required === true, hidden: !core && f.hidden === true,
+      deleted: !b && f.deleted === true, options: type === 'choice' ? list(f.options, 30, 30) : [] };
+    const unit = type === 'number' ? t(f.unit, 10) : '';
+    if (unit) field.unit = unit;
+    fields.push(field);
   });
   BUILTIN_FIELDS.forEach((b, i) => {
     if (seen.has(b.id)) return;
     const prev = BUILTIN_FIELDS.slice(0, i).map(x => x.id).reverse().find(id => seen.has(id));
-    fields.splice(prev ? fields.findIndex(f => f.id === prev) + 1 : 0, 0, { id: b.id, type: 'builtin', label: b.label, required: !!b.core, hidden: false, deleted: false, options: [] });
+    fields.splice(prev ? fields.findIndex(f => f.id === prev) + 1 : 0, 0, { id: b.id, type: 'builtin', label: b.label, required: !!(b.core || b.req), hidden: false, deleted: false, options: [] });
     seen.add(b.id);
   });
-  return { v: 1, lines: list(c.lines, 30, 20), areas, symptoms: list(c.symptoms, 40, 20), fields };
+  // 設備の別の呼び方。正式名と同じ言葉は除いてから10まで。同じ正式名は最初のものだけ
+  const known = new Set(areas.flatMap(a => a.equip)), aliases = [];
+  (Array.isArray(c.aliases) ? c.aliases : []).forEach(a => {
+    const equip = a && typeof a === 'object' ? t(a.equip, 40) : '';
+    if (!equip || !known.has(equip) || aliases.some(x => x.equip === equip) || aliases.length >= 60) return;
+    const words = list((Array.isArray(a.words) ? a.words : []).filter(w => t(w, 40) !== equip), 10, 20);
+    if (words.length) aliases.push({ equip, words });
+  });
+  return { v: 1, lines: list(c.lines, 30, 20), areas, symptoms: list((Array.isArray(c.symptoms) ? c.symptoms : []).map(symptomWord), 40, 20), fields, aliases };
 }
+/* 症状の言葉の「、」「,」は「・」にする（サーバーの symptomWord_ と同じ）。症状の種類はシートで「、」でつなぐので、区切りの文字を含む言葉は
+   読み戻すと割れる（チップの on が外れ、同じ症状のまとめも別の言葉で当たる）。設定の言葉と記録の症状の種類を同じ決まりでそろえる */
+const symptomWord = x => (typeof x === 'string' ? x.replace(/[、,，]/g, '・') : x);
 /* 並べ替えできる一覧と、その見分け方 */
 const orderList = (c, list) => (list === 'areas' ? c.areas : list === 'fields' ? c.fields : list === 'lines' ? c.lines : list === 'symptoms' ? c.symptoms : null);
 const orderKey = list => (list === 'areas' ? x => x.name : list === 'fields' ? x => x.id : x => x);
@@ -617,7 +746,8 @@ function applyOp(conf, op) {
       if (!CUSTOM_ID.test(String(f.id)) || field(f.id) || c.fields.filter(x => !x.deleted).length >= 40) break;
       if (c.fields.length >= 40) c.fields.splice(c.fields.findIndex(x => x.deleted), 1);
       {
-        c.fields.push({ id: f.id, type: f.type, label: t(f.label), required: f.required === true, hidden: false, deleted: false, options: Array.isArray(f.options) ? f.options : [] });
+        c.fields.push({ id: f.id, type: f.type, label: t(f.label), required: f.required === true, hidden: false, deleted: false, options: Array.isArray(f.options) ? f.options : [],
+          unit: f.type === 'number' ? t(f.unit) : '' });   // 単位は数字の項目だけ（空なら cleanConfig で外れる）
       }
       break;
     }
@@ -625,8 +755,20 @@ function applyOp(conf, op) {
       const f = field(op.id);
       if (f && op.label !== undefined && t(op.label)) f.label = t(op.label);
       if (f && op.required !== undefined) f.required = op.required === true;
+      if (f && op.unit !== undefined && f.type === 'number') f.unit = t(op.unit);   // 空にすると単位なし
       break;
     }
+    // 設備の別の呼び方（equip：正式名。場所の一覧にある設備だけ）。呼び方が無くなった設備は、cleanConfig で一覧から外れる
+    case 'addAlias': {
+      const e = t(op.equip), v = t(op.value).slice(0, 20);
+      if (!e || !v || v === e || !c.areas.some(a => a.equip.includes(e))) break;
+      c.aliases = c.aliases || [];
+      let a = c.aliases.find(x => x.equip === e);
+      if (!a) { if (c.aliases.length >= 60) break; a = { equip: e, words: [] }; c.aliases.push(a); }
+      if (!a.words.includes(v) && a.words.length < 10) a.words.push(v);
+      break;
+    }
+    case 'removeAlias': { const a = (c.aliases || []).find(x => x.equip === op.equip); if (a) a.words = a.words.filter(w => w !== op.value); break; }
     case 'removeField': { const f = field(op.id); if (f) { if (isCustom(f)) f.deleted = true; else f.hidden = true; } break; }
     case 'restoreField': { const f = field(op.id); if (f) { f.hidden = false; f.deleted = false; } break; }
     case 'addOption': { const f = field(op.id), v = t(op.value); if (f && f.type === 'choice' && v && !f.options.includes(v)) f.options.push(v); break; }
@@ -651,6 +793,8 @@ function applyConfig() {
   AREAS = Object.fromEntries(c.areas.map(a => [a.name, a.equip]));
   SYMPTOM_WORDS = c.symptoms;
   FIELDS = c.fields;
+  ALIASES = c.aliases || [];
+  EQUIP_INDEX = null;   // 設備の一覧・別の呼び方が変わったかもしれないので、引き方を作り直す
 }
 const saveCfg = () => metaSet('config', { base: CFG.base, rev: CFG.rev, pending: CFG.pending, local: !GAS_URL });
 /* 設定を変える（設定の画面から）。変わらなかった（同じ名前がある・上限 など）ときは false */
@@ -699,13 +843,27 @@ applyConfig();   // 読み込み前は最初の値で動く
    ========================================================= */
 let RECORDS = [];                 // 本物の記録（削除済みも含む。削除は deleted=true）
 let SAMPLES = [];                 // 見本（端末にも共有先にも保存しない）
-const META = { author: '', lastLine: '', showSamples: true };
+const META = { author: '', lastLine: '', showSamples: true, oldRecNoted: false };   // oldRecNoted：前の版のサーバーの案内（1）を記録する画面に出した
 let KEY = '';                     // 共有の合言葉
-let TAB = 'search', DETAIL = null, SAVED = '';
+let TAB = 'search', DETAIL = null;
+let SAVED = null;                 // 「保存しました」の帯 { kind: 'new'|'edit', id, until }。その記録を見ている間は、時刻（until）まで残す（3-5）
+const SAVED_MS = 5000;
 let CHAT = [];
 let PENDING = null;               // 撮って、まだ送っていない写真（入力欄の上に出す）
 let FORM = null;
-const FT = { mode: 'flow', area: '' };
+// フローの画面。mode：flow・list（新しい順）・review（見直し待ち）、reason：見直し待ちの理由で絞り込み、limit：見直し待ちを出す数（「さらに表示」で増やす）、
+// touched：見直し待ちでその場で直した記録 { ID: 直したチップの種類の Set }（理由が無くなっても、この画面を見ている間は行を残す。押しまちがえを直せるように）
+const FT = { mode: 'flow', area: '', reason: '', limit: 30, touched: new Map() };
+// フローの画面（見直し待ち・新しい順など）から記録を開いたときの戻り先 { tab, y：開く前のスクロール位置, id：開いた記録 }。
+// 詳細の［もどる］で、一覧の上から探し直さなくてよいよう、その行へ戻る（goBackTo）。記録を直す画面から戻るときは FORM.backTo
+let RETURN = null;
+const backPoint = id => ({ tab: TAB, y: window.scrollY, id });
+/* 戻り先 b の一覧で、開いていた記録の行を画面の中ほどに出す（行が無くなっていれば、開く前の位置へ） */
+function goBackTo(b) {
+  const row = b && document.querySelector(`#view .rc[data-rid="${CSS.escape(b.id)}"]`);
+  if (row) row.scrollIntoView({ block: 'center' });
+  else if (b) window.scrollTo(0, Math.min(b.y, Math.max(0, document.documentElement.scrollHeight - window.innerHeight)));
+}
 
 const visibleRecords = () => RECORDS.filter(r => !r.deleted).concat(META.showSamples ? SAMPLES : []);
 const findRec = id => RECORDS.find(r => r.id === id) || SAMPLES.find(r => r.id === id) || null;
@@ -752,8 +910,8 @@ function kinds(index, normed) {
 }
 const concepts = text => kinds(CONCEPT_INDEX, norm(text));
 const overlaps = (A, B) => !A.size || !B.size || [...A].some(v => B.has(v));   // どちらかが空なら「矛盾なし」
-/* 短い文（原因・対処）が同じ内容か */
-function sameText(a, b) {
+/* 短い文（原因・対処）が同じ内容か。th：似ている度合い（2文字ずつの組）の基準（既定 0.5。原因の種類が同じ2件は 0.3 に下げる） */
+function sameText(a, b, th) {
   const x = norm(a), y = norm(b);
   if (!x || !y) return x === y;
   if (x === y) return true;
@@ -761,33 +919,51 @@ function sameText(a, b) {
   if (!overlaps(kinds(CONCEPT_INDEX, x), kinds(CONCEPT_INDEX, y)) || !overlaps(kinds(ACTION_INDEX, x), kinds(ACTION_INDEX, y))) return false;
   const [s, l] = x.length <= y.length ? [x, y] : [y, x];
   if (s.length >= 3 && l.includes(s)) return true;
-  return dice(grams(a), grams(b)) >= 0.5;
+  return dice(grams(a), grams(b)) >= (th || 0.5);
 }
-/* 症状が同じ種類のトラブルか（言い方が違っても意味が重なれば同じ） */
-function sameSymptom(a, b) {
+/* 症状が同じ種類のトラブルか（言い方が違っても意味が重なれば同じ）。
+   ta・tb：症状の種類（symptomTags）。2件ともあって1つでも重なれば同じ。重ならない・どちらかに無いときは、文で比べる */
+function sameSymptom(a, b, ta, tb) {
+  if (Array.isArray(ta) && Array.isArray(tb) && ta.some(t => tb.includes(t))) return true;
   const ca = concepts(a), cb = concepts(b);
   for (const c of ca) if (cb.has(c)) return true;
   return sameText(a, b);
 }
-/* 設備名のゆれをまとめる（別名 → 正式名） */
-const EQUIP_CANON = (() => {
-  const m = new Map();
-  for (const [name, alts] of Object.entries(EQUIP_ALIASES)) for (const a of alts) m.set(norm(a), name);
-  return m;
-})();
-const canonEquip = e => EQUIP_CANON.get(norm(e)) || String(e || '').trim();
+/* 原因が同じか。ta・tb：原因の種類。2件ともあって違えば別の原因。同じなら、文の似かたの基準を下げてまとめる（0.5 → 0.3）。
+   どちらかに種類が無ければ、今までどおり文で比べる */
+const CAUSE_SAME_TYPE_TH = 0.3;
+const sameCause = (a, b, ta, tb) => (ta && tb ? ta === tb && sameText(a, b, CAUSE_SAME_TYPE_TH) : sameText(a, b));
+/* 設備名のゆれをまとめる（別名 → 正式名）。コードの EQUIP_ALIASES に加えて、「設定」の別の呼び方（aliases）も使う。
+   設定の呼び方は、コードの別名と重なるもの・ほかの設備の正式名と同じものは使わない（記録が別の設備にまとまってしまうため）。
+   canon：norm した呼び方 → 正式名、extra：正式名 → 設定から使う呼び方 */
+function equipIndex() {
+  if (EQUIP_INDEX) return EQUIP_INDEX;
+  const canon = new Map(), extra = new Map();
+  for (const [name, alts] of Object.entries(EQUIP_ALIASES)) for (const a of alts) canon.set(norm(a), name);
+  const official = new Set(Object.values(AREAS).flat().map(norm));
+  for (const a of ALIASES) for (const w of a.words) {
+    const k = norm(w);
+    if (!k || canon.has(k) || (official.has(k) && k !== norm(a.equip))) continue;
+    canon.set(k, a.equip);
+    extra.set(a.equip, (extra.get(a.equip) || []).concat(w));
+  }
+  return (EQUIP_INDEX = { canon, extra });
+}
+const canonEquip = e => equipIndex().canon.get(norm(e)) || String(e || '').trim();
 
 /* =========================================================
    7. 自動フロー形成
    同じ「場所・設備」で、同じ種類の症状をひとまとめにし、
    原因 → 対処 → 交換部品 を件数の多い順に並べます
    ========================================================= */
+/* same(文, まとまりの代表の文, 記録, まとまり)：記録の中身（症状の種類・原因の種類）でも比べられるよう、記録とまとまりも渡す。
+   まとまりの repItem は代表（最初に入った記録） */
 function cluster(items, getText, same) {
   const groups = [];
   for (const it of items) {
     const t = String(getText(it) || '').trim();
-    let g = groups.find(g => (t === '' ? g.empty : !g.empty && same(t, g.rep)));
-    if (!g) { g = { rep: t, empty: t === '', items: [], texts: new Map() }; groups.push(g); }
+    let g = groups.find(g => (t === '' ? g.empty : !g.empty && same(t, g.rep, it, g)));
+    if (!g) { g = { rep: t, repItem: it, empty: t === '', items: [], texts: new Map() }; groups.push(g); }
     g.items.push(it);
     g.texts.set(t, (g.texts.get(t) || 0) + 1);
   }
@@ -831,10 +1007,17 @@ function buildFlows(records) {
     const plain = withoutEquip(recs);
     const cmp = same => (a, b) => same(plain(a), plain(b));
     const equipLabel = cluster(recs, r => canonEquip(r.equipment), (a, b) => norm(a) === norm(b))[0].label;
-    for (const sym of cluster(recs, r => r.symptom, cmp(sameSymptom))) {
-      const causes = cluster(sym.items, r => r.cause, cmp(sameText)).map(c => {
-        const actions = cluster(c.items, r => r.action, cmp(sameText)).map(a => ({ label: a.label, count: a.count, ids: a.ids, parts: partsOf(a.items) }));
-        return { label: c.label, count: c.count, ids: c.ids, actions };
+    // 症状は、症状の種類（symptomTags）が重なれば同じ。原因は、原因の種類が違えば別（まとまりの種類＝先に入った記録の種類）
+    const symSame = (a, b, it, g) => sameSymptom(plain(a), plain(b), it.symptomTags, g.repItem.symptomTags);
+    const typeOf = g => (g.items.find(r => r.causeType) || {}).causeType || '';
+    const causeSame = (a, b, it, g) => sameCause(plain(a), plain(b), it.causeType || '', typeOf(g));
+    for (const sym of cluster(recs, r => r.symptom, symSame)) {
+      const causes = cluster(sym.items, r => r.cause, causeSame).map(c => {
+        // 対処ごとに、結果が「直った」記録の数も持つ（フローの「うち直った n件」）
+        const actions = cluster(c.items, r => r.action, cmp(sameText)).map(a => ({ label: a.label, count: a.count, ids: a.ids, parts: partsOf(a.items),
+          fixed: a.items.filter(r => r.result === 'fixed').length }));
+        // causeType：まとまりの原因の種類（種類のある記録は、1つのまとまりの中で同じ種類になる。「原因未記入」のまとまりは種類を出さない）
+        return { label: c.label, count: c.count, ids: c.ids, actions, causeType: c.empty ? '' : typeOf(c) };
       });
       flows.push({ area: recs[0].area || '未分類', equipment: equipLabel, symptom: sym.label, count: sym.count, last: sym.last, ids: sym.ids, causes });
     }
@@ -895,7 +1078,23 @@ function equipScore(rec, qn) {
   if (sub.length >= 3 || (sub.length === 2 && /^[一-龯々]+$/.test(sub))) return Math.min(0.8, sub.length / Math.max(3, e.length * 0.6));
   return 0;
 }
-function recordText(r) { return [r.line, r.area, r.equipment, r.symptom, r.cause, r.action, ...(r.parts || []).map(p => p.name + ' ' + p.model), ...Object.values(r.extra || {})].join(' '); }
+/* 検索の文。症状の種類・原因の種類・効かなかった対処・写真から読み取ったこと も入れる。
+   報告の原文（rawText）は長く、ほかの欄と同じことも書いてあるので、ここには入れず textScore で重みを下げて数える */
+function recordText(r) {
+  return [r.line, r.area, r.equipment, r.symptom, r.cause, r.action, ...(r.parts || []).map(p => p.name + ' ' + p.model), ...Object.values(r.extra || {}),
+    ...(r.symptomTags || []), r.causeType, r.failed, r.photoText].join(' ');
+}
+/* 検索の文の当たり具合（0〜1。今までの coverage と同じ数え方）。報告の原文は、ほかの欄で当たらなかった言葉（2文字の組）だけを、
+   半分の重み（RAW_WEIGHT）で数える。原文の無い記録は今までと同じ点、上限も今までと同じ 1 */
+const RAW_WEIGHT = 0.5;
+function textScore(r, Q) {
+  const main = grams(recordText(r));
+  if (!r.rawText || !Q.grams.size) return coverage(Q.grams, main);
+  const raw = grams(r.rawText);
+  let n = 0;
+  for (const g of Q.grams) n += main.has(g) ? 1 : raw.has(g) ? RAW_WEIGHT : 0;
+  return n / Q.grams.size;
+}
 /* 「設定」で足した項目の値 { 項目のID: 値 }。形と長さを確かめる */
 function cleanExtra(v) {
   const out = {};
@@ -918,19 +1117,21 @@ function scoreRecord(r, Q) {
   // 原因・対処・部品名にしか出てこない言葉（「グリスアップ」「レギュレーター」など）でも拾えるよう、それらにも点を付ける
   const fixText = [r.cause, r.action, ...(r.parts || []).map(p => p.name)].join(' ');
   let s = 3 * eq + areaHit + 0.3 * lineHit + 2.5 * cHit + 3 * modelHit
-    + 2 * coverage(Q.grams, grams(r.symptom)) + 1.5 * coverage(Q.grams, grams(fixText)) + coverage(Q.grams, grams(recordText(r)));
+    + 2 * coverage(Q.grams, grams(r.symptom)) + 1.5 * coverage(Q.grams, grams(fixText)) + textScore(r, Q);
   if (Q.areas.length && !areaHit) s *= 0.6;   // 場所を指定しているのに違う場所の記録は下げる
   return s;
 }
 const HIT_LINE = 1.5;
-function search(text, excludeId) {
+/* pool：探す記録（無ければ画面に出している記録。AIに渡すときは、サンプルを除いた記録で探す） */
+function search(text, excludeId, pool) {
   const Q = parseQuery(text);
-  const hits = visibleRecords().filter(r => r.id !== excludeId)
+  const hits = (pool || visibleRecords()).filter(r => r.id !== excludeId)
     .map(r => ({ r, s: scoreRecord(r, Q) })).filter(x => x.s >= HIT_LINE)
     .sort((a, b) => b.s - a.s || byNewest(a.r, b.r));
   return { Q, hits };
 }
-/* チャットの入力から「記録する」の下書きを作る */
+/* チャットの入力から「記録する」の下書きを作る。
+   号機を書いていなければ前回の号機を入れ、autoLine を true にする（自動で入っただけなので、文章からの下書きでAIの号機に置き換えてよい） */
 function prefillFrom(Q) {
   let sym = Q.cleaned;
   const drop = [...Q.areas, ...Q.areas.flatMap(a => own(AREA_ALIASES, a) || [])];
@@ -938,26 +1139,29 @@ function prefillFrom(Q) {
   drop.push(...Q.lines);
   for (const w of drop.sort((a, b) => b.length - a.length)) sym = sym.split(w).join(' ');
   sym = sym.replace(/[0-9０-９]+\s*(号ライン|号機|号|ライン)/g, ' ').replace(/^[\sのでがはを、,]+|[\sのでがはを、,]+$/g, '').replace(/\s+/g, ' ').trim();
-  return { line: Q.lines[0] || META.lastLine || '', area: Q.areas[0] || (Q.equip ? Q.equip.area : ''), equipment: Q.equip ? Q.equip.equipment : '', symptom: sym };
+  return { line: Q.lines[0] || META.lastLine || '', autoLine: !Q.lines[0] && !!META.lastLine,
+    area: Q.areas[0] || (Q.equip ? Q.equip.area : ''), equipment: Q.equip ? Q.equip.equipment : '', symptom: sym };
 }
 function answer(text) {
   const { Q, hits } = search(text);
   const msg = { role: 'bot', kind: hits.length ? 'hit' : 'none', query: text, ids: hits.slice(0, 8).map(h => h.r.id), total: hits.length, prefill: prefillFrom(Q) };
   if (!hits.length && (Q.equip || Q.areas.length)) {
     // 見つからなくても、同じ設備・場所の記録は見せる（空振りで終わらせない）
-    const near = visibleRecords().filter(r => (Q.equip ? norm(canonEquip(r.equipment)) === norm(Q.equip.equipment) : Q.areas.includes(r.area))).sort(byNewest);
-    msg.near = near.slice(0, 5).map(r => r.id);
+    msg.near = nearOf(Q, visibleRecords()).slice(0, 5).map(r => r.id);
     msg.nearLabel = Q.equip ? Q.equip.equipment : Q.areas[0];
   }
   return msg;
 }
+/* 同じ設備（設備を書いていなければ同じ場所）の記録（新しい順） */
+const nearOf = (Q, pool) => pool.filter(r => (Q.equip ? norm(canonEquip(r.equipment)) === norm(Q.equip.equipment) : Q.areas.includes(r.area))).sort(byNewest);
 
 /* =========================================================
    9. 共有（Google Apps Script）
    ・記録するとまず端末に保存 → 送れるときに送る（未送信は自動で再送）
    ・他の人の記録は、開いたとき／画面に戻ったときに取り込む
    ========================================================= */
-const SYNC = { state: 'idle', at: '', msg: '', ai: false, configOk: null };   // configOk：サーバーが設定の共有に対応しているか（前の版の Code.gs は false）   // ai：サーバーにAIの鍵が登録されているか
+const SYNC = { state: 'idle', at: '', msg: '', ai: false, configOk: null, version: null };   // configOk：サーバーが設定の共有に対応しているか（前の版の Code.gs は false）   // ai：サーバーにAIの鍵が登録されているか
+// version：一覧（list）の返事の版。3 未満（返さない）なら、記録の新しい項目（結果・原因の種類など）を保存できない前の版の Code.gs（null はまだ読んでいない）
 const AUTO_SYNC_MS = 5 * 60 * 1000;   // 開きっぱなしの端末でも、他の人の記録を取り込み、未送信を送り直す間隔
 let syncBusy = false, syncAgain = false, lastSyncTry = 0;
 async function gasFetch(opts, query, timeoutMs) {
@@ -976,17 +1180,21 @@ async function gasFetch(opts, query, timeoutMs) {
 }
 function toWire(r) {
   const ph = p => p ? { id: p.id, driveId: p.driveId || null, data: p.driveId ? null : (p.data || null) } : null;
-  return {
+  const out = {
     id: r.id, occurredAt: r.occurredAt, line: r.line, area: r.area, equipment: r.equipment, symptom: r.symptom,
     cause: r.cause, action: r.action, author: r.author, createdAt: r.createdAt, updatedAt: r.updatedAt, deleted: !!r.deleted,
     parts: (r.parts || []).map(p => ({ name: p.name, model: p.model, photo: ph(p.photo) })), photos: (r.photos || []).map(ph), extra: cleanExtra(r.extra),
   };
+  // 記録の新しい項目（1）。端末の記録にキーが無い（前の版のアプリで作って、まだ取り込み直していない）項目は送らない（サーバーはシートの値を残す）
+  const q = cleanQuality(r);
+  for (const k of QUALITY_KEYS) if (r[k] !== undefined) out[k] = q[k];
+  return out;
 }
 function fromWire(x) {
   if (!x || typeof x !== 'object' || !/^[A-Za-z0-9_-]{4,40}$/.test(String(x.id || ''))) return null;
   const s = (v, n) => String(v == null ? '' : v).slice(0, n);
   const ph = p => (p && typeof p === 'object') ? { id: s(p.id, 40) || newId('p'), driveId: /^[A-Za-z0-9_-]{10,100}$/.test(String(p.driveId || '')) ? p.driveId : null, thumb: null, data: null } : null;
-  return {
+  const rec = {
     id: x.id, occurredAt: normDate(x.occurredAt), line: s(x.line, 20), area: s(x.area, 20), equipment: s(x.equipment, 40),
     symptom: s(x.symptom, 300), cause: s(x.cause, 300), action: s(x.action, 300), author: s(x.author, 20),
     createdAt: s(x.createdAt, 30), updatedAt: s(x.updatedAt, 30), deleted: x.deleted === true || /^true$/i.test(String(x.deleted)),
@@ -994,6 +1202,79 @@ function fromWire(x) {
     photos: (Array.isArray(x.photos) ? x.photos : []).slice(0, 4).map(ph).filter(Boolean), extra: cleanExtra(x.extra),
     _dirty: false, _synced: true,
   };
+  // 新しい項目は、返ってきたものだけ入れる（前の版の Code.gs は返さない。そのときは keepLocal で端末の値を残す）
+  const q = cleanQuality(x);
+  for (const k of QUALITY_KEYS) if (k in x) rec[k] = q[k];
+  return rec;
+}
+/* 記録の新しい項目（1）の形と長さを確かめる（サーバーの cleanQuality_ と同じ決まり。決まった値以外は空）。キーが無ければ既定値 */
+function cleanQuality(x) {
+  const s = (v, n) => (typeof v === 'string' || typeof v === 'number' ? String(v) : '').slice(0, n);
+  // 決まった値：wire の値（fixed など）か名前（直った など）→ wire の値。〜 の書き方の違いはそろえる
+  const code = (v, pairs) => { const t = s(v, 20).trim().replace(/[~～]/g, '〜'); const p = pairs.find(q => q[0] === t || q[1] === t); return p ? p[0] : ''; };
+  const ids = (v, ok) => {
+    const out = [];
+    (Array.isArray(v) ? v : []).forEach(id => { if (typeof id === 'string' && ok(id) && !out.includes(id) && out.length < 60) out.push(id); });
+    return out;
+  };
+  const tags = [];
+  (Array.isArray(x.symptomTags) ? x.symptomTags : []).forEach(t => { t = symptomWord(s(t, 200)).replace(/\s+/g, ' ').trim().slice(0, 20); if (t && !tags.includes(t) && tags.length < MAX_TAGS) tags.push(t); });
+  const relatedId = typeof x.relatedId === 'string' && /^[A-Za-z0-9_-]{4,40}$/.test(x.relatedId) && x.relatedId !== x.id ? x.relatedId : '';
+  return {
+    result: code(x.result, RESULTS), failed: s(x.failed, 300), causeType: causeTypeOf(x.causeType), symptomTags: tags, downtime: code(x.downtime, DOWNTIMES),
+    autoFields: ids(x.autoFields, k => AUTO_IDS.includes(k)), rawText: s(x.rawText, 1000), context: s(x.context, 300), aiNote: s(x.aiNote, 200),
+    photoText: s(x.photoText, 300), aiFilled: ids(x.aiFilled, k => AI_FILL_IDS.includes(k) || CUSTOM_ID.test(k)), equipCanon: s(x.equipCanon, 40),
+    relatedId, relation: relatedId ? code(x.relation, RELATIONS) : '',   // つなぐ記録が無ければ、関連の種類も空
+    aiHistoryId: historyIdOf(x.aiHistoryId),
+  };
+}
+/* 原因の種類（9つの候補のどれか）。前後の空白と、かっこの全角・半角の違いはそろえる（サーバーと同じ）。どれでもなければ空 */
+function causeTypeOf(v) {
+  const x = typeof v === 'string' ? v.trim().replace(/\(/g, '（').replace(/\)/g, '）') : '';
+  return CAUSE_TYPES.includes(x) ? x : '';
+}
+/* サーバーの AI履歴 の ID（前の版の Code.gs は返さない） */
+const historyIdOf = v => (typeof v === 'string' && /^[A-Za-z0-9_-]{1,60}$/.test(v.trim()) ? v.trim() : '');
+/* 前の版の Code.gs は、追加項目と新しい項目（1）を返さない。返ってこなかったものは端末の値を残す（消さない）。
+   新しい項目を端末の値で残したら true（その値はサーバーに無く、この端末にだけある → 記録に _qLocal の印を付ける） */
+function keepLocal(srv, raw, local) {
+  if (!('extra' in raw)) srv.extra = clone(local.extra || {});
+  let kept = false;
+  for (const k of QUALITY_KEYS) if (!(k in raw) && local[k] !== undefined) { srv[k] = clone(local[k]); kept = true; }
+  return kept;
+}
+const markLocal = (r, on) => { if (on) r._qLocal = true; else delete r._qLocal; };
+const blankVal = v => v === undefined || v === '' || (Array.isArray(v) && !v.length);
+/* 前の版のサーバーのときに保存して、この端末にだけ残っていた新しい項目の値（_qLocal）を、共有先の記録 srv の空の項目に入れる。入れた項目があれば true。
+   共有先の空は「前の版のサーバーが保存できなかった値」で、だれかが空を選んだわけではない（ほかの端末はこの値を一度も見ていない）ので、
+   ほかの端末があとで記録を直していても（更新が新しくても）入れる。共有先に値がある項目（ほかの端末が選んだ・シートで直した）は、その値を使う。
+   印の項目（自動で入った欄・AIが入れた欄）は、もとの欄の値が同じものだけ戻す（ほかの端末で人が直した欄に、印を戻さない）。
+   設備の正式名は、共有先のいまの設備から作り直す。関連する記録と関連の種類はそろえて入れる */
+const LOCAL_PICKED = ['result', 'failed', 'causeType', 'symptomTags', 'downtime', 'rawText', 'context', 'aiNote', 'photoText', 'aiHistoryId'];
+function fillLocal(srv, local) {
+  let n = 0;
+  for (const k of LOCAL_PICKED) if (blankVal(srv[k]) && !blankVal(local[k])) { srv[k] = clone(local[k]); n++; }
+  if (blankVal(srv.relatedId) && !blankVal(local.relatedId)) { srv.relatedId = local.relatedId; srv.relation = local.relation || ''; n++; }
+  // 印のもとの欄の値（追加項目は extra の値、部品は名前と型式）
+  const val = (r, id) => (CUSTOM_ID.test(id) ? String((r.extra || {})[id] || '').trim() : id === 'symptomTags' ? JSON.stringify(r.symptomTags || [])
+    : id === 'parts' ? JSON.stringify((r.parts || []).map(p => [String(p.name || '').trim(), String(p.model || '').trim()]))
+    : String(r[id] == null ? '' : r[id]).trim());
+  const same = id => val(srv, id) === val(local, id);
+  for (const k of ['autoFields', 'aiFilled']) {
+    if (!blankVal(srv[k])) continue;
+    const ids = (local[k] || []).filter(same);
+    if (ids.length) { srv[k] = ids; n++; }
+  }
+  if (blankVal(srv.equipCanon) && !blankVal(local.equipCanon) && String(srv.equipment || '').trim()) { srv.equipCanon = canonEquip(srv.equipment); n++; }
+  return n > 0;
+}
+/* サーバーが新しい版になったとき（管理者が Code.gs を貼り替えた）、この端末にだけ残っていた値を空で消さずに送り直す（一覧を取り込むとき）。
+   一覧の記録 srv に端末の値を入れて（fillLocal）「未送信」にする。更新日時は共有先のまま送る（サーバーは同じ更新日時の保存を受け付ける。
+   ほかの端末のもっと新しい保存は上書きしない）。送れるまで _qLocal の印は残す（送る間にほかの端末が直しても、もう一度入れて送り直すため） */
+function resendLocal(srv, local) {
+  if (!local._qLocal || local._dirty || !fillLocal(srv, local)) return false;
+  srv._dirty = true; srv._qLocal = true;
+  return true;
 }
 /* 端末にある写真（縮小画像・未送信の画像）を、取り込んだ記録に引き継ぐ */
 function keepImages(target, local) {
@@ -1001,20 +1282,27 @@ function keepImages(target, local) {
   allPhotos(target).forEach(p => { const l = m.get(p.id); if (l) { p.thumb = p.thumb || l.thumb; if (!p.driveId) p.data = l.data; } });
 }
 const signature = r => JSON.stringify([r.occurredAt, r.line, r.area, r.equipment, r.symptom, r.cause, r.action, r.author, r.updatedAt, r.deleted,
-  (r.parts || []).map(p => [p.name, p.model, p.photo && p.photo.driveId]), (r.photos || []).map(p => p.driveId), cleanExtra(r.extra)]);
+  (r.parts || []).map(p => [p.name, p.model, p.photo && p.photo.driveId]), (r.photos || []).map(p => p.driveId), cleanExtra(r.extra),
+  QUALITY_KEYS.map(k => (r[k] === undefined ? null : r[k]))]);
 function applySaved(local, srvRaw, sentAt) {
   const srv = fromWire(srvRaw);
   if (!srv) return;
-  if (!('extra' in srvRaw)) srv.extra = clone(local.extra || {});   // 前の版の Code.gs は追加項目を返さない（端末の値を消さない）
+  const onlyHere = keepLocal(srv, srvRaw, local);   // 前の版の Code.gs は追加項目・新しい項目を返さない（端末の値を消さない）
   if (srv.updatedAt > sentAt) {             // 他の端末でより新しく直されていた
     local._synced = true;
     if (local.updatedAt !== sentAt) return;  // 応答を待つ間にこの端末でも直した・消した → そちらが最新なので残して送り直す
-    keepImages(srv, local); Object.assign(local, srv); return;   // 何もしていなければ、他の端末の内容を採用
+    if (local._fix) { rebaseFix(local, srvRaw); syncAgain = true; return; }   // 見直し待ちなどで直した項目は、他の端末の内容の上にかけ直して送り直す
+    // 何もしていなければ、他の端末の内容を採用。ただし、この端末にだけ残っていた値（前の版のサーバーのとき）は、他の端末の内容の空の項目に入れて送り直す（消さない）
+    const resend = !onlyHere && !!local._qLocal && fillLocal(srv, local);
+    keepImages(srv, local); Object.assign(local, srv);
+    if (resend) { local._dirty = true; local._qLocal = true; syncAgain = true; } else markLocal(local, onlyHere);
+    return;
   }
   const ids = new Map(allPhotos(srv).map(p => [p.id, p.driveId]));
   allPhotos(local).forEach(p => { const d = ids.get(p.id); if (d) { p.driveId = d; p.data = null; } });   // 送信済みの大きな画像は端末から外す
   local._synced = true;
-  if (local.updatedAt === sentAt) local._dirty = false;   // 送信中に書き換えていたら、もう一度送る
+  // 送信中に書き換えていたら、もう一度送る。送れた記録は、新しい項目がサーバーに残ったか（前の版の Code.gs なら、この端末にだけある）を覚える
+  if (local.updatedAt === sentAt) { local._dirty = false; markLocal(local, onlyHere); delete local._fix; delete local._fixBase; }
 }
 function mergeList(list) {
   if (!Array.isArray(list)) return false;
@@ -1027,7 +1315,15 @@ function mergeList(list) {
     const i = RECORDS.findIndex(r => r.id === srv.id);
     if (i === -1) { RECORDS.push(srv); dbPut(srv); changed = true; continue; }
     const local = RECORDS[i];
-    if (!('extra' in raw)) srv.extra = clone(local.extra || {});   // 前の版の Code.gs は追加項目を返さない（端末の値を消さない）
+    if (keepLocal(srv, raw, local)) {   // 前の版の Code.gs は追加項目・新しい項目を返さない（端末の値を消さない。この端末にだけある印も残す）
+      srv._qLocal = true;
+      if (!local._qLocal) { local._qLocal = true; dbPut(local); }
+    } else if (local._qLocal) {
+      // サーバーが新しい版になった：この端末にだけあった値を送り直す（次の同期で送る。ほかの端末があとで直していても、空の項目に入れる）。
+      // 送り直すものが無ければ印を外す。未送信の編集がある間は、端末の記録まるごとを送る（返事でほかの端末の方が新しければ applySaved で入れる）
+      if (resendLocal(srv, local)) { keepImages(srv, local); RECORDS[i] = srv; dbPut(srv); changed = true; syncAgain = true; continue; }
+      if (!local._dirty) { delete local._qLocal; dbPut(local); }
+    }
     if (local._dirty || signature(local) === signature(srv)) continue;   // 未送信の編集がある間は端末側を優先
     keepImages(srv, local); RECORDS[i] = srv; dbPut(srv); changed = true;
   }
@@ -1046,6 +1342,16 @@ async function syncNow(manual) {
   let changed = false;
   const cfgBefore = CFG.pending.length + '|' + CFG.msg;
   try {
+    // 見直し待ちなどで項目だけを直した記録（_fix）は、送る前に共有先の最新の記録を読み、ほかの端末がそのあと直していれば、
+    // その上に直した項目だけをかけ直す（端末の古い値で、ほかの端末が書いた原因などを消さない。reviewFix）
+    if (RECORDS.some(r => r._dirty && r._fix)) {
+      const pre = await gasFetch({ method: 'GET' }, { action: 'list', key: KEY });
+      const latest = new Map((Array.isArray(pre.records) ? pre.records : []).filter(x => x && typeof x === 'object').map(x => [String(x.id), x]));
+      for (const r of RECORDS.filter(x => x._dirty && x._fix)) {
+        const raw = latest.get(r.id);
+        if (raw && String(raw.updatedAt || '').slice(0, 30) > (r._fixBase || '')) { rebaseFix(r, raw); await dbPut(r); changed = true; }
+      }
+    }
     for (const r of RECORDS.filter(x => x._dirty)) {
       const sentAt = r.updatedAt;
       const res = await gasFetch({ method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'save', key: KEY, record: toWire(r) }) });
@@ -1056,6 +1362,7 @@ async function syncNow(manual) {
     const res = await gasFetch({ method: 'GET' }, { action: 'list', key: KEY });
     if (mergeList(res.records)) changed = true;
     if (SYNC.ai !== !!res.ai) { SYNC.ai = !!res.ai; changed = true; }   // AIボタンを出すかどうか
+    SYNC.version = Math.max(0, Math.floor(Number(res.version)) || 0);   // 前の版の Code.gs は版を返さない（0）。記録する画面に一度だけ案内を出す（oldRecBanner）
     // 設定（号機・場所・入力項目など）。前の版の Code.gs は設定を返さないので、そのときは共有しない
     SYNC.configOk = res.configRev !== undefined;
     if (res.configRev !== undefined) {
@@ -1084,10 +1391,15 @@ async function syncNow(manual) {
     // 入力中の画面は書き換えない（記録する画面・設定の画面で文字を入れている途中）
     if (changed && !(TAB === 'record' && !DETAIL) && !(TAB === 'settings' && !DETAIL && typingInView())) renderKeepFocus();
     renderSync();
+    syncDraftSlot();   // 記録する画面は描き直さないが、AIが使えるようになった（使えなくなった）ら「文章で書く」の欄だけ出し入れする
     if (syncAgain) { syncAgain = false; syncNow(); }
   }
 }
 const OLD_CONFIG_MSG = 'サーバーの Code.gs が前の版のため、設定をチームで共有できません（この端末には反映されています）。Code.gs を新しい版に貼り替えて、デプロイを更新してください（管理者へ）';
+/* 記録の新しい項目（1）を保存できるサーバーの版。一覧の返事の version がこれ未満（無い）なら前の版の Code.gs */
+const REC_VERSION = 3;
+const OLD_REC_MSG = 'サーバーの Code.gs が前の版のため、結果・原因の種類などはこの端末にだけ残ります（管理者へ）';
+const oldRecServer = () => !!(GAS_URL && SYNC.version !== null && SYNC.version < REC_VERSION);
 /* 文字を入れている途中か（入力欄に文字がある）。選ぶ欄（ラジオ・チェック）は数えない */
 const typingInView = () => [...document.querySelectorAll('#view input, #view textarea')].some(i => i.type !== 'radio' && i.type !== 'checkbox' && i.value);
 /* 描き直しても、カーソルのあった「追加」の入力欄に戻す（設定の画面で続けて追加しているとき） */
@@ -1130,19 +1442,65 @@ async function askKey() {
    AIの鍵はサーバー側だけにあり、このファイルには入っていない。
    ========================================================= */
 const aiAvailable = () => !!(GAS_URL && KEY && SYNC.ai && SYNC.state !== 'key');
-const aiRecord = r => ({
-  date: r.occurredAt, line: r.line, area: r.area, equipment: r.equipment, symptom: r.symptom, cause: r.cause, action: r.action,
-  parts: (r.parts || []).map(p => [p.name, p.model ? '（' + p.model + '）' : ''].join('')).filter(Boolean).join('、'), extra: extraText(r), sample: !!r.sample,
-});
+/* AIに渡す記録の形。結果・効かなかった対処・原因の種類・症状の種類・停止時間（名前）・写真から読み取ったこと・報告の原文（200字）・
+   前の記録とのつながり（related）・「設定」で足した項目（extras）も入れる。前の版の Code.gs は extras を読まないので、そのときは今までの文（extra）で渡す */
+const aiRecord = r => {
+  const out = {
+    date: r.occurredAt, line: r.line, area: r.area, equipment: r.equipment, symptom: r.symptom, cause: r.cause, action: r.action,
+    parts: (r.parts || []).map(p => [p.name, p.model ? '（' + p.model + '）' : ''].join('')).filter(Boolean).join('、'), sample: !!r.sample,
+    result: r.result || '', failed: String(r.failed || '').slice(0, 150), causeType: r.causeType || '', symptomTags: (r.symptomTags || []).slice(0, MAX_TAGS),
+    downtime: labelOf(DOWNTIMES, r.downtime), photoText: String(r.photoText || '').slice(0, 150), rawText: String(r.rawText || '').slice(0, 200),
+    related: relatedText(r), extras: extrasOf(r),
+  };
+  if (!(SYNC.version >= REC_VERSION)) out.extra = extraText(r);
+  return out;
+};
+/* 前の記録とのつながりの短い文（120字まで）。例：また起きた：前回 3日前（原因：吸盤の破れ／対処：清掃／結果：直らなかった）。
+   前回からの間は、24時間未満なら時間（「8時間前」。夜の記録の翌朝にまた起きた、のように日付をまたいでも、どれだけもったかが分かる）、
+   24時間以上なら発生日どうしの日数（「2日前」）。時刻の差を日数に丸めると、同じ日の13時間後が「1日前」、翌朝が「同じ日」になるため */
+function relatedText(r) {
+  const p = r.relatedId ? findRec(r.relatedId) : null;
+  if (!p || p.deleted) return '';
+  const ms = Date.parse(r.occurredAt) - Date.parse(p.occurredAt), h = Math.round(ms / 3600000);
+  const days = Math.round((Date.parse(String(r.occurredAt).slice(0, 10)) - Date.parse(String(p.occurredAt).slice(0, 10))) / 86400000);
+  const when = !Number.isFinite(ms) || ms < 0 ? fmtDay(p.occurredAt) : ms < 86400000 ? (h ? h + '時間前' : '1時間以内') : Number.isFinite(days) && days > 0 ? days + '日前' : fmtDay(p.occurredAt);
+  const cut = (t, n) => (t.length > n ? t.slice(0, n - 1) + '…' : t);
+  const bits = [p.cause ? '原因：' + cut(p.cause, 30) : '', p.action ? '対処：' + cut(p.action, 30) : '', '結果：' + (labelOf(RESULTS, p.result) || '未記入')].filter(Boolean);
+  return ((labelOf(RELATIONS, r.relation) || 'つながり') + '：前回 ' + when + '（' + bits.join('／') + '）').slice(0, 120);
+}
+/* 「設定」で足した項目の値 [{ label, value, unit }]（消した項目・名前の無い項目は送らない。単位は数字の項目だけ） */
+const extrasOf = r => FIELDS.filter(f => isCustom(f) && !f.deleted && f.label && String((r.extra || {})[f.id] || '').trim()).slice(0, 20)
+  .map(f => ({ label: f.label.slice(0, 20), value: String(r.extra[f.id]).trim().slice(0, 60), unit: f.type === 'number' ? String(f.unit || '').slice(0, 10) : '' }));
+/* まとまりの記録の「設定」で足した項目の内訳（選ぶ項目は値ごとの件数、数字の項目は件数・合計・平均。あわせて6件まで） */
+function extrasStats(recs) {
+  const out = [], round = v => Math.round(v * 100) / 100;
+  for (const f of FIELDS.filter(f => isCustom(f) && !f.deleted && f.label)) {
+    if (out.length >= 6) break;
+    const vals = recs.map(r => String((r.extra || {})[f.id] || '').trim()).filter(Boolean);
+    if (f.type === 'choice' && vals.length) {
+      const m = new Map();
+      vals.forEach(v => m.set(v, (m.get(v) || 0) + 1));
+      out.push({ label: f.label, kind: 'choice', counts: [...m].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([v, n]) => ({ v, n })) });
+    } else if (f.type === 'number') {
+      const nums = vals.map(numberOf).filter(v => v !== null).map(Number);
+      if (!nums.length) continue;
+      const sum = nums.reduce((a, b) => a + b, 0);
+      out.push({ label: f.label, kind: 'number', n: nums.length, sum: round(sum), avg: round(sum / nums.length), unit: f.unit || '' });
+    }
+  }
+  return out;
+}
 /* AIに渡す記録（最大15件）と集計。吹き出しの「これまでに○件」「まず確認」と同じまとまりの内訳を渡し、
-   記録は原因ごとの代表（新しい順）を先に入れる（似ている順の上位だけだと、多い原因が抜けることがあるため） */
+   記録は原因ごとの代表（新しい順）を先に入れる（似ている順の上位だけだと、多い原因が抜けることがあるため）。
+   サンプルは、表示の設定にかかわらず渡さない（試用のための架空の例なので。サンプルしかなければ記録0件として聞く）。画面の検索結果・フローはそのまま */
 function aiInput(m) {
-  if (m.kind !== 'hit') {
-    const recs = (m.near || []).map(findRec).filter(Boolean);
+  const pool = RECORDS.filter(r => !r.deleted);
+  const { Q, hits: found } = search(m.query, null, pool), hits = found.map(h => h.r);
+  if (!hits.length) {
+    const recs = Q.equip || Q.areas.length ? nearOf(Q, pool).slice(0, 5) : [];
     return { recs, stats: { total: 0, near: recs.length > 0 } };
   }
-  const hits = search(m.query).hits.map(h => h.r);
-  const f = flowsOf(buildFlows(visibleRecords()), hits.slice(0, 3).map(r => r.id))[0];
+  const f = flowsOf(buildFlows(pool), hits.slice(0, 3).map(r => r.id))[0];
   const picked = [], seen = new Set();
   const add = (id, max) => { if (picked.length < max && !seen.has(id)) { seen.add(id); picked.push(id); } };
   if (f) {
@@ -1151,10 +1509,19 @@ function aiInput(m) {
   }
   hits.forEach(r => add(r.id, 15));
   const partsText = ps => ps.slice(0, 3).map(p => (p.name || '') + (p.model ? '（' + p.model + '）' : '') + (p.count > 1 ? '×' + p.count : '')).join('、');
+  const recsOf = ids => ids.map(findRec).filter(Boolean);
+  // 対処ごとの結果（直った・直らなかった の件数）と、原因ごとの原因の種類（多い順に3つまで）
+  const results = ids => ({ fixed: recsOf(ids).filter(r => r.result === 'fixed').length, notfixed: recsOf(ids).filter(r => r.result === 'notfixed').length });
+  const types = ids => {
+    const n = new Map();
+    recsOf(ids).forEach(r => { if (r.causeType) n.set(r.causeType, (n.get(r.causeType) || 0) + 1); });
+    return [...n].sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]);
+  };
   const flow = f && {
     area: f.area, equipment: f.equipment, symptom: f.symptom, count: f.count,
-    causes: f.causes.slice(0, 6).map(c => ({ label: c.label, count: c.count,
-      actions: c.actions.slice(0, 3).map(a => ({ label: a.label, count: a.count, parts: partsText(a.parts) })) })),
+    causes: f.causes.slice(0, 6).map(c => ({ label: c.label, count: c.count, causeTypes: types(c.ids),
+      actions: c.actions.slice(0, 3).map(a => Object.assign({ label: a.label, count: a.count, parts: partsText(a.parts) }, results(a.ids))) })),
+    extras: extrasStats(recsOf(f.ids)),   // いちばん近いまとまりの、選ぶ項目の内訳・数字の項目の合計と平均
   };
   return { recs: picked.map(findRec).filter(Boolean), stats: { total: hits.length, flow: flow || null } };
 }
@@ -1174,14 +1541,40 @@ async function askAi(m) {
     // サーバーは80秒以内に必ず返す（AIの時間切れも理由つきで返る）ので、それより長く待つ
     // 写真を送ったときは、本人のひとこと（無ければその旨）を質問にし、写真から読み取ったことを添える（写真そのものは送らない）
     const question = m.photo ? (m.text || PHOTO_ONLY_Q) : m.query;
+    // refIds：渡した記録の ID（サーバーの AI履歴 に残す。AIには送らない）
     const res = await gasFetch({ method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'suggest', key: KEY, question, records: recs.map(aiRecord), stats, vision: visionWire(m) }) }, null, 100000);
-    m.ai = { state: 'done', refIds, data: res.suggestion, by: typeof res.by === 'string' ? res.by : '' };
+      body: JSON.stringify({ action: 'suggest', key: KEY, question, records: recs.map(aiRecord), stats, vision: visionWire(m), refIds }) }, null, 100000);
+    m.ai = { state: 'done', refIds, data: res.suggestion, by: typeof res.by === 'string' ? res.by : '', historyId: historyIdOf(res.historyId) };
   } catch (e) {
     m.ai = { state: 'error', refIds, msg: e.message };
     if (e.code === 'key') SYNC.state = 'key';
   }
   if (TAB === 'search' && !DETAIL) render();   // 別の画面を見ていたら書き換えない（戻ったときに表示される）
+}
+/* 対処案の評価（任意）。AIの枠の下に小さく出す。押すとすぐ「ありがとうございます」に変える（押したかどうかはメッセージに覚える）。
+   オフライン・送れなかったときは toast で知らせるだけ（作業は止めない。送れなかったときは、また押せるように戻す） */
+function feedbackHtml(m) {
+  const a = m.ai, mi = CHAT.indexOf(m);
+  if (!a || a.state !== 'done' || !a.historyId) return '';
+  return `<div class="aifb" id="fb-${mi}">${a.rated ? 'ありがとうございます' : 'この案は' + RATINGS.map(([v, l]) =>
+    `<button type="button" class="chip sug" data-act="ai-rate" data-mi="${mi}" data-v="${v}">${esc(l)}</button>`).join('')}</div>`;
+}
+async function rateAi(m, rating) {
+  const a = m && m.ai;
+  if (!a || a.state !== 'done' || !a.historyId || a.rated || !labelOf(RATINGS, rating)) return;
+  if (!navigator.onLine) { toast('オフラインのため、評価は送れませんでした'); return; }
+  const redraw = () => { const box = document.getElementById('fb-' + CHAT.indexOf(m)); if (box) box.outerHTML = feedbackHtml(m); };   // 描き直さずに、その所だけ（読んでいる位置を動かさない）
+  a.rated = rating;
+  redraw();
+  try {
+    await gasFetch({ method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'feedback', key: KEY, historyId: a.historyId, rating }) });
+  } catch (e) {
+    a.rated = '';
+    redraw();
+    toast('評価を送れませんでした（' + e.message + '）');
+    if (e.code === 'key') { SYNC.state = 'key'; renderSync(); }
+  }
 }
 /* 写真を送ったときは、写真の読み取りが終わってから（探す言葉があるときだけ）対処案を聞ける */
 const canAsk = m => !m.photo || (m.kind !== 'photo' && !(m.vision && m.vision.state === 'loading'));
@@ -1208,7 +1601,7 @@ function aiBlock(m) {
     ${d.enough_records ? '' : '<div class="muted" style="font-size:13px">関係する記録が少ないため、一般的な内容が中心です。</div>'}
     ${d.safety ? `<div class="aisafe">${ICON.warn}<span>${esc(d.safety)}</span></div>` : ''}
     <div class="aifoot">AIによる提案です。作業前に必ず設備を止めて安全を確認し、最終判断は担当者が行ってください。${a.by ? `<br>回答したAI：${esc(a.by)}` : ''}</div>
-  </div>`;
+  </div>${feedbackHtml(m)}`;
 }
 
 /* =========================================================
@@ -1268,7 +1661,7 @@ function visionSearch(text, d) {
   const seen = new Set();
   const q = words.join(' ').split(/\s+/).filter(w => w && !seen.has(w) && seen.add(w)).join(' ');
   const prefill = {
-    line: base.line,
+    line: base.line, autoLine: base.autoLine,   // 号機は写真からは決めない（ひとことに号機が無ければ、前回の号機が自動で入っただけ）
     area: saidArea || (useArea ? d.area : base.area),
     equipment: saidEquip || (conflict ? '' : d.equipment),
     symptom: base.symptom || (conflict ? '' : d.abnormality),
@@ -1407,9 +1800,11 @@ const ICON = {
   plus: svg('<rect x="4" y="3.5" width="16" height="17" rx="3"/><path d="M12 8.5v7"/><path d="M8.5 12h7"/>', 20),
   next: svg('<path d="M9 6l6 6-6 6"/>', 20, 2),
   back: svg('<path d="M15 6l-6 6 6 6"/>', 18, 2),
+  pen: svg('<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>', 22),
 };
-function recCard(r, hl) {
-  const badges = (r.sample ? '<span class="badge sample">サンプル</span>' : '') + (GAS_URL && r._dirty ? '<span class="badge dirty">未送信</span>' : '');
+/* note：行に添える小さな札（詳細の「この記録につながる記録」の 続き／また起きた など） */
+function recCard(r, hl, note) {
+  const badges = (note ? `<span class="badge">${esc(note)}</span>` : '') + (r.sample ? '<span class="badge sample">サンプル</span>' : '') + (GAS_URL && r._dirty ? '<span class="badge dirty">未送信</span>' : '');
   const where = [r.line, r.area].filter(Boolean).map(esc).join('・');
   return `<button type="button" class="rc${hl ? ' hl' : ''}" data-rid="${esc(r.id)}">
     <span class="t">${esc(r.equipment)}：${esc(r.symptom)}</span>
@@ -1422,10 +1817,11 @@ function flowTree(f, hlId) {
     const r = findRec(id);
     return r ? `<button type="button" class="rchip${id === hlId ? ' hl' : ''}" data-rid="${esc(id)}">${esc(fmtDay(r.occurredAt))} ${esc((r.line || '').replace('ライン', ''))}</button>` : '';
   }).join('') + (ids.length > 6 ? `<span class="rchip">他${ids.length - 6}件</span>` : '');
+  // 原因の種類が違えば別の原因にまとめるので、同じ書き方の原因が2つ並んでも分かるよう、種類を添える。対処には「うち直った n件」（1件以上のとき）
   return `<ul class="ft">${f.causes.map(c => `
-    <li><span class="k cau">原因</span>${c.label ? esc(c.label) : '<span class="muted">原因未記入</span>'}<span class="cnt">${c.count}件</span>
+    <li><span class="k cau">原因</span>${c.label ? esc(c.label) : '<span class="muted">原因未記入</span>'}${c.causeType ? `<span class="badge">${esc(c.causeType)}</span>` : ''}<span class="cnt">${c.count}件</span>
       <ul class="ft">${c.actions.map(a => `
-        <li><span class="k act">対処</span>${a.label ? esc(a.label) : '<span class="muted">対処未記入</span>'}<span class="cnt">${a.count}件</span>
+        <li><span class="k act">対処</span>${a.label ? esc(a.label) : '<span class="muted">対処未記入</span>'}<span class="cnt">${a.count}件</span>${a.fixed ? `<span class="cnt fixed">（うち直った ${a.fixed}件）</span>` : ''}
           ${a.parts.length ? `<div class="pchips">${a.parts.map(partChip).join('')}</div>` : ''}
           <div class="rchips">${chips(a.ids)}</div>
         </li>`).join('')}</ul>
@@ -1477,12 +1873,10 @@ function renderIntro() {
   recs.forEach(r => { const e = canonEquip(r.equipment); freq.set(e, (freq.get(e) || 0) + 1); });
   const topEq = [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]);
   const examples = [...new Set(['袋を吸わない', 'シール不良', ...topEq, '異音'])].slice(0, 6);
-  const recent = recs.slice().sort(byNewest).slice(0, 3);
   return `<div class="msg bot"><div class="bub">
     <h1 class="hello">いま、何が起きていますか？</h1>
-    <p class="hello-sub">起きているトラブルや設備名を送ると、過去の記録から<b>原因と対処</b>を探します。入力欄の左のカメラで、その場の写真も送れます。</p>
+    <p class="hello-sub">起きているトラブルや設備名を送ると、過去の記録から<b>原因と対処</b>を探します。入力欄の左のカメラで、その場の写真も送れます。${aiAvailable() ? '直したあとは「この内容で記録する」から、文章で書くだけでAIが記録の下書きを作ります。' : ''}</p>
     <div class="chips">${examples.map(q => `<button type="button" class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>
-    <div class="h3">最近の記録</div>${recent.map(r => recCard(r)).join('')}
   </div></div>`;
 }
 function renderBot(m, flows) {
@@ -1551,65 +1945,219 @@ function sendChat(text, photo) {
 /* =========================================================
    13. 画面：記録する
    ========================================================= */
+/* 文章からの下書き（13-2）の状態も持つ。draftText：書いた文章、context：チャットで聞いた内容、draft：AIの結果、aiFilled：AIが入れた欄。
+   autoLine：号機を前回の号機で自動で入れただけか（AIの下書きで置き換えてよい。チャットで書いた号機・押して選んだ号機は置き換えない）。
+   pre.line があるときは pre.autoLine に従う（チャットで号機を書かず、前回の号機が入っただけなら true）。
+   autoAt：発生日時が自動で入ったままか（入力やチップで触ると false。保存のとき autoFields に入れる）。
+   記録の新しい項目（結果・原因の種類 など。既定値は REC_DEFAULTS）と、aiNote：直近の振り分けのAIのメモ、rawText0：直す記録にもとからあった原文、
+   modelHints：写真から読めた型式の候補 も持つ。pre で前の記録とのつながり（relatedId・relation）なども渡せる */
 function newForm(pre) {
-  return Object.assign({ editId: null, occurredAt: nowLocal(), author: shown('author') ? META.author : '', line: shown('line') ? META.lastLine : '',
-    area: '', equipment: '', symptom: '', cause: '', action: '', parts: [], photos: [], extra: {} }, pre || {});
+  const F = Object.assign(formDefaults(), { editId: null, occurredAt: nowLocal(), author: shown('author') ? META.author : '', line: shown('line') ? META.lastLine : '',
+    area: '', equipment: '', symptom: '', cause: '', action: '', parts: [], photos: [], extra: {},
+    draftText: '', context: '', draft: null, aiFilled: [], aiNote: '', rawText0: '', modelHints: [] }, pre || {});
+  F.autoLine = !!F.line && (pre && pre.line ? !!pre.autoLine : true);
+  F.autoAt = !(pre && pre.occurredAt);
+  return F;
 }
+const formDefaults = () => Object.fromEntries(FORM_KEYS.map(k => [k, clone(REC_DEFAULTS[k])]));
 function formFromRecord(r) {
-  return { editId: r.id, occurredAt: r.occurredAt, author: r.author, line: r.line, area: r.area, equipment: r.equipment,
-    symptom: r.symptom, cause: r.cause, action: r.action, parts: clone(r.parts || []), photos: clone(r.photos || []), extra: clone(r.extra || {}) };
+  const auto = r.autoFields || [];
+  const F = Object.assign(formDefaults(), { editId: r.id, occurredAt: r.occurredAt, author: r.author, line: r.line, area: r.area, equipment: r.equipment,
+    symptom: r.symptom, cause: r.cause, action: r.action, parts: clone(r.parts || []), photos: clone(r.photos || []), extra: clone(r.extra || {}),
+    // AIの印は、記録に残っている「AIが入れて人が直していない欄」から（直すと外れる）。自動で入ったままの欄（発生日時・号機）も引き継ぐ。
+    // チャットで聞いた内容・AIのメモ・原文は、直して保存しても消さない（文章で書き直したときだけ原文を入れ替える）
+    draftText: '', context: r.context || '', draft: null, aiFilled: (r.aiFilled || []).slice(), aiNote: r.aiNote || '', rawText0: r.rawText || '', modelHints: [],
+    autoLine: auto.includes('line') && !!r.line, autoAt: auto.includes('occurredAt') });
+  for (const k of FORM_KEYS) if (r[k] !== undefined) F[k] = clone(r[k]);
+  F.orig = formSnap(F);   // 開いたときの値（直している途中の入力があるかを見分ける。formHasInput）
+  return F;
 }
-const formHasInput = () => FORM && !FORM.editId && !!(FORM.equipment || FORM.symptom || FORM.cause || FORM.action || FORM.parts.length || FORM.photos.length
-  || Object.values(FORM.extra || {}).some(v => String(v).trim()));
+/* 記録を直す画面で、入力があったかを比べる値（開いたときの値 FORM.orig と比べる） */
+const formSnap = F => ({ occurredAt: F.occurredAt, author: F.author, line: F.line, area: F.area, equipment: F.equipment, symptom: F.symptom, cause: F.cause,
+  action: F.action, parts: (F.parts || []).map(p => [p.name, p.model, p.photo ? p.photo.id : '']), photos: (F.photos || []).map(p => p.id), extra: cleanExtra(F.extra),
+  draftText: F.draftText, ...Object.fromEntries(FORM_KEYS.map(k => [k, clone(F[k])])), aiFilled: (F.aiFilled || []).slice().sort(), autoAt: !!F.autoAt, autoLine: !!F.autoLine });
+/* 入力中の記録があるか（破棄してよいか聞くとき）。新しい記録は、何か入れたか。記録を直しているときは、開いたときから値を変えたか
+   （直している途中の原因や結果も、ほかの記録の［直す］や［続きを書く］で黙って消さない） */
+const formHasInput = () => {
+  if (!FORM) return false;
+  if (FORM.editId) return !!FORM.orig && JSON.stringify(formSnap(FORM)) !== JSON.stringify(FORM.orig);
+  return !!(FORM.equipment || FORM.symptom || FORM.cause || FORM.action || FORM.parts.length || FORM.photos.length
+    || Object.values(FORM.extra || {}).some(v => String(v).trim()) || String(FORM.draftText || '').trim()
+    || String(FORM.failed || '').trim() || FORM.causeType || FORM.result || FORM.downtime || (FORM.symptomTags || []).length || FORM.relatedId);
+};
+/* 入力中の記録を破棄してよいか聞く（入力が無ければ聞かずに true）。what：「新しく書きます」「この記録を直します」 */
+const discardOk = what => !formHasInput() || confirm((FORM.editId ? '直している途中の記録があります。破棄して' : '入力中の記録があります。破棄して') + what + 'か？');
 const chip = (kind, v, on, label, cls) => `<button type="button" class="chip${cls ? ' ' + cls : ''}${on ? ' on' : ''}" data-f="${kind}" data-v="${esc(v)}">${esc(label || v)}</button>`;
 const reqMark = f => (f.required ? '<span class="req">必須</span>' : '');
+/* AIが下書きした欄（13-2）は、見出しの横に「AI」の印を出し、欄に印のクラスを付ける。人がその欄を直すと外す */
+const aiMarked = f => !!(FORM && (FORM.aiFilled || []).includes(f.id));
+const aiMark = f => (aiMarked(f) ? '<span class="aimark" title="AIが下書きした欄">AI</span>' : '');
+const fBox = f => `<div class="f${aiMarked(f) ? ' aifill' : ''}" data-fid="${esc(f.id)}">`;
+const dropAi = id => {
+  if (!FORM) return;
+  FORM.aiFilled = (FORM.aiFilled || []).filter(x => x !== id);
+  // 部品の欄を人が直したら、AIが入れた部品も人が確かめた部品として扱う（押し直しても入れ替えない）
+  if (id === 'parts') FORM.parts.forEach(p => { delete p.ai; });
+};
+/* 描き直さずに、その欄の印だけを外す（文字を入れている途中の欄を描き直さないため） */
+function unmarkAi(id) {
+  if (!FORM || !(FORM.aiFilled || []).includes(id)) return;
+  dropAi(id);
+  const box = document.querySelector(`#view .f[data-fid="${CSS.escape(id)}"]`);
+  if (box) { box.classList.remove('aifill'); box.querySelectorAll('.aimark').forEach(m => m.remove()); }
+}
 const noOptions = '<p class="muted" style="font-size:14px;margin:4px 0 0">選択肢がありません（「設定」で追加できます）</p>';
 const withCurrent = (list, cur) => (cur && !list.includes(cur) ? list.concat(cur) : list);   // 設定から消した値の記録を直すときも、選んである値は出す
+/* 1つだけ選ぶ欄（原因の種類・結果・停止時間）のチップ。もう一度押すと外す（onFormChip） */
+const pickChips = (kind, cur) => `<div class="chips">${PICKS[kind].map(([v, l]) => chip(kind, v, cur === v, l)).join('')}</div>`;
+/* 発生日時のチップ [何分前, 名前] */
+const WHEN_CHIPS = [['0', 'いま'], ['30', '30分前'], ['60', '1時間前'], ['120', '2時間前']];
 /* 入力項目ごとの入力欄（もともとある項目）。並びと名前・必須は「設定」のとおり */
 const FORM_PARTS = {
-  occurredAt: (f, F) => `<div class="f"><label class="l" for="fDate">${esc(f.label)}</label><input id="fDate" class="inp mono" type="datetime-local" value="${esc(F.occurredAt)}"></div>`,
-  line: (f, F) => `<div class="f"><span class="l">${esc(f.label)}${reqMark(f)}</span>${LINES.length || F.line
+  occurredAt: (f, F) => `${fBox(f)}<label class="l" for="fDate">${esc(f.label)}</label><input id="fDate" class="inp mono" type="datetime-local" value="${esc(F.occurredAt)}">
+      <div class="chips">${WHEN_CHIPS.map(([v, l]) => chip('when', v, false, l, 'sug')).join('')}</div></div>`,
+  // 前回の号機が自動で入っているだけのときは、そう分かるように小さく出す
+  line: (f, F) => `${fBox(f)}<span class="l">${esc(f.label)}${reqMark(f)}${aiMark(f)}${F.autoLine && F.line ? '<span class="lnote">前回の号機（違えば押して直す）</span>' : ''}</span>${LINES.length || F.line
     ? `<div class="chips grid4">${withCurrent(LINES, F.line).map(l => chip('line', l, F.line === l, l.replace(/ライン$/, ''))).join('')}</div>` : noOptions}</div>`,
-  area: (f, F) => `<div class="f"><span class="l">${esc(f.label)}${reqMark(f)}</span>${Object.keys(AREAS).length || F.area
+  area: (f, F) => `${fBox(f)}<span class="l">${esc(f.label)}${reqMark(f)}${aiMark(f)}</span>${Object.keys(AREAS).length || F.area
     ? `<div class="chips">${withCurrent(Object.keys(AREAS), F.area).map(a => chip('area', a, F.area === a)).join('')}</div>` : noOptions}</div>`,
   equipment: (f, F) => {
     const eqList = equipOfArea(F.area);
-    return `<div class="f"><label class="l" for="fEquip">${esc(f.label)}${reqMark(f)}</label>
+    return `${fBox(f)}<label class="l" for="fEquip">${esc(f.label)}${reqMark(f)}${aiMark(f)}</label>
       <input id="fEquip" class="inp" maxlength="40" placeholder="${F.area ? '下から選ぶか、入力してください' : '先に' + esc(shortLabel(fieldById('area'))) + 'を選ぶと候補が出ます'}" value="${esc(F.equipment)}">
       ${eqList.length ? `<div class="chips" id="eqChips">${eqList.map(e => chip('equip', e, canonEquip(F.equipment) === e, '', 'sug')).join('')}</div>` : ''}
+      <div id="eqNear">${nearHtml(F)}</div>
     </div>`;
   },
-  symptom: (f, F) => `<div class="f"><label class="l" for="fSym">${esc(f.label)}${reqMark(f)}</label>
+  symptom: (f, F) => `${fBox(f)}<label class="l" for="fSym">${esc(f.label)}${reqMark(f)}${aiMark(f)}</label>
       <textarea id="fSym" class="inp" maxlength="300" placeholder="例）袋を吸わず、チャックが開かない">${esc(F.symptom)}</textarea>
-      ${SYMPTOM_WORDS.length ? `<div class="chips">${SYMPTOM_WORDS.map(w => chip('sym', w, false, '', 'sug')).join('')}</div>` : ''}
+      <div id="symTags">${symTagsHtml(F)}</div>
+      <div id="sameHint">${sameHtml(F)}</div>
       <div id="simHint"></div>
     </div>`,
-  cause: (f, F) => `<div class="f"><label class="l" for="fCause">${esc(f.label)}${reqMark(f)}</label><input id="fCause" class="inp" maxlength="300" placeholder="${f.required ? '' : '分からなければ空欄でOK'}" value="${esc(F.cause)}"></div>`,
-  action: (f, F) => `<div class="f"><label class="l" for="fAction">${esc(f.label)}${reqMark(f)}</label><textarea id="fAction" class="inp" maxlength="300" placeholder="例）吸盤を新品に交換した">${esc(F.action)}</textarea></div>`,
-  parts: f => `<div class="f"><span class="l">${esc(f.label)}${reqMark(f)}</span><div id="partsBox">${partsHtml()}</div></div>`,
-  photos: f => `<div class="f"><span class="l">${esc(f.label)}${reqMark(f)}</span><div id="photoBox">${photosHtml()}</div></div>`,
-  author: (f, F) => `<div class="f"><label class="l" for="fAuthor">${esc(f.label)}${reqMark(f)}</label><input id="fAuthor" class="inp" maxlength="20" placeholder="名前" value="${esc(F.author)}"></div>`,
+  causeType: (f, F) => `${fBox(f)}<span class="l">${esc(f.label)}${reqMark(f)}${aiMark(f)}</span>${pickChips('causeType', F.causeType)}</div>`,
+  cause: (f, F) => `${fBox(f)}<label class="l" for="fCause">${esc(f.label)}${reqMark(f)}${aiMark(f)}</label><input id="fCause" class="inp" maxlength="300" placeholder="${f.required ? '' : '分からなければ空欄でOK'}" value="${esc(F.cause)}"></div>`,
+  action: (f, F) => `${fBox(f)}<label class="l" for="fAction">${esc(f.label)}${reqMark(f)}${aiMark(f)}</label><textarea id="fAction" class="inp" maxlength="300" placeholder="例）吸盤を新品に交換した">${esc(F.action)}</textarea></div>`,
+  failed: (f, F) => `${fBox(f)}<label class="l" for="fFailed">${esc(f.label)}${reqMark(f)}${aiMark(f)}</label><input id="fFailed" class="inp" maxlength="300" placeholder="試したけど直らなかったこと（あれば）" value="${esc(F.failed)}"></div>`,
+  result: (f, F) => `${fBox(f)}<span class="l">${esc(f.label)}${reqMark(f)}${aiMark(f)}</span>${pickChips('result', F.result)}</div>`,
+  downtime: (f, F) => `${fBox(f)}<span class="l">${esc(f.label)}${reqMark(f)}${aiMark(f)}</span>${pickChips('downtime', F.downtime)}</div>`,
+  parts: f => `${fBox(f)}<span class="l">${esc(f.label)}${reqMark(f)}${aiMark(f)}</span><div id="partsBox">${partsHtml()}</div></div>`,
+  // 写真から読み取ったこと（「この内容で記録する」で写真の読み取りから入れた文。× で消せる）
+  photos: (f, F) => `${fBox(f)}<span class="l">${esc(f.label)}${reqMark(f)}${aiMark(f)}</span><div id="photoBox">${photosHtml()}</div>
+      ${F.photoText ? `<div class="ptext"><span>写真から読み取ったこと：${esc(F.photoText)}</span><button type="button" class="x2" data-act="ptext-clear" aria-label="写真から読み取ったことを消す">✕</button></div>` : ''}</div>`,
+  author: (f, F) => `${fBox(f)}<label class="l" for="fAuthor">${esc(f.label)}${reqMark(f)}${aiMark(f)}</label><input id="fAuthor" class="inp" maxlength="20" placeholder="名前" value="${esc(F.author)}"></div>`,
 };
+/* 症状の言葉のチップ。押すと文に足し、症状の種類（symptomTags）にも入れる（on の見た目）。もう一度押すと種類から外す（文はそのまま）。
+   設定から消した言葉でも、選んである種類は出す。AIが選んだ種類（人がまだ触っていない）は、列の頭に小さな印 */
+function symTagsHtml(F) {
+  const tags = F.symptomTags || [], words = SYMPTOM_WORDS.concat(tags.filter(t => !SYMPTOM_WORDS.includes(t)));
+  if (!words.length) return '';
+  const ai = tags.length && (F.aiFilled || []).includes('symptomTags');
+  return `<div class="chips${ai ? ' aitags' : ''}">${ai ? '<span class="aitag" title="AIが選んだ症状の種類">AI</span>' : ''}${words.map(w => chip('sym', w, tags.includes(w), '', 'sug')).join('')}</div>`;
+}
+/* 設備の近い候補：入れた設備名が、選んだ場所の一覧（と別名）に無く、一覧に近い名前があれば3つまで（止めない。押さなくても保存できる）。
+   近い：部分一致（2文字以上）か、norm したあとの似ている度合い（2文字ずつの組）が 0.5 以上 */
+function nearEquips(F) {
+  const name = String(F.equipment || '').trim(), q = norm(name), list = equipOfArea(F.area);
+  if (!q || !list.length || list.some(e => sameEquip(e, name))) return [];
+  const g = grams(name);
+  const score = n => {
+    const x = norm(n);
+    if (!x) return 0;
+    if (q.length >= 2 && (x.includes(q) || q.includes(x))) return 1;
+    return dice(g, grams(n));
+  };
+  return list.map(e => ({ e, s: Math.max(...[e, ...aliasesOf(e)].map(score)) })).filter(x => x.s >= 0.5)
+    .sort((a, b) => b.s - a.s).slice(0, 3).map(x => x.e);
+}
+const nearHtml = F => { const l = nearEquips(F); return l.length ? `<div class="near">近い候補：${l.map(e => chip('equip', e, false, '', 'sug')).join('')}</div>` : ''; };
+/* 7日以内の同じトラブル：場所・設備（正式名）が同じで、症状がフローと同じ決まり（sameSymptom。文中の設備名は外して比べる）でまとまる、
+   ほかの記録（サンプル・削除済みは除く。新しい順に2件まで）。止めない（つなぐかどうかは人が決める）。
+   出すのは、この記録の発生日時より前の7日以内の記録だけ（つなぐ先は「前の記録」。あとの記録につなぐと、時間が逆向きの「前回」になる）。
+   直している記録自身と、この記録にもうつないでいる記録（あとの記録）は出さない（つなぐと循環になる） */
+const SAME_DAYS = 7;
+function recentSame(F) {
+  if (!F.area || !String(F.equipment || '').trim() || !String(F.symptom || '').trim()) return [];
+  const t = Date.parse(F.occurredAt), at = Number.isFinite(t) ? t : Date.now(), eq = norm(canonEquip(F.equipment));
+  const cands = RECORDS.filter(r => {
+    const rt = Date.parse(r.occurredAt);
+    return !r.deleted && r.id !== F.editId && !(F.editId && r.relatedId === F.editId) && r.area === F.area && norm(canonEquip(r.equipment)) === eq
+      && rt <= at && at - rt <= SAME_DAYS * 86400000;
+  });
+  if (!cands.length) return [];
+  const plain = withoutEquip(cands.concat({ equipment: F.equipment }));
+  // 症状の種類（symptomTags）も渡す（同じ症状のまとめ方を、症状の種類で比べるようにしたとき、ここも同じ決まりになるように）
+  return cands.filter(r => sameSymptom(plain(F.symptom), plain(r.symptom), F.symptomTags, r.symptomTags)).sort(byNewest).slice(0, 2);
+}
+/* ［つなぐ］で、この記録を前の記録につなぐ（前の記録が「直った」なら また起きた、様子見・直らなかった・未記入なら 続き）。もう一度押すと外す */
+function sameHtml(F) {
+  return recentSame(F).map(r => {
+    const on = F.relatedId === r.id;
+    return `<div class="relbar"><span class="rv">${SAME_DAYS}日以内に同じトラブル：${esc(fmtDay(r.occurredAt))} ${esc(r.cause || r.symptom)}（${esc(shortLabel(fieldById('result') || builtinOf('result')))}：${esc(labelOf(RESULTS, r.result) || '未記入')}）</span>`
+      + `<button type="button" class="chip sug${on ? ' on' : ''}" data-act="rel-link" data-v="${esc(r.id)}" aria-pressed="${on}">${on ? 'つないでいます' : 'つなぐ'}</button></div>`;
+  }).join('');
+}
+/* 前の記録とのつながり（記録する画面の上に出す。［外す］でつながりを消す） */
+function relBar(F) {
+  if (!F.relatedId) return '';
+  const r = findRec(F.relatedId), rel = labelOf(RELATIONS, F.relation);
+  const what = r ? `${fmtDay(r.occurredAt)} ${r.cause || r.symptom || r.equipment}` : '（この端末にない記録）';
+  return `<div class="relbar"><span class="rv">前の記録：${esc(what)}${rel ? `（${esc(rel)}）` : ''} につなぎます</span><button type="button" class="chip sug" data-act="rel-clear">外す</button></div>`;
+}
+/* 前の版のサーバーの案内（1）。記録する画面に一度だけ出す（出したときの入力の間は出し続け、次からは出さない） */
+let OLD_REC_FORM = null;
+function oldRecBanner(F) {
+  if (OLD_REC_FORM !== F) {
+    if (!oldRecServer() || META.oldRecNoted) return '';
+    OLD_REC_FORM = F; META.oldRecNoted = true; metaSet('oldRecNoted', true);
+  }
+  return `<div class="banner">${esc(OLD_REC_MSG)}</div>`;
+}
+/* 写真から読めた文字のうち、型式らしいもの（英字と数字を両方含む、英数字とハイフンだけの3〜20字。60kPa のような測った値は除く）を5つまで */
+function modelCandidates(texts) {
+  const out = [];
+  for (const t of texts || []) for (let w of String(t).normalize('NFKC').split(/[\s、,。:;()「」『』\[\]【】/]+/)) {
+    w = w.replace(/^-+|-+$/g, '');
+    if (/^[A-Za-z0-9-]{3,20}$/.test(w) && /[A-Za-z]/.test(w) && /\d/.test(w)
+      && !/^\d+(kpa|mpa|pa|mm|cm|m|kg|g|kw|w|v|a|hz|rpm|ms|s|h|ml|l)$/i.test(w) && !out.includes(w)) out.push(w);
+  }
+  return out.slice(0, 5);
+}
 /* 「設定」で足した項目の入力欄 */
 function customPart(f, F) {
   const v = String(F.extra[f.id] || '');
   if (f.type === 'choice') {
-    return `<div class="f"><span class="l">${esc(f.label)}${reqMark(f)}</span>${f.options.length || v ? `<div class="chips">${withCurrent(f.options, v).map(o =>
+    return `${fBox(f)}<span class="l">${esc(f.label)}${reqMark(f)}${aiMark(f)}</span>${f.options.length || v ? `<div class="chips">${withCurrent(f.options, v).map(o =>
       `<button type="button" class="chip${v === o ? ' on' : ''}" data-f="x" data-xid="${esc(f.id)}" data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div>` : noOptions}</div>`;
   }
   const num = f.type === 'number';
-  return `<div class="f"><label class="l" for="fx_${esc(f.id)}">${esc(f.label)}${reqMark(f)}</label>
+  // 数字の項目は、「設定」で決めた単位を見出しに小さく出す（3-7）
+  return `${fBox(f)}<label class="l" for="fx_${esc(f.id)}">${esc(f.label)}${reqMark(f)}${aiMark(f)}${num && f.unit ? `<span class="lnote">単位：${esc(f.unit)}</span>` : ''}</label>
     <input id="fx_${esc(f.id)}" class="inp${num ? ' mono' : ''}" type="text"${num ? ' inputmode="decimal"' : ''} maxlength="${num ? 20 : 200}" data-xf="${esc(f.id)}" value="${esc(v)}"></div>`;
 }
 let FORM_SHOWN = new Set();   // いま記録する画面に出している項目
+/* 発生日時が自動のままの新しい記録で、まだ何も入れていなければ、発生日時をいまにし直す（記録する画面を出したとき・画面に戻ったとき）。
+   FORM は起動したとき・保存したあとに作るので、そのままだと、何時間も前の時刻が「自動で入った時刻」として保存される。
+   何か入れ始めたら止める（記録を始めた時刻を残す）。直す画面は記録の時刻のまま。し直したら true */
+function refreshAutoAt() {
+  const F = FORM;
+  if (!F || F.editId || !F.autoAt || formHasInput()) return false;
+  const now = nowLocal();
+  if (F.occurredAt === now) return false;
+  F.occurredAt = now;
+  return true;
+}
 function renderForm() {
   const F = FORM;
+  refreshAutoAt();
   FORM_SHOWN = new Set(FIELDS.filter(inForm).map(f => f.id));
   const need = FIELDS.filter(f => inForm(f) && f.required && f.id !== 'occurredAt').map(shortLabel);
   $('#view').innerHTML = `
     <h2 class="ttl">${F.editId ? '記録を直す' : 'トラブルを記録する'}</h2>
     <p class="sub">${need.map(esc).join('・')}だけで保存できます。${shown('cause') && !fieldById('cause').required ? '原因は後から書き足せます。' : ''}</p>
     <button type="button" class="linkbtn" data-tab="settings" style="margin-top:0">入力項目や選択肢を変える（設定）</button>
+    ${oldRecBanner(F)}${relBar(F)}
+    <div id="draftSlot">${draftBox(F)}</div>
     ${FIELDS.filter(inForm).map(f => (FORM_PARTS[f.id] || customPart)(f, F)).join('')}
     <div id="formErr" class="err" role="alert"></div>
     <div class="savebar">
@@ -1618,9 +2166,15 @@ function renderForm() {
         : '<button type="button" class="btn pri" data-act="save">保存する</button>'}
       ${GAS_URL ? '<p class="note">電波がなくても保存できます（あとで自動で送ります）</p>' : ''}
     </div>`;
-  updateHint();
+  // 「似たトラブルが過去に N件」の案内は、描き直したその場で入れる（待ってから入れると、チップを押すたびに下の欄が案内の高さだけ跳ね上がって戻り、
+  // 続けて押したときに別のチップ・すき間を押してしまう）。文字を打っている間は、今までどおり少し待ってから入れる（input の updateHint）
+  clearTimeout(hintTimer);
+  showHint();
 }
+/* いま画面に出している部品の並び（data-i の番号 → 部品。AIの下書きで FORM.parts が入れ替わっても、画面の行がどの部品かを探せるように） */
+let PARTS_SHOWN = [];
 function partsHtml() {
+  PARTS_SHOWN = FORM.parts.slice();
   return FORM.parts.map((p, i) => `<div class="part">
       <input class="inp" data-pf="name" data-i="${i}" maxlength="40" placeholder="部品名" value="${esc(p.name)}" aria-label="部品名">
       <input class="inp" data-pf="model" data-i="${i}" maxlength="40" placeholder="型式" value="${esc(p.model)}" aria-label="型式">
@@ -1629,7 +2183,14 @@ function partsHtml() {
         : `<button type="button" class="addph sm" data-act="add-part-photo" data-i="${i}" aria-label="部品の写真を追加">${ICON.camera}</button>`}
       <button type="button" class="x2" data-act="del-part" data-i="${i}" aria-label="この部品を消す">✕</button>
     </div>`).join('')
-    + (FORM.parts.length < 5 ? '<button type="button" class="btn sub sm dash" data-act="add-part">＋ 部品を追加</button>' : '');
+    + (FORM.parts.length < 5 ? '<button type="button" class="btn sub sm dash" data-act="add-part">＋ 部品を追加</button>' : '')
+    + modelHintsHtml();
+}
+/* 型式の候補（写真から読めた文字）。押すと部品（名前は空・型式にその文字）を足す。足してある型式と、部品が5件のときは出さない */
+function modelHintsHtml() {
+  const list = (FORM.modelHints || []).filter(m => !FORM.parts.some(p => norm(p.model) === norm(m))).slice(0, 5);
+  return list.length && FORM.parts.length < 5 ? `<div class="near">型式の候補：${list.map(m =>
+    `<button type="button" class="chip sug mono" data-act="model-hint" data-v="${esc(m)}">${esc(m)}</button>`).join('')}</div>` : '';
 }
 function photosHtml() {
   return `<div class="photos">${FORM.photos.map((p, i) => `<div class="ph">${imgHtml(p, 'form:photo:' + i, '写真' + (i + 1))}<button type="button" class="x" data-act="del-photo" data-i="${i}" aria-label="写真を外す">✕</button></div>`).join('')}
@@ -1639,8 +2200,13 @@ function photosHtml() {
 let hintTimer = null;
 function updateHint() { clearTimeout(hintTimer); hintTimer = setTimeout(showHint, 250); }
 function showHint() {
+  if (!FORM) return;
+  // 設備の近い候補・7日以内の同じトラブル（入力に合わせて入れ替える）
+  const near = $('#eqNear'), same = $('#sameHint');
+  if (near) near.innerHTML = nearHtml(FORM);
+  if (same) same.innerHTML = sameHtml(FORM);
   const box = $('#simHint');
-  if (!box || !FORM) return;
+  if (!box) return;
   const q = [FORM.area, FORM.equipment, FORM.symptom].join(' ').trim();
   if (!FORM.equipment.trim() && !FORM.symptom.trim()) { box.innerHTML = ''; return; }
   const { hits } = search(q, FORM.editId);
@@ -1664,11 +2230,13 @@ async function saveForm() {
   // 選べるものが無い項目（号機が0・選択肢が0）は、必須でも止めない（だれも保存できなくなるため）
   const nothingToPick = f => (f.id === 'line' && !LINES.length && !F.line) || (f.id === 'area' && !Object.keys(AREAS).length && !F.area)
     || (f.type === 'choice' && !f.options.length && !F.extra[f.id]);
+  // 必須の欄が空なら、確認の画面は出さずに、ここで「○○を選んでください」と知らせて保存しない（記録を直すときも、画面に出している欄は同じ）
+  const picked = f => f.id === 'line' || f.id === 'area' || !!own(PICKS, f.id) || f.type === 'choice';   // チップで選ぶ欄
   for (const f of FIELDS.filter(f => FORM_SHOWN.has(f.id))) {
     if (f.id === 'occurredAt') continue;
     if (f.required && empty(f) && !nothingToPick(f)) {
       errs.push(f.id === 'parts' ? f.label + 'を1つ以上入れてください' : f.id === 'photos' ? '写真を1枚以上付けてください'
-        : f.label + (f.id === 'line' || f.id === 'area' || f.type === 'choice' ? 'を選んでください' : 'を入力してください'));
+        : f.label + (picked(f) ? 'を選んでください' : 'を入力してください'));
     } else if (f.type === 'number' && !empty(f) && numberOf(F.extra[f.id]) === null) errs.push(f.label + 'は数字で入れてください');
   }
   if (errs.length) { const box = $('#formErr'); box.innerHTML = errs.map(esc).join('<br>'); box.scrollIntoView({ block: 'center' }); return; }
@@ -1690,15 +2258,351 @@ async function saveForm() {
     parts: use('parts') ? F.parts.map(p => ({ name: p.name.trim(), model: p.model.trim(), photo: p.photo || null })).filter(p => p.name || p.model || p.photo) : [],
     photos: use('photos') ? F.photos.slice(0, 4) : [], extra, updatedAt: now, deleted: false, _dirty: true,
   });
+  delete rec._fix; delete rec._fixBase;   // 直す画面で保存した記録は、画面で確かめた記録まるごとを送る（見直し待ちの項目だけの直しは終わり）
+  // 記録の新しい項目（1）。原文は、文章の欄に文字があれば（AIに振り分けを頼んだかどうかに関係なく）。直すときに書いていなければ、もとの原文を残す。
+  // 写真から読み取ったことは、写真と同じ扱い（使わない項目なら新しい記録には入れない）
+  const tr = v => String(v == null ? '' : v).trim();
+  const q = cleanQuality({
+    id: rec.id, causeType: use('causeType') ? F.causeType : '', failed: use('failed') ? tr(F.failed) : '', result: use('result') ? F.result : '',
+    downtime: use('downtime') ? F.downtime : '', symptomTags: F.symptomTags || [],
+    // 発生日時を消して保存したときは、保存した時刻が自動で入るので「自動」に数える（人が入れた時刻ではない）
+    autoFields: [F.autoAt || !F.occurredAt ? 'occurredAt' : '', F.autoLine && rec.line ? 'line' : ''].filter(Boolean),
+    rawText: tr(F.draftText) || F.rawText0 || '', context: F.context || '', aiNote: F.aiNote || '', photoText: use('photos') ? F.photoText : '',
+    aiFilled: F.aiFilled || [], equipCanon: canonEquip(rec.equipment), relatedId: F.relatedId, relation: F.relation, aiHistoryId: F.aiHistoryId,
+  });
+  for (const k of QUALITY_KEYS) {
+    // 前の版のアプリで作った記録（この端末にキーが無い）を直して、その項目が空のままなら、キーを作らない（送らない＝サーバーはシートの値を残す）
+    if (!isNew && rec[k] === undefined && (Array.isArray(q[k]) ? !q[k].length : !q[k])) continue;
+    rec[k] = q[k];
+  }
   await dbPut(rec);
   if (FORM_SHOWN.has('author')) { META.author = rec.author; metaSet('author', rec.author); }
   if (FORM_SHOWN.has('line')) { META.lastLine = rec.line; metaSet('lastLine', rec.line); }
-  SAVED = F.editId ? 'edit' : 'new';
+  showSaved(F.editId ? 'edit' : 'new', rec.id);
   FORM = newForm();
   DETAIL = rec.id;
+  // 見直し待ちなどから直す画面を開いていたら、その画面のタブで詳細を出す（詳細の［もどる］で、その一覧のその行へ戻る）
+  if (F.backTo) { TAB = F.backTo.tab; RETURN = F.backTo; }
   render();
   window.scrollTo(0, 0);
   syncNow();
+}
+
+/* =========================================================
+   13-2. 文章から記録の下書きを作る（AIが各欄に振り分け）
+   「記録する」の上の欄に、起きたこと・原因・やったことを話すように書くと、サーバー（GAS）経由でAIが
+   号機・場所・設備・症状・原因・対処・部品・「設定」で足した項目に振り分けて、下書きにする。
+   AIは保存しない（人が確かめて「保存」を押す）。人が入れた欄は上書きしない（空の欄だけ埋め、違う案は［置き換える］で選べる）。
+   言い直して押し直したときは、AIの印が残っている欄（人が直していない欄）を新しい答えに置き換える
+   ========================================================= */
+const OLD_DRAFT_MSG = 'サーバーの Code.gs が前の版のため、文章からの振り分けは使えません。Code.gs を新しい版に貼り替えて、デプロイを更新してください（管理者へ）';
+/* AIに渡す今の設定（号機・場所と設備・症状の言葉・記録する画面に出している「設定」で足した項目）。
+   数字の項目は単位も渡す（渡さないと、違う単位で話した値が数字だけで入る。例：kPa の項目に「-0.06MPa」の -0.06） */
+const draftMasters = () => ({ lines: LINES, areas: AREAS, symptoms: SYMPTOM_WORDS,
+  fields: FIELDS.filter(f => isCustom(f) && inForm(f)).map(f => ({ id: f.id, label: f.label, type: f.type, options: f.options, unit: f.type === 'number' ? f.unit || '' : '' })) });
+/* AIの下書きを、画面で使う形にそろえる（サーバーでも整えているが、念のため形を確かめる）。
+   結果・停止時間・原因の種類は決まった値だけ、症状の種類は今の症状の言葉にあるものだけ（5つまで） */
+function draftData(a) {
+  a = a && typeof a === 'object' && !Array.isArray(a) ? a : {};
+  const s = (x, n) => (typeof x === 'string' || typeof x === 'number' ? String(x) : '').replace(/\s+/g, ' ').trim().slice(0, n);
+  const ex = a.extra && typeof a.extra === 'object' && !Array.isArray(a.extra) ? a.extra : {};
+  const q = cleanQuality({ result: a.result, downtime: a.downtime, causeType: a.causeType });
+  const tags = [];
+  (Array.isArray(a.symptomTags) ? a.symptomTags : []).forEach(t => { t = s(symptomWord(t), 20); if (SYMPTOM_WORDS.includes(t) && !tags.includes(t) && tags.length < MAX_TAGS) tags.push(t); });
+  return {
+    line: s(a.line, 20), area: s(a.area, 20), equipment: s(a.equipment, 40), symptom: s(a.symptom, 300), cause: s(a.cause, 300), action: s(a.action, 300),
+    parts: (Array.isArray(a.parts) ? a.parts : []).map(p => ({ name: s(p && p.name, 40), model: s(p && p.model, 40) })).filter(p => p.name || p.model).slice(0, 5),
+    extra: Object.fromEntries(Object.keys(ex).filter(k => CUSTOM_ID.test(k)).map(k => [k, s(ex[k], 200)]).filter(x => x[1])),
+    note: s(a.note, 200),
+    result: q.result, failed: s(a.failed, 300), causeType: q.causeType, symptomTags: tags, downtime: q.downtime,
+  };
+}
+const sameEquip = (a, b) => norm(canonEquip(a)) === norm(canonEquip(b));
+/* 場所が決まっていて、その場所の一覧に無く、別の場所の一覧にはある設備か（入れると場所と設備が食い違う） */
+function equipOutOfArea(area, e) {
+  if (!area || !e) return false;
+  const inList = a => equipOfArea(a).some(x => sameEquip(x, e));
+  return !inList(area) && Object.keys(AREAS).some(a => a !== area && inList(a));
+}
+/* 場所を from から to に変えると外す設備か（from の一覧にあって、to の一覧に無い設備。場所を押して選び直したときと同じ考え方） */
+function equipLeaves(from, to, e) {
+  const eq = canonEquip(e);
+  return from !== to && !!eq && equipOfArea(from).includes(eq) && !equipOfArea(to).includes(eq);
+}
+/* 下書きを記録の欄に入れる。画面に出している欄のうち、次の欄にだけ入れる：
+   ・空の欄（号機は、前回の号機を自動で入れただけのときも入れる）
+   ・AIの印が残っている欄（前にAIが入れて、人が直していない欄）。言い直して押し直したときは、新しい答えに置き換える
+     （新しい答えでその欄が空なら、前の値を残す。消さない）
+   人が入れた・直した欄で違う値だったものは、AIの案として kept に残す（［置き換える］で選べる） */
+function applyDraft(F, d) {
+  const filled = [], kept = [];
+  const empty = v => !String(v == null ? '' : v).trim();
+  const marked = id => (F.aiFilled || []).includes(id);
+  // 案の表示（show）：結果・停止時間は名前で出す（value は記録に入れる値）
+  const keep = (id, value) => kept.push({ id, label: shortLabel(fieldById(id)), value, show: own(PICKS, id) ? labelOf(PICKS[id], value) : value });
+  // 1つの欄に入れる：空の欄・AIの印の欄なら入れる（同じ値ならそのまま）。人が入れた欄で違う値なら、案に出す
+  const put = (id, cur, v, same, set) => {
+    if (empty(cur)) { set(); filled.push(id); }
+    else if (same(cur, v)) return;
+    else if (marked(id)) { set(); filled.push(id); }
+    else keep(id, v);
+  };
+  if (shown('line') && d.line && LINES.includes(d.line)) {
+    if (empty(F.line) || F.autoLine || (marked('line') && F.line !== d.line)) { F.line = d.line; F.autoLine = false; filled.push('line'); }
+    else if (F.line !== d.line) keep('line', d.line);
+  }
+  // 場所：入れたあとの設備（AIの印の設備は新しい答えの設備に置き換わる）が別の場所の設備なら、場所は入れない（場所と設備の食い違いを作らない）。
+  // ただし、選んである場所の設備が入っているだけなら、場所は案に出す（［置き換える］で前の場所の設備は外れるので、食い違わない）
+  const eqAfter = shown('equipment') && d.equipment && marked('equipment') && !empty(F.equipment) ? d.equipment : F.equipment;
+  if (shown('area') && d.area && own(AREAS, d.area)) {
+    if (!equipOutOfArea(d.area, eqAfter)) put('area', F.area, d.area, (a, b) => a === b, () => { F.area = d.area; });
+    else if (!empty(F.area) && eqAfter === F.equipment && equipLeaves(F.area, d.area, F.equipment)) keep('area', d.area);
+  }
+  // 設備：選んである場所の一覧に無く、別の場所の一覧にある設備なら入れない（一覧に無い設備名は、そのまま入れる）
+  if (shown('equipment') && d.equipment && !equipOutOfArea(F.area, d.equipment)) {
+    put('equipment', F.equipment, d.equipment, sameEquip, () => { F.equipment = d.equipment; });
+  }
+  // 場所の案には、同じ答えの設備（その場所の一覧にある設備）を添える。場所を置き換えると設備の欄が空になるときだけ（［置き換える］で一緒に入れる）
+  const ka = kept.find(k => k.id === 'area');
+  const eqNew = ka && shown('equipment') && d.equipment ? equipOfArea(d.area).find(x => sameEquip(x, d.equipment)) : '';
+  if (eqNew && (empty(F.equipment) || equipLeaves(F.area, d.area, F.equipment))) Object.assign(ka, { equip: eqNew, equipLabel: shortLabel(fieldById('equipment')) });
+  for (const id of ['symptom', 'cause', 'action', 'failed']) {
+    if (shown(id) && d[id]) put(id, F[id], d[id], (a, b) => norm(a) === norm(b), () => { F[id] = d[id]; });
+  }
+  // 原因の種類・結果・停止時間（選ぶ欄）も同じ決まりで入れる
+  for (const id of ['causeType', 'result', 'downtime']) {
+    if (shown(id) && d[id]) put(id, F[id], d[id], (a, b) => a === b, () => { F[id] = d[id]; });
+  }
+  // 症状の種類：人が選んだ種類が無いときだけ入れる（AIの印が残っている種類は、新しい答えに置き換える。新しい答えが空なら前のまま）
+  if (shown('symptom') && d.symptomTags.length) {
+    const cur = F.symptomTags || [];
+    if ((!cur.length || marked('symptomTags')) && cur.join('\n') !== d.symptomTags.join('\n')) { F.symptomTags = d.symptomTags.slice(); filled.push('symptomTags'); }
+  }
+  // 部品：AIが入れた部品には印（ai: true）を付けておく。
+  // 部品の欄にAIの印が残っていれば、前回AIが入れた部品を新しい答えの部品に入れ替える（人が入れた部品は残す）。
+  // 印が無ければ、名前と型式が同じものが無い部品だけ後ろに足す。どちらも合わせて5件まで
+  if (shown('parts') && d.parts.length) {
+    const swap = marked('parts');
+    const filledPart = p => String(p.name || '').trim() || String(p.model || '').trim() || p.photo;
+    const has = F.parts.filter(p => filledPart(p) && !(swap && p.ai));
+    if (!swap) has.forEach(p => { delete p.ai; });   // 印の無い欄の部品は、人が確かめた部品（入れ替えない）
+    const key = p => norm(p.name) + '|' + norm(p.model);
+    const add = d.parts.filter(p => !has.some(q => key(q) === key(p))).slice(0, Math.max(0, 5 - has.length));
+    const next = has.concat(add.map(p => ({ name: p.name, model: p.model, photo: null, ai: true })));
+    const cur = F.parts.filter(filledPart);
+    const same = next.length === cur.length && next.every((p, i) => key(p) === key(cur[i]));
+    // 足す部品が無いとき（新しい答えの部品が、人が入れた部品と同じだけ）は、前の部品をそのまま残す
+    if (add.length && !(swap && same)) { F.parts = next; filled.push('parts'); }
+  }
+  // 「設定」で足した項目：空の欄・AIの印の欄だけ。数字は数字に直せたもの、選ぶ項目は今の選択肢にあるものだけ
+  for (const f of FIELDS.filter(f => isCustom(f) && inForm(f))) {
+    let v = own(d.extra, f.id) || '';
+    if (f.type === 'number') v = numberOf(v) || '';
+    else if (f.type === 'choice' && !f.options.includes(v)) v = '';
+    if (!v) continue;
+    put(f.id, F.extra[f.id], v, cur => (f.type === 'number' ? numberOf(cur) : String(cur).trim()) === v, () => { F.extra[f.id] = v; });
+  }
+  F.aiFilled = [...new Set((F.aiFilled || []).concat(filled))];
+  return { filled, kept };
+}
+/* 「AIで各欄に振り分ける」 */
+async function runDraft() {
+  const F = FORM;
+  if (!F || (F.draft && F.draft.state === 'loading')) return;
+  const ta = $('#fDraft');
+  if (ta) F.draftText = ta.value;
+  if (!F.draftText.trim()) { toast('文章を入れてください'); return; }
+  if (!navigator.onLine) { toast('オフラインのため、AIには頼めません'); return; }
+  F.draft = { state: 'loading', msg: '', filled: [], kept: [], note: '' };
+  redrawForm();
+  try {
+    // サーバーは80秒以内に必ず返す（AIの時間切れも理由つきで返る）ので、それより長く待つ
+    const res = await gasFetch({ method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'draft', key: KEY, text: F.draftText, context: F.context, masters: draftMasters() }) }, null, 100000);
+    if (FORM !== F) return;   // 待っている間に保存した・やめた・別の記録を開いた → この結果は捨てる
+    const d = draftData(res.draft);
+    const { filled, kept } = applyDraft(F, d);
+    F.draft = { state: 'done', msg: '', filled, kept, note: d.note, by: typeof res.by === 'string' ? res.by : '' };
+    F.aiNote = d.note;   // 保存のとき記録に残す（直近の答えのメモ。あとで押し直してエラーになっても消さない）
+    // どこを見ていても気づけるよう、上にも短く出す（結果の欄が画面の外・別の画面に居るときのため）
+    const n = filled.length;
+    toast(n ? `AIが ${n}${n < 10 ? 'つ' : '個'}の欄に下書きしました。確かめてから保存してください` : 'AIが入れられる欄はありませんでした');
+  } catch (e) {
+    if (e.code === 'key') { SYNC.state = 'key'; renderSync(); }
+    if (FORM !== F) return;
+    // アプリだけ新しくして、サーバーの Code.gs が前のままだと「知らない操作です」が返る
+    F.draft = { state: 'error', msg: /知らない操作/.test(e.message) ? OLD_DRAFT_MSG : e.message, filled: [], kept: [], note: '' };
+    if (e.code === 'key') toast(e.message);   // 合言葉が違うとこの欄は出さないので、理由を知らせる
+  }
+  if (TAB === 'record' && !DETAIL) {   // 別の画面を見ていたら書き換えない（戻ったときに表示される）
+    // 待っている間にほかの欄へ文字を入れていたら、その欄は作り直さない（変換中の文字が二重になる・スマホのキーボードが閉じるため）
+    const a = typingAt();
+    if (a) {   // 上に結果のメッセージが出て下の欄が押し下げられても、入力中の欄が画面の中で動かないようにする
+      const t0 = a.getBoundingClientRect().top;
+      refreshForm(a);
+      if (a.isConnected) window.scrollTo(0, window.scrollY + a.getBoundingClientRect().top - t0);
+    } else redrawForm();
+    if (!a || a.id === 'fDraft') showDraftResult();   // ほかの欄に入力している途中は、その欄が画面の外へ行かないよう動かさない
+  }
+}
+/* ［置き換える］：すでに入っていた欄を、AIの案にする */
+function useDraft(id) {
+  const F = FORM, d = F && F.draft, k = d && (d.kept || []).find(x => x.id === id);
+  if (!k) return;
+  const ids = [id];
+  if (isCustom(fieldById(id))) F.extra[id] = k.value;
+  else if (['line', 'area', 'equipment', 'symptom', 'cause', 'action', 'failed', 'causeType', 'result', 'downtime'].includes(id)) {
+    if (id === 'equipment' && equipOutOfArea(F.area, k.value)) { toast('選んである' + shortLabel(fieldById('area')) + 'の設備ではないため、置き換えられません'); return; }
+    // 前の場所の設備は外す（場所を押して選び直したときと同じ）
+    if (id === 'area' && equipLeaves(F.area, k.value, F.equipment)) { F.equipment = ''; dropAi('equipment'); }
+    F[id] = k.value;
+    if (id === 'line') F.autoLine = false;
+    // 場所の案に同じ答えの設備が添えてあれば、設備の欄が空のときだけ一緒に入れる（人が入れた設備は上書きしない）
+    if (id === 'area' && k.equip && shown('equipment') && !String(F.equipment || '').trim()) { F.equipment = k.equip; ids.push('equipment'); }
+  } else return;
+  F.aiFilled = [...new Set((F.aiFilled || []).concat(ids))];
+  d.kept = d.kept.filter(x => !ids.includes(x.id));
+  redrawForm();
+}
+/* 記録する画面を描き直す（スクロール位置と、文字を入れている欄のカーソルを保つ） */
+function redrawForm() {
+  const y = window.scrollY, a = document.activeElement;
+  let sel = '';
+  if (a && a.closest && a.closest('#view')) {
+    if (a.id) sel = '#' + CSS.escape(a.id);
+    else if (a.dataset.pf) {
+      // 部品の欄は、番号ではなく部品そのもので探す（AIの下書きで部品の並びが変わることがあるため）。無くなっていればカーソルは戻さない
+      const j = FORM.parts.indexOf(PARTS_SHOWN[+a.dataset.i]);
+      if (j >= 0) sel = `[data-pf="${a.dataset.pf}"][data-i="${j}"]`;
+    }
+  }
+  const before = sel ? a.value : '';
+  let pos = null;
+  try { if (sel && typeof a.selectionStart === 'number') pos = [a.selectionStart, a.selectionEnd]; } catch (e) { pos = null; }
+  renderForm();
+  window.scrollTo(0, y);
+  const b = sel && document.querySelector('#view ' + sel);
+  if (b) {
+    b.focus({ preventScroll: true });
+    if (pos && b.value !== before) pos = [b.value.length, b.value.length];   // 値が変わった欄（AIが入れた）は、カーソルを最後に置く（打った字がAIの値の頭に入らないように）
+    try { if (pos) b.setSelectionRange(pos[0], pos[1]); } catch (e) { /* カーソルを置けない欄 */ }
+  }
+}
+/* 記録する画面で、文字を入れている途中の欄（フォーカスのある文字の欄。選ぶ欄・ボタンは数えない） */
+function typingAt() {
+  const a = document.activeElement;
+  if (!a || !a.closest || !a.closest('#view')) return null;
+  return a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !/^(radio|checkbox|button|submit|reset|file|image)$/.test(a.type)) ? a : null;
+}
+/* その入力欄に入れるはずの FORM の値（部品の欄は別に扱うので null） */
+const formValueOf = a => (FORM_INPUTS[a.id] ? String(FORM[FORM_INPUTS[a.id]] == null ? '' : FORM[FORM_INPUTS[a.id]])
+  : a.dataset.xf ? String(FORM.extra[a.dataset.xf] == null ? '' : FORM.extra[a.dataset.xf]) : null);
+/* 入力中の欄 a を作り直さずに、記録する画面のほかの所を描き直す（AIの結果が返ったとき、待っている間に別の欄へ文字を入れていた）。
+   作り直すと、かな漢字変換の途中の文字が確定した文字として残り（「たなか田中」のように二重になる）、スマホではキーボードが閉じるため。
+   入力中の欄は、印と、AIが入れた値（まだ何も打っていない欄に入ったとき）だけを直す */
+function refreshForm(a) {
+  const F = FORM, tmp = document.createElement('div');
+  const aPart = a.dataset.pf ? PARTS_SHOWN[+a.dataset.i] : null;   // 入力中の部品（描き直す前の並びで探す）
+  const slot = $('#draftSlot'), dbox = slot && slot.querySelector('.dbox');
+  if (slot) {
+    tmp.innerHTML = draftBox(F);
+    const nb = tmp.querySelector('.dbox');
+    if (dbox && nb && dbox.contains(a)) {   // 文章の欄で言い直している途中：文章の欄は触らず、ボタンと結果のメッセージだけを入れ替える
+      dbox.className = nb.className;
+      dbox.querySelector('#draftBtn').replaceWith(nb.querySelector('#draftBtn'));
+      dbox.querySelector('.dres').innerHTML = nb.querySelector('.dres').innerHTML;
+    } else slot.innerHTML = tmp.innerHTML;
+  }
+  for (const box of document.querySelectorAll('#view .f[data-fid]')) {
+    const f = fieldById(box.dataset.fid);
+    if (!f) continue;
+    const html = (FORM_PARTS[f.id] || customPart)(f, F);
+    if (!box.contains(a)) { box.outerHTML = html; continue; }
+    tmp.innerHTML = html;
+    const nb = tmp.firstElementChild, l = box.querySelector('.l'), nl = nb.querySelector('.l');
+    // 印（欄の印のクラスと、見出しの横の「AI」）
+    box.className = nb.className;
+    if (l && nl) { l.querySelectorAll('.aimark').forEach(m => m.remove()); nl.querySelectorAll('.aimark').forEach(m => l.appendChild(m)); }
+    if (a.dataset.pf) { refreshParts(a, aPart); continue; }
+    if (f.id === 'equipment') {   // 場所が変わったときの設備の候補と、入力欄の案内の文
+      const ch = box.querySelector('#eqChips'), nch = nb.querySelector('#eqChips'), ni = nb.querySelector('#fEquip');
+      if (ch) ch.remove();
+      if (nch) box.appendChild(nch);
+      if (ni) a.placeholder = ni.placeholder;
+    }
+    if (f.id === 'symptom') {   // 症状の種類（AIが選んだ種類と、その印）
+      const st = box.querySelector('#symTags'), nst = nb.querySelector('#symTags');
+      if (st && nst) st.innerHTML = nst.innerHTML;
+    }
+    // まだ何も打っていない欄にAIが入れたときだけ、値を入れてカーソルを最後に置く（変換中の欄は触らない）
+    const v = formValueOf(a);
+    if (v !== null && a !== COMPOSING && a.value !== v) {
+      a.value = v;
+      try { a.setSelectionRange(v.length, v.length); } catch (e) { /* カーソルを置けない欄 */ }
+    }
+  }
+  updateHint();
+}
+/* 部品の欄で入力中：入力中の行は作り直さず、ほかの行だけを入れ替える（部品は番号ではなく、部品そのもので探す） */
+function refreshParts(a, part) {
+  const pbox = $('#partsBox'), row = a.closest('.part'), j = FORM.parts.indexOf(part);
+  const tmp = document.createElement('div');
+  tmp.innerHTML = partsHtml();
+  if (!pbox) return;
+  // 入力中の部品が無くなった（まだ何も書いていない行・人が確かめていないAIの部品が入れ替わった）→ ほかの部品にカーソルは移さない
+  if (j < 0 || !row) { pbox.replaceChildren(...tmp.childNodes); return; }
+  const fresh = [...tmp.children];
+  [...pbox.childNodes].forEach(n => { if (n !== row) n.remove(); });
+  fresh.slice(0, j).forEach(n => pbox.insertBefore(n, row));
+  fresh.slice(j + 1).forEach(n => pbox.appendChild(n));
+  row.querySelectorAll('[data-i]').forEach(e => { e.dataset.i = String(j); });
+  row.querySelectorAll('[data-photo^="form:part:"]').forEach(e => { e.dataset.photo = 'form:part:' + j; });
+}
+/* 結果が下の「保存する」の帯に隠れないよう、見える所まで下げる（スマホでは、ボタンを出すために少しだけスクロールして押すことが多い）。
+   ボタンが画面に出ているときだけ。上には動かさず、ボタンが上の見出しの下に隠れるほどは下げない（下の欄を見ているときは動かさない） */
+function showDraftResult() {
+  const r = $('#view .dres'), b = $('#draftBtn'), bar = $('#view .savebar'), top = $('.top');
+  if (!r || !b || !bar || !r.firstElementChild) return;
+  const lim = bar.getBoundingClientRect().top - 8, head = (top ? top.getBoundingClientRect().bottom : 0) + 8;
+  const bt = b.getBoundingClientRect(), dy = Math.min(r.getBoundingClientRect().bottom - lim, bt.top - head);
+  if (bt.bottom > head && bt.top < lim && dy > 0) window.scrollBy(0, dy);
+}
+/* 話す順番の案内（たたんでおき、押すと開く）と、同じ順番の例文。言われた順に話すと、AIが欄に振り分けやすく、記録も正確になる */
+const DRAFT_ORDER = ['どこで（号機・設備）', '何が起きた（いつから・何回）', '測った値（単位つき）', '直前に変えたこと（品種切替・フィルム交換 など）',
+  'どこがどうなっていた（推測なら『たぶん』）', '何をした（ダメだったことも）', '直ったか・様子見か'];
+const DRAFT_PLACEHOLDER = '例）3号の充填部のチャック開口吸盤。朝から袋を吸わないのが3回。真空圧は40kPa。直前にフィルムを交換した。吸盤が破れていた。清掃ではダメで、SP-VP15 に交換したら直った';
+let DRAFT_GUIDE_OPEN = false;   // 話す順番の案内を開いたままにする（描き直しても閉じない）
+/* 「文章で書く」の欄（AIが使えるときだけ。新しい記録でも、直すときでも出す） */
+function draftBox(F) {
+  if (!aiAvailable() || !F) return '';
+  const d = F.draft, busy = !!(d && d.state === 'loading');
+  return `<section class="aibox dbox${busy ? ' busy' : ''}" aria-labelledby="dHead">
+    <div class="aih" id="dHead">${ICON.pen}文章で書く（AIが各欄に振り分け）</div>
+    <p class="dsub">起きたこと・原因・やったことを、話すように書いてください。AIが下の欄に下書きします（保存はされません）。スマホはキーボードのマイクで話して入力できます。</p>
+    ${F.context ? `<p class="dctx">チャットで聞いた『${esc(F.context)}』も一緒にAIに渡します</p>` : ''}
+    <details class="dguide"${DRAFT_GUIDE_OPEN ? ' open' : ''}><summary>話す順番の例（押すと開く）</summary><ol>${DRAFT_ORDER.map(x => `<li>${esc(x)}</li>`).join('')}</ol></details>
+    <textarea id="fDraft" class="inp" maxlength="1000" aria-labelledby="dHead" placeholder="${esc(DRAFT_PLACEHOLDER)}">${esc(F.draftText)}</textarea>
+    <button type="button" id="draftBtn" class="btn sub" data-act="draft"${busy ? ' disabled aria-busy="true"' : ''}>${busy ? '振り分けています…（10〜30秒ほど）' : 'AIで各欄に振り分ける'}</button>
+    <div class="dres" role="status" aria-live="polite">${busy ? '' : draftResult(d)}</div>
+  </section>`;
+}
+/* 結果のメッセージ（入れた欄の数・そのままにした欄とAIの案・AIのメモ） */
+function draftResult(d) {
+  if (!d) return '';
+  if (d.state === 'error') return `<div class="dmsg err">${esc(d.msg)}</div>`;
+  if (d.state !== 'done') return '';
+  const n = d.filled.length;
+  return (n ? `<div class="dmsg">AIが ${n}${n < 10 ? 'つ' : '個'}の欄に下書きしました（AIの印の欄）。内容を確かめてから保存してください。</div>`
+    : '<div class="dmsg none">AIが入れられる欄はありませんでした。</div>')
+    + (d.kept.length ? `<div class="dkept"><div>すでに入っている欄はそのままにしました：</div>${d.kept.map(k => `<div class="dkrow">
+      <span class="dkv">${esc(k.label)}：AIの案『${esc(k.show || k.value)}』${k.equip ? `（${esc(k.equipLabel)}『${esc(k.equip)}』も入れます）` : ''}</span><button type="button" class="chip sug" data-act="draft-use" data-k="${esc(k.id)}">置き換える</button></div>`).join('')}</div>` : '')
+    + (d.note ? `<div class="dnote">AIのメモ：${esc(d.note)}</div>` : '')
+    + (d.by ? `<div class="aifoot">回答したAI：${esc(d.by)}</div>` : '');
+}
+/* 同期のあとでAIが使えるかどうかが変わったら、「文章で書く」の欄だけを出し入れする（入力中のほかの欄は描き直さない） */
+function syncDraftSlot() {
+  const slot = document.getElementById('draftSlot');
+  if (slot && FORM && TAB === 'record' && !DETAIL && !!slot.firstElementChild !== aiAvailable()) slot.innerHTML = draftBox(FORM);
 }
 
 /* =========================================================
@@ -1706,11 +2610,16 @@ async function saveForm() {
    ========================================================= */
 function renderFlowTab() {
   const recs = visibleRecords().filter(r => !FT.area || r.area === FT.area);
+  const review = reviewList();
+  const seg = (v, label) => `<button type="button" data-act="ft-mode" data-v="${v}" class="${FT.mode === v ? 'on' : ''}">${label}</button>`;
   let html = `<h2 class="ttl">フロー</h2>
-    <p class="sub">記録から自動で作ったまとめです。同じ設備の同じトラブルを1つにし、原因 → 対処 → 交換部品を多い順に並べています。</p>
-    <div class="seg"><button type="button" data-act="ft-mode" data-v="flow" class="${FT.mode === 'flow' ? 'on' : ''}">フロー</button><button type="button" data-act="ft-mode" data-v="list" class="${FT.mode === 'list' ? 'on' : ''}">新しい順</button></div>
+    <p class="sub">${FT.mode === 'review'
+      ? '原因や結果などが空の記録です（古い順）。チップを押すと、その記録のその項目だけを直して保存します。書き足すほど、AIの対処案が正確になります。'
+      : '記録から自動で作ったまとめです。同じ設備の同じトラブルを1つにし、原因 → 対処 → 交換部品を多い順に並べています。'}</p>
+    <div class="seg">${seg('flow', 'フロー')}${seg('list', '新しい順')}${seg('review', `見直し待ち（${review.filter(x => x.why.length).length}）`)}</div>
     <div class="chips">${['', ...new Set([...Object.keys(AREAS), ...visibleRecords().map(r => r.area).filter(Boolean)])].map(a => `<button type="button" class="chip pill${FT.area === a ? ' on' : ''}" data-act="ft-area" data-v="${esc(a)}">${esc(a || 'すべて')}</button>`).join('')}</div>`;
-  if (!recs.length) html += '<p class="muted" style="margin-top:16px">まだ記録がありません。</p>';
+  if (FT.mode === 'review') html += reviewHtml(review);
+  else if (!recs.length) html += '<p class="muted" style="margin-top:16px">まだ記録がありません。</p>';
   else if (FT.mode === 'flow') html += buildFlows(recs).map(f => flowCard(f, false)).join('');
   else html += recs.slice().sort(byNewest).slice(0, 100).map(r => recCard(r)).join('');
   if (SAMPLES.length) {
@@ -1718,12 +2627,181 @@ function renderFlowTab() {
   }
   $('#view').innerHTML = html;
 }
+/* ---------------------------------------------------------
+   14-1. 見直し待ち（主任が記録を整える。書き足すほど、AIの答えが正確になる）
+   対象：本物の記録（サンプル・削除済みは除く）。理由：原因が空・原因の種類が空か「不明」・結果が空・結果が「様子見」のまま1日以上・
+   停止時間が空・設備名が一覧（と別の呼び方）に無い・発生日時が自動のまま・AIが入れた欄が人に確かめられていない。
+   「使わない」にした項目は理由にしない（チームで使わないと決めた欄で、手間を増やさない）。
+   件数が多くても見やすいよう、古い順に並べ、理由で絞り込め、一度に REVIEW_STEP 件ずつ出す
+   --------------------------------------------------------- */
+// 様子見のまま、これだけ経ったら出す（1日。発生日時から。最後に保存した時刻からにすると、ほかの項目を直しただけで消えてしまうため）
+const WATCH_STALE_MS = 86400000;
+const REVIEW_STEP = 30;
+/* 理由の種類 [キー, 絞り込みのチップの名前（今の項目の名前で作る）] */
+const REVIEW_KINDS = [
+  ['cause', () => fname('cause') + 'なし'], ['causeType', () => fname('causeType') + '（なし・不明）'], ['result', () => fname('result') + 'なし'],
+  ['watch', () => labelOf(RESULTS, 'watch') + 'のまま'], ['downtime', () => fname('downtime') + 'なし'], ['equip', () => fname('equipment') + 'が一覧に無い'],
+  ['at', () => fname('occurredAt') + 'が自動'], ['ai', () => 'AIが入れたまま'],
+];
+/* 項目の短い名前（「設定」で名前を変えていれば、その名前） */
+const fname = id => shortLabel(fieldById(id) || builtinOf(id));
+/* 設備名が、その場所の一覧（と別の呼び方）にあるか。場所が一覧に無い（消した）ときは、どこかの場所の一覧にあればよい */
+function equipKnown(r) {
+  if (!String(r.equipment || '').trim()) return false;
+  const lists = own(AREAS, r.area) ? [equipOfArea(r.area)] : Object.values(AREAS);
+  return lists.some(l => l.some(e => sameEquip(e, r.equipment)));
+}
+/* AIが入れて、まだ人が確かめていない欄の名前（消した項目は数えない） */
+function aiLeft(r) {
+  return (r.aiFilled || []).map(id => { if (id === 'symptomTags') return '症状の種類'; const f = fieldById(id); return f && !f.deleted ? shortLabel(f) : ''; }).filter(Boolean);
+}
+/* 見直し待ちの理由 [{ k, label }]（k は REVIEW_KINDS のキー） */
+function reviewReasons(r) {
+  const why = [], add = (k, label) => why.push({ k, label });
+  if (shown('cause') && !String(r.cause || '').trim()) add('cause', fname('cause') + 'なし');
+  if (shown('causeType') && (!r.causeType || r.causeType === '不明')) add('causeType', fname('causeType') + (r.causeType ? 'が「不明」' : 'なし'));
+  if (shown('result')) {
+    const since = Date.parse(r.occurredAt);
+    if (!r.result) add('result', fname('result') + 'なし');
+    else if (r.result === 'watch' && Number.isFinite(since) && Date.now() - since >= WATCH_STALE_MS) {
+      add('watch', `${labelOf(RESULTS, 'watch')}のまま${Math.floor((Date.now() - since) / 86400000)}日`);
+    }
+  }
+  if (shown('downtime') && !r.downtime) add('downtime', fname('downtime') + 'なし');
+  if (!equipKnown(r)) add('equip', fname('equipment') + 'が一覧に無い');
+  if ((r.autoFields || []).includes('occurredAt')) add('at', fname('occurredAt') + 'が自動のまま');
+  const ai = aiLeft(r);
+  if (ai.length) add('ai', 'AIが入れたまま（' + ai.join('・') + '）');
+  return why;
+}
+/* 見直し待ちの記録 [{ r, why }]（場所を選んでいればその場所だけ。古い順）。この画面でその場で直した記録は、理由が無くなっても残す */
+const reviewList = () => RECORDS.filter(r => !r.deleted && !r.sample && (!FT.area || r.area === FT.area))
+  .map(r => ({ r, why: reviewReasons(r) })).filter(x => x.why.length || FT.touched.has(x.r.id))
+  .sort((a, b) => (a.r.occurredAt || '').localeCompare(b.r.occurredAt || '') || String(a.r.id).localeCompare(String(b.r.id)));
+function reviewHtml(all) {
+  const live = all.filter(x => x.why.length);
+  if (!all.length) return '<p class="muted" style="margin-top:16px">見直し待ちの記録はありません。</p>';
+  const count = k => live.filter(x => x.why.some(w => w.k === k)).length;
+  const fchip = (k, label, n) => `<button type="button" class="chip pill${FT.reason === k ? ' on' : ''}" data-act="ft-reason" data-v="${esc(k)}">${esc(label)}<span class="mono">${n}</span></button>`;
+  const list = all.filter(x => !FT.reason || x.why.some(w => w.k === FT.reason) || FT.touched.has(x.r.id));
+  let html = `<div class="rvfl" id="rvfl">理由で絞り込む</div><div class="chips rvf" role="group" aria-labelledby="rvfl">${fchip('', 'すべて', live.length)}${REVIEW_KINDS.filter(([k]) => count(k) || FT.reason === k).map(([k, l]) => fchip(k, l(), count(k))).join('')}</div>`;
+  html += list.length ? list.slice(0, FT.limit).map(x => reviewItem(x.r, x.why)).join('') : '<p class="muted" style="margin-top:16px">この理由の記録はありません。</p>';
+  if (list.length > FT.limit) html += `<button type="button" class="btn sub rvmore" data-act="rv-more">さらに表示（残り ${list.length - FT.limit}件）</button>`;
+  return html;
+}
+/* 1件：記録の行（押すと詳細）・理由の札・その場で押せるチップ（結果・原因の種類・停止時間。理由のある項目と、この画面で直した項目だけ）・
+   発生日時が自動のままなら［このままでよい］・［直す］ */
+function reviewItem(r, why) {
+  const has = k => why.some(w => w.k === k), done = FT.touched.get(r.id) || new Set(), id = esc(r.id);
+  const pick = (k, v, label, on) => `<button type="button" class="chip sug${on ? ' on' : ''}" data-act="rv-set" data-id="${id}" data-k="${k}" data-v="${esc(v)}" aria-pressed="${on}">${esc(label)}</button>`;
+  const group = k => (done.has(k) || has(k) || (k === 'result' && has('watch'))
+    ? `<div class="rvg"><span class="rvk">${esc(fname(k))}</span>${PICKS[k].map(([v, l]) => pick(k, v, l, r[k] === v)).join('')}</div>` : '');
+  return `<div class="rvi">${recCard(r)}
+    <div class="rvw">${why.length ? why.map(w => `<span class="badge">${esc(w.label)}</span>`).join('') : '<span class="badge ok">見直し済み</span>'}</div>
+    ${group('result')}${group('causeType')}${group('downtime')}
+    <div class="chips rva">${has('at') ? `<button type="button" class="chip sug" data-act="rv-set" data-id="${id}" data-k="at" data-v="1">${esc(fname('occurredAt'))}はこのままでよい</button>` : ''}<button type="button" class="chip" data-act="rv-edit" data-id="${id}">直す</button></div>
+  </div>`;
+}
+/* 見直し待ち（と記録の詳細）で押したチップで、その記録のその項目だけを直して保存・同期する（updatedAt を新しくする。必須の検査はしない）。
+   k：result・causeType・downtime（v は選んだ値）、at（発生日時はこのままでよい）、ai（AIが入れた欄を確かめた）。
+   選んである値を押しても何もしない（この画面では値を消さない。外すときは［直す］から）。
+   記録は1件まるごと送るので、この端末が最新を読む前に、ほかの端末が同じ記録の別の項目（原因など）を直していると、端末の古い値で上書きして
+   消してしまう。そこで、押して直した項目を記録に覚えておき（_fix。_fixBase はもとにした記録の更新日時）、送る前に共有先の最新の記録を読んで、
+   その上に直した項目だけをかけ直してから送る（syncNow・rebaseFix） */
+async function reviewFix(id, k, v) {
+  const r = RECORDS.find(x => x.id === id);
+  if (!r || r.deleted || r.sample) return;
+  let msg, op;
+  if (k === 'at') {
+    if (!(r.autoFields || []).includes('occurredAt')) return;
+    op = { k };
+    msg = fname('occurredAt') + 'はこのままにしました';
+  } else if (k === 'ai') {
+    if (!(r.aiFilled || []).length) return;
+    op = { k, base: r.aiFilled.slice() };   // 確かめた欄（見えていた印）
+    msg = 'AIが入れた欄を、確かめたことにしました';
+  } else if (own(PICKS, k) && labelOf(PICKS[k], v)) {
+    if (r[k] === v) return;
+    op = { k, v, base: r[k] || '' };   // 押す前の値（ほかの端末が同じ項目を直したかを見分ける）
+    msg = `「${fname(k)}：${labelOf(PICKS[k], v)}」を保存しました`;
+  } else return;
+  op.at = new Date().toISOString();
+  applyFix(r, op);
+  // 覚えるのは共有しているときだけ。「直す」画面の変更をまだ送っていない記録は、今までどおり記録まるごとを送る
+  if (GAS_URL && (!r._dirty || r._fix)) { if (!r._fix) { r._fix = []; r._fixBase = r.updatedAt; } r._fix.push(op); }
+  r.updatedAt = op.at; r._dirty = true;
+  // 同じ記録を記録する画面で直している途中なら、その画面にも同じ値を入れる（あとで保存したときに、押した値を戻さないように）。
+  // 開いたときの値（FORM.orig）にも入れる（もう保存した値なので、直している途中の入力には数えない）
+  if (FORM && FORM.editId === id) {
+    const o = FORM.orig || {};
+    if (k === 'at') FORM.autoAt = o.autoAt = false;
+    else if (k === 'ai') { FORM.aiFilled = []; o.aiFilled = []; }
+    else { FORM[k] = o[k] = v; dropAi(k); o.aiFilled = (o.aiFilled || []).filter(x => x !== k); }
+  }
+  await dbPut(r);
+  if (TAB === 'flow' && !DETAIL && FT.mode === 'review') FT.touched.set(id, (FT.touched.get(id) || new Set()).add(k));
+  toast(msg);
+  const y = window.scrollY;
+  render();
+  window.scrollTo(0, y);
+  syncNow();
+}
+/* 直した項目（op）を記録 t にかける。srvAt：共有先の最新の記録にかけ直すときの、その記録の更新日時。
+   選ぶ項目は、この端末で押したあとに、ほかの端末が同じ項目を直していれば、そちらを残す（あとから直した方が勝つ。記録の保存と同じ決まり） */
+function applyFix(t, op, srvAt) {
+  if (op.k === 'at') { if ((t.autoFields || []).includes('occurredAt')) t.autoFields = t.autoFields.filter(x => x !== 'occurredAt'); return; }
+  if (op.k === 'ai') { if (t.aiFilled) t.aiFilled = t.aiFilled.filter(x => !op.base.includes(x)); return; }   // 確かめた欄だけ外す
+  if (srvAt && (t[op.k] || '') !== op.base && srvAt > op.at) return;
+  t[op.k] = op.v;
+  if (t.aiFilled) t.aiFilled = t.aiFilled.filter(x => x !== op.k);   // 人が選んだので、AIの印は外す（キーが無い記録には足さない＝サーバーの値を消さない）
+}
+/* 共有先の最新の記録 raw の上に、この端末で直した項目（_fix）をかけ直して、送る記録 local を作り直す（未送信のまま） */
+function rebaseFix(local, raw) {
+  const srv = fromWire(raw);
+  if (!srv) return;
+  keepLocal(srv, raw, local);   // 前の版の Code.gs は新しい項目を返さない（端末の値を使う）
+  keepImages(srv, local);
+  local._fix.forEach(op => applyFix(srv, op, srv.updatedAt));
+  // 更新日時は共有先の記録より新しくする（端末の時計が遅れていても、直した項目が「古い保存」として捨てられないように）
+  const at = new Date(Math.max(Date.now(), (Date.parse(srv.updatedAt) || 0) + 1)).toISOString();
+  Object.assign(local, srv, { updatedAt: at, _dirty: true, _fix: local._fix, _fixBase: srv.updatedAt });
+}
+/* 記録を直す画面を開く（詳細の［直す］・見直し待ちの［直す］）。入力中の記録（新しい記録・直している途中の記録）があれば、破棄してよいか聞く。
+   同じ記録を直している途中なら、その画面のまま開く（入れた値を記録の値で作り直さない）。
+   フローの画面（見直し待ち など）から開いたときは、戻り先を覚えておく（保存してもどる・やめる で、その行へ戻る。backTo） */
+function editRecord(id) {
+  const r = findRec(id);
+  if (!r || r.sample || r.deleted) return;
+  const back = TAB === 'flow' ? (DETAIL ? RETURN : backPoint(id)) : null;
+  if (FORM && FORM.editId === id && formHasInput()) { if (back) FORM.backTo = back; }
+  else {
+    if (!discardOk('この記録を直します')) return;
+    FORM = formFromRecord(r);
+    FORM.backTo = back;
+  }
+  TAB = 'record'; DETAIL = null; RETURN = null; render(); window.scrollTo(0, 0);
+}
 
 /* =========================================================
    14-2. 画面：設定（号機・場所・設備・症状の言葉・入力項目を追加・削除）
    変えた内容はすぐ自分の画面に反映し、共有しているときはチーム全員に送る（4-2）
    ========================================================= */
 const TYPE_LABEL = { text: '文字', number: '数字', choice: '選んで入力' };
+// 前の版の Code.gs は、設定の単位（unit）・別の呼び方（aliases）と、新しい4つの項目（原因の種類・効かなかった対処・結果・停止時間）を
+// 消してしまう（送っても残らず、同期のあとアプリの既定の設定に戻る）ので、変える前に知らせる
+const OLD_CFG_MSG = 'サーバーの Code.gs が前の版のため、単位・別の呼び方と、結果・原因の種類・停止時間・効かなかった対処の設定は保存できません（管理者へ）';
+const NEW_BUILTIN = ['causeType', 'failed', 'result', 'downtime'];
+/* 別の呼び方を足せない理由（無ければ ''）。ほかの設備の名前・ほかの設備の呼び方と同じ言葉は、記録が別の設備にまとまってしまうので足さない */
+function aliasProblem(equip, w) {
+  const k = norm(w), eqName = shortLabel(fieldById('equipment'));
+  if (!k) return '呼び方を入れてください';
+  if (k === norm(equip)) return '正式名と同じです';
+  const owner = Object.values(AREAS).flat().find(e => norm(e) === k);
+  if (owner) return `「${w}」は${eqName}の名前（${owner}）として登録されています`;
+  const mine = ((CONF.aliases || []).find(a => a.equip === equip) || {}).words || [];
+  const canon = equipIndex().canon.get(k) || (mine.some(x => norm(x) === k) ? equip : '');
+  return canon ? `「${w}」は、すでに「${canon}」の呼び方です` : '';
+}
 function renderSettings() {
   const lineF = fieldById('line'), areaF = fieldById('area'), eqF = fieldById('equipment');
   const pend = GAS_URL ? CFG.pending.length : 0;
@@ -1736,15 +2814,24 @@ function renderSettings() {
   const live = FIELDS.filter(f => !f.deleted), gone = FIELDS.filter(f => f.deleted);
   const fieldRow = (f, i) => {
     const b = builtinOf(f.id), core = !!(b && b.core);
+    // 数字の項目は単位も出す（3-7）
     const badges = (f.required ? '<span class="badge req2">必須</span>' : '') + (f.hidden ? '<span class="badge">使っていない</span>' : '')
-      + (isCustom(f) ? `<span class="badge">${TYPE_LABEL[f.type]}</span>` : '');
+      + (isCustom(f) ? `<span class="badge">${TYPE_LABEL[f.type]}${f.type === 'number' && f.unit ? '・単位：' + esc(f.unit) : ''}</span>` : '');
     return `<div class="fld${f.hidden ? ' off' : ''}">
       <div class="fl1"><b>${esc(f.label)}</b>${badges}</div>
-      <div class="fl2">${btn('cf-rename', '名前を変える', at('id', f.id))}${core ? '' : btn('cf-req', f.required ? '任意にする' : '必須にする', at('id', f.id))}${moves('fields', f.id, i, live.length, f.label)}${
+      <div class="fl2">${btn('cf-rename', '名前を変える', at('id', f.id))}${f.type === 'number' ? btn('cf-unit', '単位', at('id', f.id), ` aria-label="${esc(f.label)}の単位を変える"`) : ''}${core ? '' : btn('cf-req', f.required ? '任意にする' : '必須にする', at('id', f.id))}${moves('fields', f.id, i, live.length, f.label)}${
         core ? '' : !isCustom(f) ? btn(f.hidden ? 'cf-show' : 'cf-hide', f.hidden ? '使う' : '使わない', at('id', f.id)) : btn('cf-del-field', '消す', at('id', f.id), ' style="color:var(--ng);border-color:var(--ng)"')}</div>
       ${core ? '<div class="fnote">検索とフローに使う項目なので、消せません（名前は変えられます）</div>' : ''}
       ${f.type === 'choice' ? `<div class="chips">${f.options.map(o => xchip(o, 'cf-rm-opt', f.id)).join('') || '<span class="muted" style="font-size:14px">選択肢がありません</span>'}</div>${addForm('opt', f.id, f.label + 'の選択肢を追加', '追加', 30)}` : ''}
     </div>`;
+  };
+  // 設備の行：名前・別の呼び方（コードにある別名は消せないので文字だけ。「設定」で足した呼び方は ✕ で消せる）・［＋呼び方］・［消す］
+  const eqRow = (area, e) => {
+    const code = (own(EQUIP_ALIASES, e) || []).filter(w => w !== e), mine = ((CONF.aliases || []).find(a => a.equip === e) || {}).words || [];
+    return `<div class="eqrow">
+        <div class="eqh"><span class="sname">${esc(e)}</span>${btn('cf-add-alias', '＋呼び方', at('v', e), ` aria-label="${esc(e)}の別の呼び方を足す"`)}${btn('cf-rm-equip', '消す', `${at('key', area)} ${at('v', e)}`, ` aria-label="${esc(e)}を消す"`)}</div>
+        ${code.length || mine.length ? `<div class="eqa">${code.length ? `<span class="eqcode">${code.map(esc).join('・')}</span>` : ''}${mine.map(w => xchip(w, 'cf-rm-alias', e, `呼び方「${w}」`)).join('')}</div>` : ''}
+      </div>`;
   };
   $('#view').innerHTML = `
     <h2 class="ttl">設定</h2>
@@ -1761,11 +2848,12 @@ function renderSettings() {
 
     <section class="sec">
       <h3 class="sh">${esc(shortLabel(areaF))}と${esc(shortLabel(eqF))}</h3>
-      <p class="sd">${esc(shortLabel(areaF))}ごとに、記録するときの${esc(shortLabel(eqF))}の候補を登録します（候補に無い${esc(shortLabel(eqF))}も、記録するときに文字で入れられます）。</p>
+      <p class="sd">${esc(shortLabel(areaF))}ごとに、記録するときの${esc(shortLabel(eqF))}の候補を登録します（候補に無い${esc(shortLabel(eqF))}も、記録するときに文字で入れられます）。
+        現場での別の呼び方（例：「開口吸盤」）を足すと、その呼び方の記録も同じ${esc(shortLabel(eqF))}としてまとめ、探せます。</p>
       ${CONF.areas.map((ar, i) => `<details class="sarea" ${at('area', ar.name)}${OPEN_AREAS.has(ar.name) ? ' open' : ''}>
         <summary><b class="sname">${esc(ar.name)}</b><span class="scount">${esc(shortLabel(eqF))} ${ar.equip.length}</span></summary>
         <div class="srow">${moves('areas', ar.name, i, CONF.areas.length, ar.name)}<span class="sname"></span>${btn('cf-rm-area', 'この' + esc(shortLabel(areaF)) + 'を消す', at('v', ar.name))}</div>
-        <div class="chips">${ar.equip.map(e => xchip(e, 'cf-rm-equip', ar.name)).join('')}</div>
+        <div class="eqlist">${ar.equip.map(e => eqRow(ar.name, e)).join('')}</div>
         ${addForm('equip', ar.name, ar.name + 'に' + shortLabel(eqF) + 'を追加', '追加', 40)}
       </details>`).join('')}
       ${addForm('areas', '', '例：検査機', shortLabel(areaF) + 'を追加', 20)}
@@ -1788,6 +2876,7 @@ function renderSettings() {
           <div class="f"><label class="l" for="nfLabel">項目の名前</label><input id="nfLabel" class="inp" maxlength="20" placeholder="例：停止時間（分）"></div>
           <div class="f"><span class="l">入れ方</span><div class="chips">${Object.keys(TYPE_LABEL).map((t, i) =>
             `<label class="chip rad"><input type="radio" name="nfType" value="${t}"${i === 0 ? ' checked' : ''}>${TYPE_LABEL[t]}</label>`).join('')}</div></div>
+          <div class="f nfunit"><label class="l" for="nfUnit">単位（任意）</label><input id="nfUnit" class="inp" maxlength="10" placeholder="例：分、kPa、℃"></div>
           <div class="f"><label class="l" for="nfOpts">選択肢（「選んで入力」のとき。「、」か改行で区切る）</label><textarea id="nfOpts" class="inp" placeholder="例：日勤、夜勤"></textarea></div>
           <label class="chk"><input type="checkbox" id="nfReq">必須にする（入れないと保存できない）</label>
           <button type="submit" class="btn pri">この項目を追加</button>
@@ -1803,6 +2892,8 @@ function addFromForm(form) {
   if (kind === 'field') { addField(); return; }
   const v = form.querySelector('input').value.replace(/\s+/g, ' ').trim();
   if (!v) { toast('名前を入れてください'); return; }
+  // 症状の言葉に区切りの文字は使えない（症状の種類はシートで「、」でつなぐので、読み戻すと割れる）
+  if (kind === 'symptoms' && /[、,，]/.test(v)) { toast('症状の言葉に「、」「,」は使えません（「・」を使ってください）'); return; }
   const op = kind === 'lines' || kind === 'symptoms' ? { op: 'add', list: kind, value: v }
     : kind === 'areas' ? (OPEN_AREAS.add(v), { op: 'addArea', value: v })
     : kind === 'equip' ? { op: 'addEquip', area: key, value: v }
@@ -1818,13 +2909,15 @@ function addField() {
   const label = $('#nfLabel').value.replace(/\s+/g, ' ').trim();
   const type = (document.querySelector('input[name="nfType"]:checked') || {}).value || 'text';
   const options = type === 'choice' ? [...new Set($('#nfOpts').value.split(/[、,，\n]/).map(x => x.replace(/\s+/g, ' ').trim()).filter(Boolean))] : [];
+  const unit = type === 'number' ? $('#nfUnit').value.replace(/\s+/g, ' ').trim().slice(0, 10) : '';   // 単位は数字の項目だけ（任意）
   if (GAS_URL && SYNC.configOk === false) { toast('サーバーの Code.gs が前の版のため、入力項目は足せません（先に Code.gs を新しい版にしてください）'); return; }
   if (!label) { toast('項目の名前を入れてください'); return; }
   if (FIELDS.some(f => !f.deleted && f.label === label)) { toast('同じ名前の項目があります'); return; }
   if (type === 'choice' && !options.length) { toast('選択肢を1つ以上入れてください'); return; }
+  if (unit && oldRecServer()) { toast(OLD_CFG_MSG); return; }   // 前の版の Code.gs は単位を消してしまう（入れた単位が黙って消えないよう、足す前に知らせる）
   const id = 'x_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   SET_ADD_OPEN = false;
-  const ok = editConfig({ op: 'addField', field: { id, label, type, options, required: $('#nfReq').checked } });
+  const ok = editConfig({ op: 'addField', field: { id, label, type, options, unit, required: $('#nfReq').checked } });
   if (ok) toast(`項目「${label}」を追加しました`);
   else if (ok === false) toast('追加できませんでした（入力項目は40個までです）');
 }
@@ -1832,6 +2925,9 @@ function addField() {
 function onSettingsAct(act, t) {
   const v = t.dataset.v, f = t.dataset.id ? fieldById(t.dataset.id) : null;
   const keep = '（これまでの記録は消えません）';
+  // 前の版の Code.gs は新しい4つの項目を知らない：名前・必須・使う／使わない・並べ替え（動かす項目か、となりが新しい項目）を変えても、同期で黙って戻るので止めて知らせる
+  if (oldRecServer() && ((f && NEW_BUILTIN.includes(f.id) && /^cf-(rename|req|hide|show|restore)$/.test(act))
+    || (act === 'cf-move' && t.dataset.list === 'fields' && [v, neighborOf(CONF, 'fields', v, +t.dataset.dir)].some(x => NEW_BUILTIN.includes(x))))) { toast(OLD_CFG_MSG); return; }
   switch (act) {
     case 'cf-move': {
       const target = neighborOf(CONF, t.dataset.list, v, +t.dataset.dir);
@@ -1858,6 +2954,31 @@ function onSettingsAct(act, t) {
       break;
     }
     case 'cf-req': if (f) editConfig({ op: 'setField', id: f.id, required: !f.required }); break;
+    case 'cf-unit': {   // 数字の項目の単位（空にすると単位なし）
+      if (!f || f.type !== 'number') break;
+      if (oldRecServer()) { toast(OLD_CFG_MSG); break; }
+      // 記録には数字だけが残るので、単位を変えると、これまでの記録の値も新しい単位で表示し、AIにも送る。値のある記録があれば、そう知らせる
+      // （書きまちがいを直すなら変えてよい。計器が変わって値の大きさが変わるなら、新しい項目を足してもらう）
+      const n = f.unit ? RECORDS.filter(r => !r.deleted && String((r.extra || {})[f.id] || '').trim()).length : 0;
+      const u = prompt('単位（10文字まで。空にすると単位なし）' + (n ? `\nこれまでの記録（${n}件）の値も、この単位で表示し、AIにも送ります。計器が変わって値の大きさが変わるときは、単位を変えずに新しい項目を足してください` : ''), f.unit || '');
+      const nu = u == null ? null : u.replace(/\s+/g, ' ').trim().slice(0, 10);
+      if (nu == null || nu === (f.unit || '')) break;
+      editConfig({ op: 'setField', id: f.id, unit: nu });
+      break;
+    }
+    case 'cf-add-alias': {   // 設備の別の呼び方を足す（v：設備の正式名）
+      if (oldRecServer()) { toast(OLD_CFG_MSG); break; }
+      const name = prompt(`「${v}」の別の呼び方（20文字まで。現場でそう呼んでいる名前）`, '');
+      const w = name == null ? '' : name.replace(/\s+/g, ' ').trim().slice(0, 20);
+      if (!w) break;
+      const why = aliasProblem(v, w);
+      if (why) { toast(why); break; }
+      const ok = editConfig({ op: 'addAlias', equip: v, value: w });
+      if (ok) toast(`「${w}」を「${v}」の別の呼び方にしました`);
+      else if (ok === false) toast('足せませんでした（呼び方は1つの' + shortLabel(fieldById('equipment')) + 'に10個まで、呼び方のある' + shortLabel(fieldById('equipment')) + 'は60個までです）');
+      break;
+    }
+    case 'cf-rm-alias': if (confirm(`「${t.dataset.key}」の呼び方「${v}」を消しますか？${keep}`)) editConfig({ op: 'removeAlias', equip: t.dataset.key, value: v }); break;
     case 'cf-hide': if (f && confirm(`「${f.label}」を、記録する画面に出さないようにしますか？（これまでの記録の値は残ります。「使う」で戻せます）`)) editConfig({ op: 'removeField', id: f.id }); break;
     case 'cf-del-field': if (f && confirm(`項目「${f.label}」を消しますか？（これまでの記録の値は残ります。「消した項目」から元に戻せます）`)) editConfig({ op: 'removeField', id: f.id }); break;
     case 'cf-show': case 'cf-restore': if (f) editConfig({ op: 'restoreField', id: f.id }); break;
@@ -1874,36 +2995,83 @@ function renderDetail() {
   const partsBlock = (r.parts || []).map((p, i) => `<div>${esc(p.name) || '<span class="muted">部品名なし</span>'}${p.model ? `　<b>型式：${esc(p.model)}</b>` : ''}
       ${p.photo ? `<div class="photos" style="margin-top:6px"><div class="ph">${imgHtml(p.photo, r.id + ':part:' + i, '部品の写真')}</div></div>` : ''}</div>`).join('');
   const photos = (r.photos || []).map((p, i) => `<div class="ph">${imgHtml(p, r.id + ':photo:' + i, '写真' + (i + 1))}</div>`).join('');
-  const tag = id => esc(shortLabel(fieldById(id)));
-  const extras = FIELDS.filter(f => isCustom(f) && (r.extra || {})[f.id]).map(f => `<div class="xrow"><span class="xk">${esc(f.label)}${f.deleted
-    ? '<br><span class="muted">（使っていない項目）</span>' : ''}</span><span class="xv">${esc(r.extra[f.id])}</span></div>`).join('')
-    + Object.keys(r.extra || {}).filter(k => !fieldById(k)).map(k => `<div class="xrow"><span class="xk">追加項目<br><span class="muted">（消した項目）</span></span><span class="xv">${esc(r.extra[k])}</span></div>`).join('');
-  let banner = '';
-  if (SAVED) {
-    banner = `<div class="banner ok">${SAVED === 'edit' ? '直した内容を保存しました。' : '保存しました。'}${f && f.count > 1 ? `同じトラブルは <b>${f.count}件</b> になり、下のフローに加わりました。` : '下のフローに加わりました。'}</div>`;
-    SAVED = '';
-  }
+  const tag = id => esc(fname(id));
+  const none = '<span class="muted">未記入</span>';
+  // 空でも「未記入」と出す欄：記録する画面に出している欄（サンプルには出さない。架空の例なので）
+  const want = id => !r.sample && shown(id);
+  // 欄の中の小さな行（症状の種類・原因の種類・効かなかった対処）。label・v はエスケープ済み
+  const sub = (label, v) => `<div class="dv"><span class="dk">${label}：</span>${v}</div>`;
+  const xrow = (k, v) => `<div class="xrow"><span class="xk">${k}</span><span class="xv">${v}</span></div>`;
+  const tags = r.symptomTags || [], resultL = labelOf(RESULTS, r.result), downL = labelOf(DOWNTIMES, r.downtime);
+  // そのほかの項目：停止時間・「設定」で足した項目（数字は単位つき）
+  const extras = (downL || want('downtime') ? xrow(tag('downtime'), downL ? esc(downL) : none) : '')
+    + FIELDS.filter(f => isCustom(f) && (r.extra || {})[f.id]).map(f => xrow(`${esc(f.label)}${f.deleted ? '<br><span class="muted">（使っていない項目）</span>' : ''}`,
+      esc(r.extra[f.id]) + (f.type === 'number' && f.unit ? ' ' + esc(f.unit) : ''))).join('')
+    + Object.keys(r.extra || {}).filter(k => !fieldById(k)).map(k => xrow('追加項目<br><span class="muted">（消した項目）</span>', esc(r.extra[k]))).join('');
+  // 関連する記録（この記録をつないだ前の記録）と、この記録につながる記録（逆向き・古い順）。押すとその記録へ
+  const prev = r.relatedId ? findRec(r.relatedId) : null, rel = labelOf(RELATIONS, r.relation);
+  const prevBlock = !r.relatedId ? '' : `<div class="h3">関連する記録${rel ? `（${esc(rel)}）` : ''}</div>`
+    + (prev && !prev.deleted ? recCard(prev) : `<p class="muted" style="font-size:14px;margin:4px 0">${prev ? '消した記録です' : 'この端末にない記録です'}</p>`);
+  const next = r.sample ? [] : RECORDS.filter(x => !x.deleted && x.relatedId === r.id).sort((a, b) => (a.occurredAt || '').localeCompare(b.occurredAt || ''));
+  const nextBlock = next.length ? `<div class="h3">この記録につながる記録（${next.length}件）</div>${next.map(x => recCard(x, false, labelOf(RELATIONS, x.relation))).join('')}` : '';
+  // 確かめること（主任の見直し）：発生日時が自動のまま・AIが入れて人が確かめていない欄。押すと、その印だけを外して保存する。
+  // 自動の発生日時は「記録する画面を開いた時刻」。記録した時刻も並べて出す（ずれていれば、起きた時刻ではないと気づけるように）
+  const aiNames = aiLeft(r), made = new Date(r.createdAt);
+  const madeAt = r.createdAt && !isNaN(made) ? `（記録した時刻：${fmtDate(localStamp(made))}）` : '';
+  const checks = r.sample ? '' : ((r.autoFields || []).includes('occurredAt')
+    ? `<div class="dchk"><span>${tag('occurredAt')}は人が入れておらず、記録する画面を開いた時刻（自動）のままです${esc(madeAt)}</span><button type="button" class="chip sug" data-act="dt-ok" data-k="at">この日時でよい</button></div>` : '')
+    + (aiNames.length ? `<div class="dchk"><span>AIが入れて、まだ人が確かめていない欄：${esc(aiNames.join('・'))}</span><button type="button" class="chip sug" data-act="dt-ok" data-k="ai">確かめた</button></div>` : '');
+  // 「保存しました」の帯は、その記録を見ている間、時刻（SAVED.until）まで残す（保存のあとの同期で描き直しても消さない）
+  if (SAVED && (SAVED.id !== r.id || Date.now() >= SAVED.until)) SAVED = null;
+  const banner = SAVED ? `<div class="banner ok" id="savedBanner">${SAVED.kind === 'edit' ? '直した内容を保存しました。' : '保存しました。'}${f && f.count > 1 ? `同じトラブルは <b>${f.count}件</b> になり、下のフローに加わりました。` : '下のフローに加わりました。'}</div>` : '';
   $('#view').innerHTML = `
     <button type="button" class="btn sub sm" data-act="back">${ICON.back}もどる</button>
     ${banner}
     <h2 class="ttl" style="margin-top:12px">${esc(r.equipment)}${r.sample ? '<span class="badge sample">サンプル</span>' : ''}${GAS_URL && r._dirty ? '<span class="badge dirty">未送信</span>' : ''}</h2>
     <div class="meta">${esc(fmtDate(r.occurredAt))}　${esc(r.line)}　${esc(r.area)}${r.author ? '　記録：' + esc(r.author) : ''}</div>
+    ${checks}
     <div class="steps">
       <div class="step"><span class="k eq">${tag('equipment')}</span><div class="v">${esc(r.area)} › <b>${esc(r.equipment)}</b></div></div>
       <div class="arrow">↓</div>
-      <div class="step"><span class="k sym">${tag('symptom')}</span><div class="v">${esc(r.symptom)}</div></div>
+      <div class="step"><span class="k sym">${tag('symptom')}</span><div class="v">${esc(r.symptom)}${tags.length ? sub('症状の種類', tags.map(esc).join('、')) : ''}</div></div>
       <div class="arrow">↓</div>
-      <div class="step"><span class="k cau">${tag('cause')}</span><div class="v">${r.cause ? esc(r.cause) : '<span class="muted">未記入</span>'}</div></div>
+      <div class="step"><span class="k cau">${tag('cause')}</span><div class="v">${r.cause ? esc(r.cause) : none}${r.causeType || want('causeType') ? sub(tag('causeType'), r.causeType ? esc(r.causeType) : none) : ''}</div></div>
       <div class="arrow">↓</div>
-      <div class="step"><span class="k act">${tag('action')}</span><div class="v">${r.action ? esc(r.action) : '<span class="muted">未記入</span>'}</div></div>
+      <div class="step"><span class="k act">${tag('action')}</span><div class="v">${r.action ? esc(r.action) : none}${r.failed ? sub(tag('failed'), esc(r.failed)) : ''}</div></div>
       ${partsBlock ? `<div class="arrow">↓</div><div class="step"><span class="k prt">${tag('parts')}</span><div class="v">${partsBlock}</div></div>` : ''}
+      ${resultL || want('result') ? `<div class="arrow">↓</div><div class="step"><span class="k res">${tag('result')}</span><div class="v">${resultL ? `<b class="rs ${esc(r.result)}">${esc(resultL)}</b>` : none}</div></div>` : ''}
     </div>
+    ${r.rawText ? `<details class="rawd"${RAW_OPEN === r.id ? ' open' : ''}><summary>話した原文を見る</summary><p class="rawt">${esc(r.rawText)}</p></details>` : ''}
     ${extras ? `<div class="h3">そのほかの項目</div><div class="xbox">${extras}</div>` : ''}
-    ${photos ? `<div class="h3">写真</div><div class="photos">${photos}</div>` : ''}
+    ${photos || r.photoText ? `<div class="h3">写真</div>${photos ? `<div class="photos">${photos}</div>` : ''}${r.photoText ? `<div class="dv ptx"><span class="dk">写真から読み取ったこと：</span>${esc(r.photoText)}</div>` : ''}` : ''}
+    ${prevBlock}${nextBlock}
     ${f ? `<div class="h3">このトラブルのフロー（同じ設備・同じ症状 ${f.count}件）</div>${flowCard(f, true, r.id)}` : ''}
     ${r.sample
       ? '<p class="muted" style="font-size:13px">サンプルの記録は直したり消したりできません。</p>'
-      : '<div class="btnrow"><button type="button" class="btn sub" data-act="edit">直す</button><button type="button" class="btn danger" data-act="delete">消す</button></div>'}`;
+      : `<div class="btnrow"><button type="button" class="btn sub" data-act="rel-new" data-v="continue">続きを書く</button><button type="button" class="btn sub" data-act="rel-new" data-v="recur">また起きた</button></div>
+        <p class="muted" style="font-size:13px;margin:6px 0 0">［続きを書く］は原因まで、［また起きた］は症状までを写して、この記録につなぎます。</p>
+        <div class="btnrow"><button type="button" class="btn sub" data-act="edit">直す</button><button type="button" class="btn danger" data-act="delete">消す</button></div>`}`;
+}
+let RAW_OPEN = null;   // 「話した原文を見る」を開いている記録（同期で描き直しても閉じない）
+/* 「保存しました」の帯を出す。その記録を見ている間は SAVED_MS まで残す（保存のあとの同期で詳細を描き直しても消さない。時刻で消す） */
+function showSaved(kind, id) {
+  const s = SAVED = { kind, id, until: Date.now() + SAVED_MS };
+  setTimeout(() => {
+    if (SAVED !== s) return;   // 見るのをやめた・あとでもう一度保存した（そちらの時刻で消す）
+    SAVED = null;
+    const b = $('#savedBanner');
+    if (b) b.remove();
+  }, SAVED_MS);
+}
+/* 詳細の［続きを書く］［また起きた］で開く、記録する画面の下書き（この記録につなぐ。発生日時は いま＝自動）。
+   続き：号機・場所・設備・症状（と症状の種類）・原因・原因の種類を写す。また起きた：号機・場所・設備・症状（と症状の種類）を写す。
+   もとの記録でAIが入れて人が確かめていない欄は、写した欄にもAIの印を付ける（確かめていない値を、人が入れた値にしない） */
+function followPre(r, relation) {
+  const pre = { relatedId: r.id, relation, area: r.area || '', equipment: r.equipment || '', symptom: r.symptom || '', symptomTags: (r.symptomTags || []).slice(0, MAX_TAGS) };
+  if (r.line) Object.assign(pre, { line: r.line, autoLine: false });   // 号機の無い記録なら、いつもどおり前回の号機（自動）
+  if (relation === 'continue') Object.assign(pre, { cause: r.cause || '', causeType: r.causeType || '' });
+  pre.aiFilled = (r.aiFilled || []).filter(id => (id === 'symptomTags' ? pre.symptomTags.length : String(pre[id] || '').trim()));
+  return pre;
 }
 
 /* =========================================================
@@ -1919,6 +3087,7 @@ function render() {
   const sb = $('#setBtn'), onSet = TAB === 'settings' && !DETAIL;
   sb.classList.toggle('on', onSet);
   if (onSet) sb.setAttribute('aria-current', 'page'); else sb.removeAttribute('aria-current');
+  if (SAVED && SAVED.id !== DETAIL) SAVED = null;   // 「保存しました」の帯は、その記録を見ている間だけ
   if (DETAIL) renderDetail();
   else if (TAB === 'search') renderSearch();
   else if (TAB === 'record') renderForm();
@@ -1928,10 +3097,14 @@ function render() {
   renderCam();
 }
 function goTab(tab) {
-  TAB = tab; DETAIL = null;
+  TAB = tab; DETAIL = null; RETURN = null;
+  FT.touched.clear();   // 見直し待ちでその場で直した行は、画面を離れたら残さない
   render();
   if (tab === 'search') window.scrollTo(0, document.body.scrollHeight); else window.scrollTo(0, 0);
 }
+/* 写真を付ける部品（番号ではなく部品そのもの。撮っている間に、AIの下書きで部品の並びが変わることがあるため） */
+let PICK_PART = null;
+const PART_GONE_MSG = '部品が入れ替わったため、写真を付けられませんでした。もう一度付けてください';
 function pickImage(target, multiple) {
   const fi = $('#fileIn');
   fi.dataset.target = JSON.stringify(target);
@@ -1949,8 +3122,14 @@ $('#fileIn').addEventListener('change', async e => {
     if (target.kind === 'photo') {
       for (const f of files) { if (FORM.photos.length >= 4) break; FORM.photos.push(await makePhoto(f)); }
       $('#photoBox').innerHTML = photosHtml();
-    } else if (FORM.parts[target.i]) {
-      FORM.parts[target.i].photo = await makePhoto(files[0]);
+    } else {
+      // 押した部品が無くなっていたら（AIの下書きで空の行が消えた・保存した など）、ほかの部品には付けずに知らせる。写真を準備している間にも確かめる
+      const part = PICK_PART;
+      if (!part || !FORM.parts.includes(part)) { toast(PART_GONE_MSG); return; }
+      const photo = await makePhoto(files[0]);
+      if (!FORM.parts.includes(part)) { toast(PART_GONE_MSG); return; }
+      part.photo = photo;
+      delete part.ai;   // 写真を付けた部品は、AIを押し直しても入れ替えない（写真ごと消さない）
       $('#partsBox').innerHTML = partsHtml();
     }
     toast('写真を追加しました');
@@ -1963,8 +3142,9 @@ document.addEventListener('click', e => {
   if (!t) return;
   if (t.dataset.photo && (t.closest('.ph') || t.classList.contains('chatimg')) && !t.closest('[data-act]') && t.tagName === 'IMG') { openLightbox(t.dataset.photo); return; }
   if (t.dataset.tab) { goTab(t.dataset.tab); return; }
-  if (t.dataset.f === 'x') {   // 「設定」で足した「選んで入力」の項目（もう一度押すと外す）
-    FORM.extra[t.dataset.xid] = FORM.extra[t.dataset.xid] === t.dataset.v ? '' : t.dataset.v;
+  if (t.dataset.f === 'x') {   // 「設定」で足した「選んで入力」の項目（もう一度押すと外す。AIが選んだ値を押したときは、外さずに人が確かめたことにする）
+    FORM.extra[t.dataset.xid] = FORM.extra[t.dataset.xid] === t.dataset.v && !aiMarked({ id: t.dataset.xid }) ? '' : t.dataset.v;
+    dropAi(t.dataset.xid);   // 人が選び直した欄は、AIの印を外す
     const y = window.scrollY; renderForm(); window.scrollTo(0, y);
     return;
   }
@@ -1972,7 +3152,10 @@ document.addEventListener('click', e => {
   const act = t.dataset.act;
   if (act && act.startsWith('cf-')) { onSettingsAct(act, t); return; }
   if (act === 'hint' || (!act && t.dataset.q)) { sendChat(t.dataset.q); return; }
-  if (!act && t.dataset.rid) { DETAIL = t.dataset.rid; SAVED = ''; render(); window.scrollTo(0, 0); return; }
+  if (!act && t.dataset.rid) {
+    if (TAB === 'flow' && !DETAIL) RETURN = backPoint(t.dataset.rid);   // フローの一覧から開いた：［もどる］でその行へ戻る
+    DETAIL = t.dataset.rid; SAVED = null; render(); window.scrollTo(0, 0); return;
+  }
   const i = +t.dataset.i;
   switch (act) {
     case 'key': askKey(); break;
@@ -1980,50 +3163,126 @@ document.addEventListener('click', e => {
     case 'vision': analyzePhoto(CHAT[+t.dataset.mi]); break;
     case 'cam': openCamera(); break;
     case 'cam-clear': PENDING = null; renderCam(); break;
-    case 'back': DETAIL = null; render(); if (TAB === 'search') window.scrollTo(0, document.body.scrollHeight); break;
-    case 'edit': {
-      const r = findRec(DETAIL);
-      if (!r || r.sample) break;
-      if (formHasInput() && !confirm('入力中の記録があります。破棄してこの記録を直しますか？')) break;
-      FORM = formFromRecord(r); TAB = 'record'; DETAIL = null; render(); window.scrollTo(0, 0);
+    case 'back': {
+      const b = RETURN && RETURN.tab === TAB ? RETURN : null;
+      DETAIL = null; RETURN = null; render();
+      if (TAB === 'search') window.scrollTo(0, document.body.scrollHeight);
+      else if (b) goBackTo(b);   // フローの一覧から開いた詳細：一覧のその行へ戻る（上から探し直さなくてよいように）
       break;
     }
+    case 'edit': editRecord(DETAIL); break;
+    case 'rel-new': {   // 詳細の［続きを書く］［また起きた］：この記録につないだ新しい記録を書く（入力中の記録があれば、破棄してよいか聞く）
+      const r = findRec(DETAIL);
+      if (!r || r.sample || r.deleted || !labelOf(RELATIONS, t.dataset.v)) break;
+      if (!discardOk('新しく書きます')) break;
+      FORM = newForm(followPre(r, t.dataset.v)); TAB = 'record'; DETAIL = null; render(); window.scrollTo(0, 0);
+      break;
+    }
+    case 'dt-ok': if (DETAIL) reviewFix(DETAIL, t.dataset.k, ''); break;   // 詳細の「確かめること」（この日時でよい・AIの欄を確かめた）
+    case 'rv-set': reviewFix(t.dataset.id, t.dataset.k, t.dataset.v); break;
+    case 'rv-edit': editRecord(t.dataset.id); break;
+    case 'rv-more': { const y = window.scrollY; FT.limit += REVIEW_STEP; render(); window.scrollTo(0, y); break; }
     case 'delete': deleteRecord(DETAIL); break;
-    case 'cancel-edit': FORM = newForm(); DETAIL = null; TAB = 'search'; render(); break;
+    case 'cancel-edit': {   // 見直し待ちなどから開いた直す画面なら、その一覧のその行へ戻る（ほかは今までどおり探す画面へ）
+      const b = FORM && FORM.backTo;
+      FORM = newForm(); DETAIL = null; TAB = b ? b.tab : 'search'; render();
+      if (b) goBackTo(b);
+      break;
+    }
     case 'save': saveForm(); break;
+    case 'draft': runDraft(); break;
+    case 'draft-use': useDraft(t.dataset.k); break;
     case 'rec-from-chat': {
       const m = CHAT[+t.dataset.mi];
       if (!m) break;
-      if (formHasInput() && !confirm('入力中の記録があります。破棄して新しく書きますか？')) break;
+      if (!discardOk('新しく書きます')) break;
       FORM = newForm(m.prefill);
+      // チャットで聞いた内容（写真のときは、ひとこと。無ければ写真から読み取った探す言葉）も、文章からの下書きのときにAIに渡す
+      FORM.context = String((m.photo ? m.text || m.query : m.query) || '').replace(/\s+/g, ' ').trim().slice(0, 300);
       if (m.photo) FORM.photos = [{ id: newId('p'), data: m.photo.data, thumb: m.photo.thumb, driveId: null }];   // 送った写真も記録に付ける
+      // 写真から読み取ったこと（読み取りが終わっていて、確かさが low でないときだけ）と、読めた文字からの型式の候補
+      const v = m.photo && m.vision && m.vision.state === 'done' ? m.vision.data : null;
+      if (v && v.confidence !== 'low') {
+        FORM.photoText = [v.abnormality ? '見えた異常：' + v.abnormality : '', v.texts.length ? '読めた文字：' + v.texts.join('、') : ''].filter(Boolean).join('／').slice(0, 300);
+        FORM.modelHints = modelCandidates(v.texts);
+      }
+      if (m.ai && m.ai.state === 'done' && m.ai.historyId) FORM.aiHistoryId = m.ai.historyId;   // このメッセージのAIの対処案（AI履歴の ID）も記録に残す
       TAB = 'record'; DETAIL = null; render(); window.scrollTo(0, 0);
       break;
     }
+    case 'ai-rate': rateAi(CHAT[+t.dataset.mi], t.dataset.v); break;
+    case 'rel-link': {   // 7日以内の同じトラブルに［つなぐ］（もう一度押すと外す）
+      const r = findRec(t.dataset.v);
+      if (!FORM || !r) break;
+      if (FORM.relatedId === r.id) { FORM.relatedId = ''; FORM.relation = ''; }
+      else { FORM.relatedId = r.id; FORM.relation = r.result === 'fixed' ? 'recur' : 'continue'; }
+      redrawForm();
+      break;
+    }
+    case 'rel-clear': if (FORM) { FORM.relatedId = ''; FORM.relation = ''; redrawForm(); } break;
+    case 'ptext-clear': if (FORM) { FORM.photoText = ''; redrawForm(); } break;
+    case 'model-hint': {   // 型式の候補を押す → 部品（名前は空・型式にその文字）を足す
+      const v = t.dataset.v;
+      if (!FORM || FORM.parts.length >= 5 || FORM.parts.some(p => norm(p.model) === norm(v))) break;
+      FORM.parts.push({ name: '', model: v, photo: null });
+      $('#partsBox').innerHTML = partsHtml();
+      unmarkAi('parts');   // 人が部品の欄を直した（AIの部品も人が確かめた部品として扱う）
+      break;
+    }
     case 'add-part': FORM.parts.push({ name: '', model: '', photo: null }); $('#partsBox').innerHTML = partsHtml(); break;
-    case 'del-part': FORM.parts.splice(i, 1); $('#partsBox').innerHTML = partsHtml(); break;
-    case 'add-part-photo': pickImage({ kind: 'part', i }, false); break;
+    case 'del-part': FORM.parts.splice(i, 1); $('#partsBox').innerHTML = partsHtml(); unmarkAi('parts'); break;
+    case 'add-part-photo':
+      // カメラを押した部品は、人が確かめた部品として扱う（撮っている間にAIの答えが返っても、この部品は入れ替えない）
+      PICK_PART = FORM.parts[i] || null;
+      if (PICK_PART) delete PICK_PART.ai;
+      pickImage({ kind: 'part', i }, false);
+      break;
     case 'del-part-photo': if (FORM.parts[i]) FORM.parts[i].photo = null; $('#partsBox').innerHTML = partsHtml(); break;
     case 'add-photo': pickImage({ kind: 'photo' }, true); break;
     case 'del-photo': FORM.photos.splice(i, 1); $('#photoBox').innerHTML = photosHtml(); break;
-    case 'ft-mode': FT.mode = t.dataset.v; render(); break;
-    case 'ft-area': FT.area = t.dataset.v; render(); break;
+    // フローの切り替え・場所・見直し待ちの理由。見直し待ちは、出す数と、その場で直した行を最初に戻す
+    case 'ft-mode': FT.mode = t.dataset.v; FT.reason = ''; FT.limit = REVIEW_STEP; FT.touched.clear(); render(); break;
+    case 'ft-area': FT.area = t.dataset.v; FT.limit = REVIEW_STEP; FT.touched.clear(); render(); break;
+    case 'ft-reason': FT.reason = t.dataset.v; FT.limit = REVIEW_STEP; FT.touched.clear(); render(); break;
     case 'toggle-samples': META.showSamples = !META.showSamples; metaSet('showSamples', META.showSamples); render(); break;
   }
 });
 function onFormChip(kind, v) {
   const F = FORM;
-  if (kind === 'line') { F.line = F.line === v ? '' : v; }
+  // 1つだけ選ぶ欄は、もう一度押すと外す。ただし、自動で入った号機・AIの印の欄で、選んである値を押したときは、外さずに「人が確かめた」にする
+  // （「前回の号機（違えば押して直す）」やAIの印を見て押し直したときに、値が消えないように）
+  const toggled = (cur, keep) => (cur === v && !keep ? '' : v);
+  // 人が押して選んだ欄は、AIの印を外す（号機は、AIの下書きで置き換えない）
+  if (kind === 'line') { F.line = toggled(F.line, F.autoLine || aiMarked({ id: 'line' })); F.autoLine = false; dropAi('line'); }
+  else if (own(PICKS, kind)) { F[kind] = toggled(F[kind], aiMarked({ id: kind })); dropAi(kind); }   // 原因の種類・結果・停止時間
   else if (kind === 'area') {
     const eq = canonEquip(F.equipment);
-    if (F.area !== v && eq && equipOfArea(F.area).includes(eq) && !equipOfArea(v).includes(eq)) F.equipment = '';   // 前の場所の設備は外す
+    if (F.area !== v && eq && equipOfArea(F.area).includes(eq) && !equipOfArea(v).includes(eq)) { F.equipment = ''; dropAi('equipment'); }   // 前の場所の設備は外す
     F.area = v;
+    dropAi('area');
   }
-  else if (kind === 'equip') { F.equipment = v; }
+  else if (kind === 'equip') { F.equipment = v; dropAi('equipment'); }
   else if (kind === 'sym') {
-    const ta = $('#fSym');
-    F.symptom = F.symptom.trim() ? F.symptom.replace(/[、\s]+$/, '') + '、' + v : v;
-    if (ta) { ta.value = F.symptom; ta.focus(); }
+    // 症状の言葉：まだ種類に入っていなければ、文に足して症状の種類（symptomTags）にも入れる。入っていれば種類から外すだけ（文はそのまま）
+    const tags = F.symptomTags || (F.symptomTags = []), ta = $('#fSym');
+    if (tags.includes(v)) F.symptomTags = tags.filter(x => x !== v);
+    else {
+      F.symptom = F.symptom.trim() ? F.symptom.replace(/[、\s]+$/, '') + '、' + v : v;
+      if (ta) { ta.value = F.symptom; ta.focus(); }
+      unmarkAi('symptom');
+      if (tags.length < MAX_TAGS) tags.push(v); else toast('症状の種類は' + MAX_TAGS + 'つまでです（文には足しました）');
+    }
+    dropAi('symptomTags');   // 人が選び直した種類は、AIの印を外す
+    const st = $('#symTags');
+    if (st) st.innerHTML = symTagsHtml(F);
+    updateHint();
+    return;
+  }
+  else if (kind === 'when') {   // 発生日時のチップ（いま・○分前）。触ったので「人が入れた」にする（autoFields に入れない）
+    F.occurredAt = localStamp(new Date(Date.now() - (+v || 0) * 60000));
+    F.autoAt = false;
+    const d = $('#fDate');
+    if (d) d.value = F.occurredAt;
     updateHint();
     return;
   }
@@ -2031,18 +3290,30 @@ function onFormChip(kind, v) {
   renderForm();
   window.scrollTo(0, y);
 }
+/* 記録する画面の文字の欄と、FORM の項目。fDraft：文章からの下書き（13-2）の文章。描き直しても消えないよう、FORM に持つ */
+const FORM_INPUTS = { fDate: 'occurredAt', fAuthor: 'author', fEquip: 'equipment', fSym: 'symptom', fCause: 'cause', fAction: 'action', fFailed: 'failed', fDraft: 'draftText' };
+/* かな漢字変換の途中の欄（AIの結果で描き直すときに、その欄の値は書き換えない） */
+let COMPOSING = null;
+document.addEventListener('compositionstart', e => { COMPOSING = e.target; });
+document.addEventListener('compositionend', () => { COMPOSING = null; });
+document.addEventListener('focusout', e => { if (e.target === COMPOSING) COMPOSING = null; });
 document.addEventListener('input', e => {
   if (TAB !== 'record' || DETAIL || !FORM) return;
   const t = e.target;
-  const map = { fDate: 'occurredAt', fAuthor: 'author', fEquip: 'equipment', fSym: 'symptom', fCause: 'cause', fAction: 'action' };
+  const map = FORM_INPUTS;
+  // 人が直した欄は、AIの印を外す
   if (map[t.id]) {
     FORM[map[t.id]] = t.value;
+    unmarkAi(map[t.id]);
+    if (t.id === 'fDate') FORM.autoAt = false;   // 発生日時を触った →「人が入れた」（autoFields に入れない）
     if (t.id === 'fEquip') document.querySelectorAll('#eqChips .chip').forEach(c => c.classList.toggle('on', c.dataset.v === canonEquip(t.value)));
-    if (t.id === 'fEquip' || t.id === 'fSym') updateHint();
+    if (t.id === 'fEquip' || t.id === 'fSym' || t.id === 'fDate') updateHint();   // 似たトラブル・設備の近い候補・7日以内の同じトラブル
   } else if (t.dataset.pf && FORM.parts[+t.dataset.i]) {
     FORM.parts[+t.dataset.i][t.dataset.pf] = t.value;
+    unmarkAi('parts');
   } else if (t.dataset.xf) {
     FORM.extra[t.dataset.xf] = t.value;
+    unmarkAi(t.dataset.xf);
   }
 });
 /* 設定の画面の「追加」（号機・場所・設備・症状の言葉・選択肢・入力項目） */
@@ -2056,6 +3327,8 @@ document.addEventListener('toggle', e => {
   const el = e.target;
   if (!el.classList) return;
   if (el.classList.contains('addf')) SET_ADD_OPEN = el.open;
+  if (el.classList.contains('dguide')) DRAFT_GUIDE_OPEN = el.open;
+  if (el.classList.contains('rawd')) RAW_OPEN = el.open ? DETAIL : null;
   if (el.classList.contains('sarea')) { if (el.open) OPEN_AREAS.add(el.dataset.area); else OPEN_AREAS.delete(el.dataset.area); }
 }, true);
 $('#chatForm').addEventListener('submit', e => {
@@ -2088,10 +3361,13 @@ async function deleteRecord(id) {
   if (!r) return;
   if (!confirm(GAS_URL ? 'この記録を消しますか？（共有しているので、全員の画面から消えます）' : 'この記録を消しますか？')) return;
   r.deleted = true; r.updatedAt = new Date().toISOString(); r._dirty = true;
+  delete r._fix; delete r._fixBase;   // 消した記録を、共有先の（消していない）記録の上に作り直して送らない
   await dbPut(r);
-  DETAIL = null;
+  const b = RETURN && RETURN.tab === TAB ? RETURN : null;
+  DETAIL = null; RETURN = null;
   toast('消しました');
   render();
+  if (b) goBackTo(b);   // フローの一覧から開いた記録：一覧のその位置へ戻る
   syncNow();
 }
 
@@ -2140,6 +3416,7 @@ function buildSamples() {
     META.lastLine = (await metaGet('lastLine')) || '';
     const ss = await metaGet('showSamples');
     META.showSamples = ss !== false;
+    META.oldRecNoted = (await metaGet('oldRecNoted')) === true;
     KEY = (await metaGet('key')) || '';
     const cfg = await metaGet('config');
     if (cfg && typeof cfg === 'object') {
@@ -2158,7 +3435,12 @@ function buildSamples() {
   render();
   syncNow();
   window.addEventListener('online', () => syncNow());
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - lastSyncTry > 15000) syncNow(); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) return;
+    // 開いたままの記録する画面に戻ったとき：何も入れていなければ、自動の発生日時をいまにする（描き直さずに、日時の欄だけ）
+    if (TAB === 'record' && !DETAIL && refreshAutoAt()) { const d = $('#fDate'); if (d) d.value = FORM.occurredAt; updateHint(); }
+    if (Date.now() - lastSyncTry > 15000) syncNow();
+  });
   setInterval(() => { if (!document.hidden) syncNow(); }, AUTO_SYNC_MS);
 })();
 </script>
