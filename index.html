@@ -14,10 +14,12 @@
   ・記録が増えると、同じ設備の同じトラブルが自動で「フロー」にまとまる
   ・起きていることを文章で送ると、過去の記録から原因と対処を探す（チャット検索）
   ・その場で撮った写真も送れる（AIの設定があれば、写真から設備・見える異常・型式を読み取って探す）
-  保存：端末内（IndexedDB）に控えを持ち、GAS_URL を設定するとスプレッドシート＋ドライブで共有する
+  ・送ったチャットは、この端末に履歴として残し、あとで開き直せる（直近50件。写真は小さい写真だけ）
+  ・入力欄の上で「調べる」にすると、型式・定格などをAIがWebで調べる（調べもの。サーバーが対応していて、AIが Claude のときだけ）
+  保存：端末内（IndexedDB）に控えを持ち、GAS_URL を設定するとスプレッドシート＋ドライブで共有する（チャットの履歴は端末内だけ。記録とは別の保存）
 -->
 <style>
-  /* 見た目の決まり：温かみのある白地・濃い文字・強調色は1色（押すボタンと「まず確認」だけ）
+  /* 見た目の決まり：温かみのある白地・濃い文字・強調色は1色（押すボタンと、いま確かめる候補だけ）
      文字は読みやすさ重視の UD フォント（BIZ UDPゴシック）。見出しは明朝、型式や日時は等幅 */
   :root{
     --bg:#F5F3EE; --card:#FFFFFF; --ink:#1E1D1A; --ink2:#3B3934; --ink3:#5B5850; --ink4:#6B675E;
@@ -61,10 +63,10 @@
   .tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--card);border-top:1px solid var(--line);
     padding-bottom:env(safe-area-inset-bottom)}
   .tabs .in{max-width:780px;margin:0 auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
-  .tabs button{border:0;background:none;min-height:var(--tabh);padding:8px 4px;font-size:13px;color:var(--ink3);
+  .tabs .in>button{border:0;background:none;min-height:var(--tabh);padding:8px 4px;font-size:13px;color:var(--ink3);
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
   .tabs .ic{display:flex}
-  .tabs button.on{color:var(--accent);font-weight:700}
+  .tabs .in>button.on{color:var(--accent);font-weight:700}
   .chatbar{position:fixed;left:0;right:0;bottom:calc(var(--tabh) + env(safe-area-inset-bottom));z-index:15;display:none;
     padding:8px 12px 12px;background:var(--bg)}
   body.chat .chatbar{display:block}
@@ -122,7 +124,9 @@
     background:var(--ink);color:#fff;padding:10px 16px;border-radius:999px;font-size:14px;
     max-width:92vw;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s}
   .toast.show{opacity:1}
-  .lb{position:fixed;inset:0;z-index:60;background:rgba(20,19,18,.92);display:none;align-items:center;justify-content:center;padding:16px}
+  /* 拡大した写真は、どこを押しても閉じる（document の click で閉じる）。iPhone は、cursor:pointer が無いところをタップしても click が起きない（閉じない） */
+  .lb{position:fixed;inset:0;z-index:60;background:rgba(20,19,18,.92);display:none;align-items:center;justify-content:center;padding:16px;
+    cursor:pointer;-webkit-tap-highlight-color:transparent}
   .lb.show{display:flex}
   .lb img{max-width:100%;max-height:100%;border-radius:8px}
 
@@ -143,7 +147,7 @@
   .msg.me .bub{background:var(--me);padding:12px 16px;border-radius:18px 18px 6px 18px;white-space:pre-wrap;line-height:1.6}
   .msg.me .bub.img{padding:6px;width:232px}
   .msg.me .bub.img .ct{padding:6px 10px 4px}
-  .chatimg{display:block;width:100%;max-height:300px;object-fit:cover;border-radius:13px 13px 4px 13px;background:var(--fill);cursor:zoom-in}
+  .chatimg{display:block;width:100%;max-height:300px;object-fit:cover;border-radius:13px 13px 4px 13px;background:var(--fill);cursor:pointer}   /* 押すと拡大。cursor:pointer が無いと、iPhone ではタップしても押したことにならない */
   .msg.bot .bub{width:100%;max-width:100%;font-size:16.5px;line-height:1.8}
   .hello{font-family:var(--serif);font-weight:600;font-size:28px;line-height:1.4;margin:12px 0 8px}
   .hello-sub{margin:0;color:var(--ink3);font-size:15px;line-height:1.75}
@@ -151,21 +155,64 @@
   .found::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none}
   .found .mono{font-size:13px;color:var(--ink4)}
   .lead{margin:0}
-  .tip{margin-top:16px;padding:16px;border-radius:16px;background:var(--card);border:1px solid var(--line);
-    display:flex;flex-direction:column;gap:6px}
-  .tipk{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.04em}
-  .tipv{font-size:20px;line-height:1.5}
-  .tipa{font-size:16px;line-height:1.7}
-  .tip .pchips{margin-top:4px}
   .h3{font-size:13px;font-weight:700;color:var(--ink3);margin:24px 0 6px;letter-spacing:.04em;line-height:1.5}
-  .bd{display:flex;flex-direction:column;gap:14px;margin-top:10px}
-  .bd-row{display:flex;flex-direction:column;gap:6px}
-  .bd-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:16px;line-height:1.5}
-  .bd-top .mono{font-size:14px;white-space:nowrap}
-  .bd-bar{height:6px;border-radius:3px;background:#E9E5DB;overflow:hidden}
-  .bd-bar i{display:block;height:100%;border-radius:3px;background:#8C877C}
-  .bd-row:first-child .bd-bar i{background:var(--accent)}
-  .bd-act{font-size:14px;line-height:1.6;color:var(--ink2)}
+  /* 可能性の高い順（①②③の候補）。強調色は、いま確かめる候補（いちばん可能性が高い・次に確認）だけ */
+  .rk-lead{margin:0 0 4px}
+  .rk-how{font-size:13px;line-height:1.7;color:var(--ink4);margin:0 0 14px}
+  .rk{display:flex;flex-direction:column;gap:12px}
+  .rcard{display:flex;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 14px 12px}
+  .rcard.rnow{border:1.5px solid var(--accent)}
+  .rn{flex:none;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;
+    background:var(--fill);color:var(--ink2)}
+  .rcard.rnow .rn{background:var(--accent);color:#fff}
+  .rbody{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+  .rl{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--ink4);line-height:1.5}
+  .rcard.rnow .rl{color:var(--accent)}
+  .rt{font-size:16.5px;font-weight:700;line-height:1.45;overflow-wrap:anywhere}
+  .rcard.rnow .rt{font-size:18px}
+  .rwhere{font-size:13.5px;line-height:1.6;color:var(--ink4);overflow-wrap:anywhere}
+  .rmeta{display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;font-size:13.5px;line-height:1.7;color:var(--ink3)}
+  .fix{display:inline-flex;align-items:center;gap:6px}
+  .fixbar{display:inline-flex;width:72px;height:6px;border-radius:3px;background:#E9E5DB;overflow:hidden}
+  .fixbar i{background:var(--ok)}
+  .fixbar u{background:#C9B48A;text-decoration:none}
+  .ra{font-size:15.5px;line-height:1.6;overflow-wrap:anywhere}
+  .ra .ok{display:inline-block;font-size:12px;font-weight:700;color:#2F5E3B;background:var(--ok-soft);border-radius:6px;padding:0 7px;margin-left:6px;vertical-align:1px}
+  .rbody .pchips{margin-top:2px}
+  .rng{align-self:flex-start;font-size:13.5px;line-height:1.6;color:var(--warn);background:var(--warn-soft);border-radius:8px;padding:4px 10px;overflow-wrap:anywhere}
+  .rbtn{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .rbtn .chip{min-height:40px;font-size:14px}
+  .rbtn .chip svg{transition:transform .15s}
+  .rbtn .chip[aria-expanded="true"] svg{transform:rotate(90deg)}
+  .chip.ngb{color:var(--ink3)}
+  .rkev{margin-top:4px;border-top:1px solid var(--line)}
+  .rkev .more{font-size:13px;color:var(--ink4);padding-top:6px}
+  /* 確認して違った候補 */
+  .rcard.done{background:var(--soft);border-style:dashed}
+  .rcard.done .rt{color:var(--ink4);text-decoration:line-through;text-decoration-color:rgba(30,28,24,.35)}
+  .rcard.done .rn{background:transparent;border:1.5px solid var(--line2);color:var(--ink4)}
+  .donel{align-self:flex-start;display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;color:var(--ink3);background:var(--fill);
+    border-radius:6px;padding:1px 8px;line-height:1.6}
+  .chip.none{width:100%;justify-content:center;border-style:dashed;color:var(--ink2);font-weight:700}
+  .rkmore{margin-top:12px;scroll-margin-top:76px}
+  .rkmore>summary{list-style:none;display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;font-size:14px;font-weight:700;color:var(--ink3);letter-spacing:.04em}
+  .rkmore>summary::-webkit-details-marker{display:none}
+  .rkmore>summary::after{content:"";width:8px;height:8px;border-right:1.8px solid var(--ink3);border-bottom:1.8px solid var(--ink3);transform:rotate(45deg);margin:0 0 4px 2px}
+  .rkmore[open]>summary::after{transform:rotate(-135deg);margin-bottom:-4px}
+  .rkmore>.rk{margin-top:4px}
+  /* 次の手（①〜③がどれも違ったとき） */
+  .nx{margin-top:16px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+  .nxh{font-size:17px;font-weight:700;line-height:1.5}
+  .nxs{font-size:14px;line-height:1.7;color:var(--ink3);margin:-6px 0 0}
+  .nxa{display:grid;grid-template-columns:36px minmax(0,1fr) 18px;gap:2px 12px;align-items:center;width:100%;margin:0;padding:12px;
+    border:1px solid var(--line);border-radius:12px;background:var(--card);text-align:left;line-height:1.5}
+  .nxa.info{grid-template-columns:36px minmax(0,1fr)}
+  .nxa .ic{grid-row:1 / span 2;width:36px;height:36px;border-radius:10px;background:var(--fill);color:var(--ink2);display:flex;align-items:center;justify-content:center}
+  .nxa.pri{border-color:var(--accent);background:var(--accent-soft)}
+  .nxa.pri .ic{background:var(--accent);color:#fff}
+  .nxa .nt{font-size:15.5px;font-weight:700}
+  .nxa .ns{grid-column:2;font-size:13.5px;color:var(--ink3);line-height:1.55}
+  .nxa .ar{grid-row:1 / span 2;grid-column:3;color:var(--ink4);display:flex}
   /* AIの対処案 */
   .chip.aichip{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;min-height:48px;padding:0 18px}
   .aibox{margin-top:20px;padding:18px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card);
@@ -191,6 +238,92 @@
   .aisafe{display:flex;gap:10px;padding:12px 14px;border-radius:12px;background:var(--warn-soft);color:#3D2A12;font-size:15px;line-height:1.7}
   .aisafe svg{margin-top:3px}
   .aifoot{font-size:12px;line-height:1.7;color:var(--ink4)}
+  /* AIの作業手順（①②③のタブ・段階つきの手順）と、AIからの質問（聞き直し） */
+  .ptabs{display:flex;gap:6px;flex-wrap:wrap}
+  .ptabs button{border:1px solid var(--line2);background:var(--card);border-radius:999px;padding:6px 12px;font-size:14px;min-height:40px;line-height:1.4}
+  .ptabs button.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:700}
+  .ptabs button.done:not(.on){color:var(--ink4);border-style:dashed}
+  .pload{display:flex;flex-direction:column;gap:2px;font-size:15px}
+  .perr{padding:12px 14px;border-radius:12px;background:var(--ng-soft);color:#5C1F18;font-size:15px;line-height:1.7;overflow-wrap:anywhere}
+  .perr .chips{margin-top:8px}
+  .proc{margin:0;padding:0;list-style:none;display:flex;flex-direction:column}
+  .proc li{display:grid;grid-template-columns:34px minmax(0,1fr);gap:0 12px;position:relative;padding-bottom:16px}
+  .proc li:last-child{padding-bottom:0}
+  .proc li:not(:last-child)::after{content:"";position:absolute;left:16px;top:34px;bottom:2px;width:2px;background:var(--line)}
+  .pn{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--accent);color:var(--accent);font-weight:700;display:flex;align-items:center;justify-content:center;background:var(--card);z-index:1}
+  .pb{min-width:0}
+  .pk{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--ink4);line-height:1.5}
+  .pt{font-size:16.5px;font-weight:700;line-height:1.5;overflow-wrap:anywhere}
+  .pd{font-size:15px;line-height:1.7;color:var(--ink2);overflow-wrap:anywhere}
+  .judge{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 8px;font-size:14px;line-height:1.6;margin-top:4px;overflow-wrap:anywhere}
+  .judge b.okk{color:var(--ok)}
+  .judge b.ngk{color:var(--ng)}
+  .src{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .gen{display:inline-block;font-size:12px;font-weight:700;color:var(--warn);background:var(--warn-soft);border-radius:6px;padding:1px 8px;line-height:1.6;vertical-align:1px}
+  .nextc{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;margin:0;border:0;border-radius:12px;padding:10px 12px;background:var(--soft);
+    font-size:14.5px;line-height:1.6;color:var(--ink2);text-align:left}
+  .nextc span{flex:1;min-width:0;overflow-wrap:anywhere}
+  .aifb.in{margin-top:0}
+  .aifb.in .chip{background:var(--card);border-color:var(--line2)}
+  .qa{display:flex;flex-direction:column;gap:6px}
+  .qa .qt{font-size:15px;font-weight:700;line-height:1.6;overflow-wrap:anywhere}
+  .qa .chips{margin-top:0}
+  .qa .chip{min-height:40px;font-size:14px}
+  .qa .chip:disabled{cursor:default}
+  .qa .chip:disabled:not(.on){color:var(--ink4)}
+  .nchk{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:15px;line-height:1.7;color:var(--ink2)}
+  .nchk .rchips{margin-top:4px}
+  .aibox .h3 .gen{margin-left:6px;letter-spacing:0}
+  .naskb{margin-top:12px}
+  .nend{font-size:13px;line-height:1.7;color:var(--ink4);margin-top:10px}
+  /* 調べもの（Web）（見本7〜9）。入力欄の上の切り替え［探す］［調べる］は、調べものに対応したサーバー（版5）でAIが使えるときだけ出す */
+  .mode{max-width:780px;margin:0 auto 8px;display:flex;align-items:center;gap:6px;padding:0 2px}
+  .mode[hidden]{display:none}
+  .mode button{flex:none;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:999px;border:1px solid var(--line2);
+    background:var(--card);font-size:14px;color:var(--ink2);font-weight:700;line-height:1}
+  .mode button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  .mode .mnote{margin-left:auto;min-width:0;font-size:12px;color:var(--ink4);white-space:nowrap}
+  @media (max-width:359px){ .mode .mnote{display:none} }   /* 狭いスマホでは、折り返さないよう「1〜3分」の案内は出さない */
+  .cambtn[hidden],.camprev.lkhide{display:none}   /* 「調べる」の間は写真を送らない（撮った写真は残しておき、「探す」に戻すと出す） */
+  body.chat.lkon main{padding-bottom:calc(var(--tabh) + 142px + env(safe-area-inset-bottom))}   /* 切り替えの分だけ、入力欄が高くなる */
+  body.chat.lkon.campending:not(.lkmode) main{padding-bottom:calc(var(--tabh) + 222px + env(safe-area-inset-bottom))}
+  .msg.me .bub .mtag{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--ink3);margin-bottom:2px;white-space:normal}
+  .lkmeta{font-size:13px;color:var(--ink3);margin:-4px 0 2px;line-height:1.6}
+  .lk{overflow-wrap:anywhere}
+  .lk p{margin:0 0 10px;font-size:16px;line-height:1.8}
+  .lk p:last-child{margin-bottom:0}
+  .cite{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:20px;padding:0 5px;margin:0 1px;border:0;border-radius:6px;
+    background:var(--fill);color:var(--ink2);font-size:12px;font-weight:700;line-height:1;vertical-align:2px;font-family:var(--mono)}
+  .lkpart{padding:8px 12px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-size:14px;font-weight:700;line-height:1.6}
+  .lknone{padding:10px 12px;border-radius:10px;background:var(--soft);color:var(--ink2);font-size:14px;line-height:1.6}
+  .srcs{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+  .srcs li{scroll-margin-top:76px;scroll-margin-bottom:200px}
+  .srcs a{display:grid;grid-template-columns:26px minmax(0,1fr);gap:2px 8px;align-items:start;padding:10px 12px;border:1px solid var(--line);border-radius:12px;
+    background:var(--soft);color:inherit;text-decoration:none;transition:background .3s,border-color .3s}
+  .srcs li.hl a{border-color:var(--accent);background:var(--accent-soft)}
+  .srcs .n{grid-row:1 / span 2;width:24px;height:24px;border-radius:7px;background:var(--fill);display:flex;align-items:center;justify-content:center;
+    font-size:12.5px;font-weight:700;color:var(--ink2)}
+  .srcs .t{font-size:15px;font-weight:700;line-height:1.5;color:var(--ink);overflow-wrap:anywhere}
+  .srcs .tag{display:inline-block;font-size:11px;font-weight:700;color:#4A463F;background:var(--tag);border-radius:5px;padding:0 6px;margin-left:6px;line-height:1.6;vertical-align:1px}
+  .srcs .u{grid-column:2;font-size:12.5px;color:var(--ink3);display:flex;align-items:center;gap:4px;min-width:0;overflow-wrap:anywhere;line-height:1.5}
+  .read{font-size:13px;color:var(--ink3);display:flex;gap:6px;align-items:flex-start;line-height:1.6}
+  .read b{color:var(--ink2);font-weight:700;white-space:nowrap}
+  .read .rdl{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .read a{color:var(--ink3);overflow-wrap:anywhere;text-underline-offset:3px;text-decoration-color:var(--line2)}
+  .lkinfo{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;background:#EEF3F7;color:#1F3A52;font-size:14.5px;line-height:1.65}
+  .lkinfo svg{margin-top:2px}
+  .lkwait{font-size:14.5px;line-height:1.7}
+  .waitbar{height:6px;border-radius:3px;background:var(--fill);overflow:hidden;margin-top:4px}
+  .waitbar i{display:block;height:100%;width:38%;border-radius:3px;background:var(--accent);opacity:.7;animation:lkbar 1.8s ease-in-out infinite}
+  @keyframes lkbar{0%{transform:translateX(-105%)}100%{transform:translateX(265%)}}
+  .lkerr{display:flex;flex-direction:column;gap:6px}
+  .lkerr .lkagain{font-size:13.5px;color:#5C1F18;opacity:.85}
+  /* 記録する画面と詳細の「調べたこと」（見本10） */
+  .f .lnote2{display:block;font-size:12.5px;font-weight:400;color:var(--ink3);margin-top:2px;line-height:1.6}
+  textarea.inp.lkfield{min-height:230px;line-height:1.7}
+  .lkhint{font-size:12.5px;color:var(--ink3);margin-top:6px;line-height:1.6}
+  .lkd{margin:2px 0 0;padding:10px 12px;border-radius:12px;background:var(--soft);white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7;font-size:15px;color:var(--ink2)}
+  .lkdn{font-size:12.5px;color:var(--ink3);margin:4px 0 16px;line-height:1.6}
   /* 写真から読み取ったこと */
   .vbox{margin:0 0 18px;padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--card);
     display:flex;flex-direction:column;gap:10px;line-height:1.7}
@@ -205,6 +338,60 @@
   .vrow .pchips{margin-top:0}
   .vretake{padding:10px 12px;border-radius:12px;background:var(--soft);font-size:15px;line-height:1.7;color:var(--ink2)}
   .vq{font-size:13px;color:var(--ink3);margin:-4px 0 12px;overflow-wrap:anywhere}
+
+  /* ---------- チャットの履歴（パソコン：左のメニューの下。スマホ：上の［≡］で左から出す一覧） ---------- */
+  .hbtn{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid var(--line2);background:var(--card);color:var(--ink2);
+    padding:0;display:flex;align-items:center;justify-content:center}
+  .hist{display:flex;flex-direction:column;gap:2px}
+  .newc{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;margin:0 0 8px;padding:0 12px;border-radius:10px;border:1px solid var(--line2);
+    background:var(--card);font-weight:700;font-size:15px;color:var(--ink);text-align:left}
+  .hg{font-size:12px;font-weight:700;color:var(--ink4);letter-spacing:.04em;padding:10px 12px 4px;line-height:1.5}
+  .hi{position:relative;border-radius:10px}
+  .hio{display:flex;flex-direction:column;gap:2px;width:100%;min-height:44px;margin:0;padding:7px 12px;border:0;border-radius:10px;background:none;
+    text-align:left;font-size:14px;line-height:1.4;color:var(--ink2);-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+  .hio .t{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-width:0;overflow-wrap:anywhere}   /* 題名は2行まで */
+  .hio .m{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink4)}
+  .hi.on{background:rgba(30,28,24,.07)}
+  .hi.on .hio{color:var(--ink);font-weight:700}
+  .hi.on .hio .m{color:var(--ink3)}   /* 色を付けた行の上でも読める濃さに */
+  /* 消す［✕］は、マウスを乗せたとき（キーで選んだとき）だけ右に重ねて出す（ふだんは題名を幅いっぱいに出す） */
+  .hi .del{position:absolute;right:6px;top:50%;margin-top:-13px;width:26px;height:26px;border:0;border-radius:8px;padding:0;background:var(--fill);
+    color:var(--ink4);display:flex;align-items:center;justify-content:center;visibility:hidden}
+  @media (hover:hover){ .hi:not(.on):hover{background:rgba(30,28,24,.04)} .hi:hover .hio{padding-right:38px} .hi:hover .del{visibility:visible} }
+  .hi:focus-within .hio{padding-right:38px}
+  .hi:focus-within .del{visibility:visible}
+  .rb{font-size:10.5px;font-weight:700;color:#2F5E3B;background:var(--ok-soft);border-radius:5px;padding:0 5px;line-height:1.6}   /* 小さい字なので濃い緑（ほかの緑の札と同じ） */
+  .hnone{font-size:13px;color:var(--ink4);padding:10px 12px;line-height:1.6}
+  .hnote{font-size:11.5px;color:var(--ink4);padding:10px 12px 0;line-height:1.5}
+  .hside{display:none}
+  .scrim{position:fixed;inset:0;z-index:40;background:rgba(30,28,24,.38);touch-action:none;cursor:pointer;-webkit-tap-highlight-color:transparent}   /* cursor:pointer が無いと、iPhone ではタップしても押したことにならない（閉じない） */
+  .drawer{position:fixed;top:0;bottom:0;left:0;z-index:41;width:84%;max-width:340px;background:#EEEBE3;box-shadow:4px 0 24px rgba(0,0,0,.18);
+    padding:calc(14px + env(safe-area-inset-top)) 12px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column}
+  .scrim[hidden],.drawer[hidden]{display:none}
+  .drawer .dh{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 4px 10px}
+  .drawer .dh b{font-size:17px}
+  .dlist{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+  html.dlock,html.dlock body{overflow:hidden}   /* 一覧を出している間は、うしろの画面を動かさない */
+  /* スマホ：上に［≡］［＋］を出すので、「トラブル記録」が切れないよう詰める（包装工程・同期の時刻は出さない） */
+  @media (max-width:1023px){
+    .top .in{gap:6px}
+    .brand{font-size:18px}
+    .brand small,.sync .tm{display:none}
+    .sync{padding:0 10px;gap:6px}
+    /* 右上の文字が長いとき（合言葉を入力・未送信 など）は、もう少し詰める */
+    .top.lng .in{gap:4px}
+    .top.lng .brand{font-size:17px}
+    .top.lng .sync{padding:0 8px}
+    /* 「オフライン・未送信1」のように2つのことを出すときは、「・」のあとで2行に折る（1行だと「トラブル記録」が切れる） */
+    .sync.two{white-space:normal;word-break:keep-all;max-width:96px;line-height:1.15;font-size:11.5px}
+  }
+  @media (max-width:380px){
+    .top{padding-left:12px;padding-right:12px}
+    .top .in{gap:4px}
+    .brand,.top.lng .brand{font-size:16px}
+    .sync{font-size:12px;padding:0 8px}
+    .top.lng .sync{font-size:11px;gap:4px;padding:0 7px}
+  }
 
   /* ---------- フロー ---------- */
   .flow{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:12px 0;overflow:hidden}
@@ -258,7 +445,7 @@
   .photos{display:flex;flex-wrap:wrap;gap:10px}
   .ph{position:relative;width:96px;height:96px;border-radius:14px;overflow:hidden;border:1px solid var(--line);
     background:var(--fill);padding:0;flex:none}
-  .ph img{width:100%;height:100%;object-fit:cover;display:block}
+  .ph img{width:100%;height:100%;object-fit:cover;display:block;cursor:pointer}   /* 押すと拡大。cursor:pointer が無いと、iPhone ではタップしても押したことにならない */
   .ph.sm{width:48px;height:48px;border-radius:12px}
   .ph .x{position:absolute;top:3px;right:3px;width:26px;height:26px;border-radius:50%;border:0;
     background:rgba(20,19,18,.66);color:#fff;font-size:12px;line-height:26px;padding:0}
@@ -409,23 +596,34 @@
     .tabs{top:0;bottom:0;right:auto;width:var(--side);border-top:0;border-right:1px solid var(--line);background:#EEEBE3;
       padding:72px 12px 16px}
     .tabs .in{display:flex;flex-direction:column;gap:2px;max-width:none}
-    .tabs button{flex-direction:row;justify-content:flex-start;gap:12px;min-height:48px;padding:0 12px;border-radius:10px;
+    .tabs .in>button{flex-direction:row;justify-content:flex-start;gap:12px;min-height:48px;padding:0 12px;border-radius:10px;
       font-size:15px;color:var(--ink2)}
-    .tabs button.on{background:rgba(30,28,24,.07);color:var(--ink)}
-    .tabs button.on .ic{color:var(--accent)}
+    .tabs .in>button.on{background:rgba(30,28,24,.07);color:var(--ink)}
+    .tabs .in>button.on .ic{color:var(--accent)}
+    /* チャットの履歴は、メニューの下に線で区切って出す（長くなったら、この中だけ動かす） */
+    .tabs{display:flex;flex-direction:column}
+    .tabs .in{flex:none;width:100%}
+    .hside{display:block;flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+    .hside .newc{border:0;background:none;min-height:48px;gap:12px;color:var(--ink2)}
+    .hside .newc:hover{background:rgba(30,28,24,.04)}
+    .hbtn.mob{display:none}
     main{padding:28px 40px 48px}
     body.chat main{padding-bottom:128px}
     body.chat.campending main{padding-bottom:210px}
+    body.chat.lkon main{padding-bottom:170px}
+    body.chat.lkon.campending:not(.lkmode) main{padding-bottom:252px}
     .chatbar{left:var(--side);bottom:0;padding:12px 40px 20px}
     .savebar{bottom:0;margin:24px -40px 0;padding:12px 40px 16px}
     .top{padding-left:40px;padding-right:40px}
   }
-  @media (prefers-reduced-motion:reduce){ .aibox.busy .aih svg,.vbox.busy .aih svg{animation:none} .toast{transition:none} }
+  @media (prefers-reduced-motion:reduce){ .aibox.busy .aih svg,.vbox.busy .aih svg,.waitbar i{animation:none} .toast,.rbtn .chip svg,.srcs a{transition:none} }
 </style>
 </head>
 <body class="chat">
 <header class="top"><div class="in">
+  <button id="histBtn" class="hbtn mob" type="button" data-act="hist-open" aria-label="チャットの履歴" aria-controls="drawer" aria-expanded="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/></svg></button>
   <div class="brand">トラブル記録<small>包装工程</small></div>
+  <button id="newBtn" class="hbtn mob" type="button" data-act="chat-new" aria-label="新しいチャット"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
   <button id="syncChip" class="sync" type="button">…</button>
   <button id="setBtn" class="setbtn" type="button" data-tab="settings" aria-label="設定（号機・場所・設備・入力項目）"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h9"/><path d="M17 7h3"/><circle cx="15" cy="7" r="2"/><path d="M4 17h3"/><path d="M11 17h9"/><circle cx="9" cy="17" r="2"/></svg></button>
 </div></header>
@@ -433,6 +631,7 @@
 <main id="view"><noscript>JavaScript を有効にしてください。</noscript></main>
 
 <div class="chatbar">
+  <div id="modeBar" class="mode" role="group" aria-label="送り方" hidden></div>
   <div id="camPrev" class="camprev" hidden></div>
   <div class="crow">
     <button type="button" id="camBtn" class="cambtn" aria-label="写真を撮って送る"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
@@ -447,7 +646,13 @@
   <button type="button" data-tab="search"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg></span>探す</button>
   <button type="button" data-tab="record"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="3"/><path d="M12 8.5v7"/><path d="M8.5 12h7"/></svg></span>記録する</button>
   <button type="button" data-tab="flow"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="5" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="6" cy="19" r="2"/><path d="M6 7v10"/><path d="M6 12h10"/></svg></span>フロー</button>
-</div></nav>
+</div><div id="histSide" class="hside"></div></nav>
+<!-- スマホ：チャットの履歴（上の［≡］で左から出す） -->
+<div id="scrim" class="scrim" data-act="hist-close" hidden></div>
+<aside id="drawer" class="drawer" role="dialog" aria-modal="true" aria-label="チャットの履歴" hidden>
+  <div class="dh"><b>チャットの履歴</b><button type="button" class="hbtn" data-act="hist-close" aria-label="閉じる"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div>
+  <div id="histDrawer" class="dlist"></div>
+</aside>
 
 <input id="fileIn" type="file" accept="image/*" hidden>
 <input id="camIn" type="file" accept="image/*" capture="environment" hidden>
@@ -471,7 +676,7 @@ window.addEventListener('load', () => {
    チームで共有するには「セットアップ手順.md」に沿って
    Apps Script の URL を貼り付けてください。
    ========================================================= */
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbw2DcyGmKKJRNw_xKEVx6Ay-u89Q2dJDc-sW9_ZYdzXLrjDn_PEmBdhKFRpRlpsb_8/exec';
+const GAS_URL = '';
 
 /* =========================================================
    2. マスタ（外装工程 日常点検チェックリストの言葉に合わせています）
@@ -538,14 +743,15 @@ const AI_FILL_IDS = ['line', 'area', 'equipment', 'symptom', 'cause', 'action', 
 /* 記録の新しいキーと既定値（toWire・fromWire・前の版のサーバーのときに端末の値を残す・記録する画面 で使う）。
    failed：効かなかった対処、symptomTags：症状の種類、autoFields：自動で入ったまま保存した欄、rawText：文章で書いた原文、
    context：チャットで聞いた内容、aiNote：文章の振り分けでAIが残したメモ、photoText：写真から読み取ったこと、
-   aiFilled：AIが入れて人が直していない欄、equipCanon：設備の正式名、relatedId・relation：前の記録とのつながり、aiHistoryId：AI履歴の ID */
+   aiFilled：AIが入れて人が直していない欄、equipCanon：設備の正式名、relatedId・relation：前の記録とのつながり、aiHistoryId：AI履歴の ID、
+   lookupNote：調べたこと（AIがWebで調べた内容。未確認。チャットの「この内容で記録する」で入る） */
 const REC_DEFAULTS = {
   result: '', failed: '', causeType: '', symptomTags: [], downtime: '', autoFields: [], rawText: '', context: '', aiNote: '', photoText: '',
-  aiFilled: [], equipCanon: '', relatedId: '', relation: '', aiHistoryId: '',
+  aiFilled: [], equipCanon: '', relatedId: '', relation: '', aiHistoryId: '', lookupNote: '',
 };
 const QUALITY_KEYS = Object.keys(REC_DEFAULTS);
 /* 記録する画面で、記録からそのまま写して直すキー（context・aiFilled・aiNote・rawText・autoFields・equipCanon は別に扱う） */
-const FORM_KEYS = ['result', 'failed', 'causeType', 'symptomTags', 'downtime', 'photoText', 'relatedId', 'relation', 'aiHistoryId'];
+const FORM_KEYS = ['result', 'failed', 'causeType', 'symptomTags', 'downtime', 'photoText', 'relatedId', 'relation', 'aiHistoryId', 'lookupNote'];
 // いま使っている値（設定から作り直す。4-2 の applyConfig）。ALIASES：「設定」で足した設備の別の呼び方 [{ equip: 正式名, words: [呼び方] }]
 let LINES = DEFAULT_LINES, AREAS = DEFAULT_AREAS, SYMPTOM_WORDS = DEFAULT_SYMPTOMS, FIELDS = [], ALIASES = [];
 let EQUIP_INDEX = null;   // 設備名の別名 → 正式名の引き方（equipIndex。設定が変わったら作り直す）
@@ -609,23 +815,68 @@ function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.ad
 /* =========================================================
    4. 端末内の保存（IndexedDB）
    写真も入れるので、容量の小さい localStorage は使いません
+   保存は2つに分けています。
+   ・trouble_log_v1   ：記録・設定・合言葉など（records・meta）。前の版のアプリと同じ作りで、版1のまま使う（版を上げない）
+   ・trouble_log_chats：チャットの履歴（chats）だけ（12-2）
+   チャットの履歴を trouble_log_v1 に足すと、その版を上げることになる。版を上げると、
+   ・アプリを前の版に戻したとき、前の版は版1で開こうとして開けず（VersionError）、どの端末でも記録が読めなくなる
+   ・前の版のアプリを別のタブで開いたままだと、版を上げられずに待たされる（そのタブを閉じてもらうしかない）
+   別の保存にしておけば、trouble_log_v1 は版1のまま。前の版に戻しても記録・設定はそのまま読め（前の版は trouble_log_chats を見ないだけ）、
+   前の版のタブを開いたままでも、待たずに開ける
    ========================================================= */
-let DB = null, dbWarned = false;
-function dbOpen() {
+const DB_NAME = 'trouble_log_v1', CDB_NAME = 'trouble_log_chats';
+// DB：記録・設定の保存へのつなぎ。CDB：チャットの履歴の保存へのつなぎ（開けなければ null のまま。履歴を端末に残さないだけで、ほかはふつうに使える）。
+// DB_GONE：新しい版のアプリに譲って閉じた保存の名前（そのあと書こうとしたら知らせる）
+let DB = null, CDB = null, dbWarned = false;
+const DB_GONE = new Set();
+const DB_BLOCKED_MSG = 'ほかのタブで開いているトラブル記録を閉じてから、開き直してください';
+const DB_GONE_MSG = 'アプリが新しくなりました。このタブを閉じて、開き直してください（このタブでは端末に保存できません）';
+/* 保存を1つ開く。version を渡さなければ、いまの版のまま開く（はじめての端末では版1で作る）。
+   upgrade：作るとき（版を上げるとき）に入れ物を作る。set：開いたつなぎを置く（譲って閉じたら null） */
+function dbOpenOne(name, version, upgrade, set) {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open('trouble_log_v1', 1);
-    req.onupgradeneeded = () => { req.result.createObjectStore('records', { keyPath: 'id' }); req.result.createObjectStore('meta'); };
-    req.onsuccess = () => resolve(DB = req.result);
+    const req = version ? indexedDB.open(name, version) : indexedDB.open(name);
+    req.onupgradeneeded = () => upgrade(req.result);
+    // 版を上げるとき、前の版のアプリを別のタブで開いていると、版を上げられずに待つ。画面が空のままにならないよう、閉じてもらう案内を出す。
+    // 待っている間は、まだ記録もチャットも読んでいないので、押せないようにする（送ったものが起動の続きで消えないように。起動で戻す）。
+    // いまは、どちらの保存も版を上げないので起きない（この先、版を上げるときのために残す）
+    req.onblocked = () => { toast(DB_BLOCKED_MSG); $('#view').innerHTML = `<div class="banner">${esc(DB_BLOCKED_MSG)}</div>`; document.body.inert = true; };
+    req.onsuccess = () => {
+      const db = req.result;
+      // 新しい版のアプリが別のタブで、この保存の版を上げようとしたら、こちらは閉じて譲る（向こうを待たせない）。
+      // このタブでは、もうこの保存に書けないので、書こうとしたときに知らせる（黙って消えないように）
+      db.onversionchange = () => { db.close(); set(null); DB_GONE.add(name); toast(DB_GONE_MSG); };
+      set(db);
+      resolve(db);
+    };
     req.onerror = () => reject(req.error);
   });
 }
+/* 2つの保存を同時に開く。記録・設定の保存が開けなければ投げる（起動で「保存できません」と知らせる）。
+   チャットの履歴の保存は、開けなくても投げない（履歴を残さないだけ） */
+function dbOpen() {
+  // 版を渡さない：前の版の端末（版1）は版1のまま開く。はじめての端末では、前の版のアプリと同じ作り（records・meta）で版1を作る
+  const main = dbOpenOne(DB_NAME, 0, db => {
+    if (!db.objectStoreNames.contains('records')) db.createObjectStore('records', { keyPath: 'id' });
+    if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta');
+  }, db => { DB = db; });
+  const chats = dbOpenOne(CDB_NAME, 1, db => {
+    if (!db.objectStoreNames.contains('chats')) db.createObjectStore('chats', { keyPath: 'id' });
+  }, db => { CDB = db; }).catch(() => null);
+  return Promise.all([main, chats]);
+}
+/* 入れ物（store）の操作。chats はチャットの履歴の保存、ほかは記録・設定の保存 */
 function idb(store, mode, op) {
-  if (!DB) return Promise.resolve(undefined);
+  const name = store === 'chats' ? CDB_NAME : DB_NAME, db = store === 'chats' ? CDB : DB;
+  if (!db) { if (DB_GONE.has(name) && mode === 'readwrite') toast(DB_GONE_MSG); return Promise.resolve(undefined); }
   return new Promise(resolve => {
     try {
-      const tx = DB.transaction(store, mode), req = op(tx.objectStore(store));
+      const tx = db.transaction(store, mode), req = op(tx.objectStore(store));
       tx.oncomplete = () => resolve(req ? req.result : undefined);
       tx.onerror = tx.onabort = () => { if (!dbWarned) { dbWarned = true; toast('端末への保存に失敗しました（空き容量をご確認ください）'); } resolve(undefined); };
+      // 書き込みは、すぐ確定させる（閉じる・再読み込みの直前に書いたものが、確定する前に捨てられないように）。
+      // どの操作も1回の依頼だけなので、早く確定しても困らない。中止ずみなら投げるが、onabort で知らせる
+      if (mode === 'readwrite' && tx.commit) { try { tx.commit(); } catch (e) { /* 中止ずみ：onabort で知らせる */ } }
     } catch (e) { resolve(undefined); }
   });
 }
@@ -848,9 +1099,21 @@ let KEY = '';                     // 共有の合言葉
 let TAB = 'search', DETAIL = null;
 let SAVED = null;                 // 「保存しました」の帯 { kind: 'new'|'edit', id, until }。その記録を見ている間は、時刻（until）まで残す（3-5）
 const SAVED_MS = 5000;
+// チャットの履歴（12-2）。CHATS：この端末のチャット（新しい順。updatedAt）、CUR：開いているチャット（null は新しいチャット。最初に送ったときに作る）、
+// CHAT：開いているチャットの吹き出し（= CUR.messages。CUR が null なら空）。いつもそろえておく（setCur）
+let CHATS = [];
+let CUR = null;
 let CHAT = [];
 let PENDING = null;               // 撮って、まだ送っていない写真（入力欄の上に出す）
 let FORM = null;
+// 起動（端末の記録・チャットの履歴の読み込み）が終わったか。入力欄は起動の前から出ているが、終わる前に送ると、
+// 起動の続き（履歴の読み込み・新しいチャットにする）で吹き出しが消え、履歴にも残らない。終わるまでは送らせない（入れた文字は残す）
+let BOOTED = false;
+function notReady() {
+  if (BOOTED) return false;
+  toast(document.body.inert ? DB_BLOCKED_MSG : '準備しています。少し待ってから送ってください');
+  return true;
+}
 // フローの画面。mode：flow・list（新しい順）・review（見直し待ち）、reason：見直し待ちの理由で絞り込み、limit：見直し待ちを出す数（「さらに表示」で増やす）、
 // touched：見直し待ちでその場で直した記録 { ID: 直したチップの種類の Set }（理由が無くなっても、この画面を見ている間は行を残す。押しまちがえを直せるように）
 const FT = { mode: 'flow', area: '', reason: '', limit: 30, touched: new Map() };
@@ -1078,19 +1341,26 @@ function equipScore(rec, qn) {
   if (sub.length >= 3 || (sub.length === 2 && /^[一-龯々]+$/.test(sub))) return Math.min(0.8, sub.length / Math.max(3, e.length * 0.6));
   return 0;
 }
-/* 検索の文。症状の種類・原因の種類・効かなかった対処・写真から読み取ったこと も入れる。
+/* 検索の文。症状の種類・原因の種類・効かなかった対処・写真から読み取ったこと・調べたことの問い も入れる。
    報告の原文（rawText）は長く、ほかの欄と同じことも書いてあるので、ここには入れず textScore で重みを下げて数える */
 function recordText(r) {
   return [r.line, r.area, r.equipment, r.symptom, r.cause, r.action, ...(r.parts || []).map(p => p.name + ' ' + p.model), ...Object.values(r.extra || {}),
-    ...(r.symptomTags || []), r.causeType, r.failed, r.photoText].join(' ');
+    ...(r.symptomTags || []), r.causeType, r.failed, r.photoText, lookupNoteParts(r).ask].join(' ');
 }
-/* 検索の文の当たり具合（0〜1。今までの coverage と同じ数え方）。報告の原文は、ほかの欄で当たらなかった言葉（2文字の組）だけを、
-   半分の重み（RAW_WEIGHT）で数える。原文の無い記録は今までと同じ点、上限も今までと同じ 1 */
+/* 調べたこと（lookupNote）は、調べもの1つごとに「問い／答え／出典」の行（空行で区切る。lookupNoteOf）。
+   問い（まとまりの1行目）は検索の文に入れる。答え・出典は Web の未確認の長い文（安全の決まり文句・「確認」「作業」などのよくある言葉も多い）なので、
+   報告の原文と同じく重みを下げて数える（関係の無い言葉で、同じ場所の記録が当たってしまわないように） */
+function lookupNoteParts(r) {
+  const blocks = String(r.lookupNote || '').split(/\n\s*\n/).map(b => b.trim()).filter(Boolean).map(b => b.split('\n'));
+  return { ask: blocks.map(b => b[0]).join(' '), rest: blocks.map(b => b.slice(1).join(' ')).filter(Boolean).join(' ') };
+}
+/* 検索の文の当たり具合（0〜1。今までの coverage と同じ数え方）。報告の原文・調べたことの答えと出典は、ほかの欄で当たらなかった言葉（2文字の組）だけを、
+   半分の重み（RAW_WEIGHT）で数える。原文・調べたことの無い記録は今までと同じ点、上限も今までと同じ 1 */
 const RAW_WEIGHT = 0.5;
 function textScore(r, Q) {
-  const main = grams(recordText(r));
-  if (!r.rawText || !Q.grams.size) return coverage(Q.grams, main);
-  const raw = grams(r.rawText);
+  const main = grams(recordText(r)), rest = lookupNoteParts(r).rest;
+  if ((!r.rawText && !rest) || !Q.grams.size) return coverage(Q.grams, main);
+  const raw = new Set([...grams(r.rawText || ''), ...grams(rest)]);
   let n = 0;
   for (const g of Q.grams) n += main.has(g) ? 1 : raw.has(g) ? RAW_WEIGHT : 0;
   return n / Q.grams.size;
@@ -1143,8 +1413,13 @@ function prefillFrom(Q) {
     area: Q.areas[0] || (Q.equip ? Q.equip.area : ''), equipment: Q.equip ? Q.equip.equipment : '', symptom: sym };
 }
 function answer(text) {
-  const { Q, hits } = search(text);
+  const pool = visibleRecords();
+  const { Q, hits } = search(text, null, pool);
   const msg = { role: 'bot', kind: hits.length ? 'hit' : 'none', query: text, ids: hits.slice(0, 8).map(h => h.r.id), total: hits.length, prefill: prefillFrom(Q) };
+  // 候補（①②③…）は、上位8件だけでなく、当たった記録すべてから作って吹き出しに固める
+  const rk = rankCands(Q, hits, pool);
+  msg.cands = rk.cands;
+  msg.candsHead = rk.head;
   if (!hits.length && (Q.equip || Q.areas.length)) {
     // 見つからなくても、同じ設備・場所の記録は見せる（空振りで終わらせない）
     msg.near = nearOf(Q, visibleRecords()).slice(0, 5).map(r => r.id);
@@ -1156,12 +1431,84 @@ function answer(text) {
 const nearOf = (Q, pool) => pool.filter(r => (Q.equip ? norm(canonEquip(r.equipment)) === norm(Q.equip.equipment) : Q.areas.includes(r.area))).sort(byNewest);
 
 /* =========================================================
+   8-2. 可能性の高い順（①②③の候補）
+   いちばん近い記録のまとまり（フロー）の原因ごとに1つの候補を作り、直った件数 → 件数 → 新しさ の順に並べる。
+   作った候補は吹き出しに固めて持つ（m.cands。履歴で開き直しても、AIの①②③でも、同じ候補を指すように）
+   ========================================================= */
+const CANDS_MAX = 8;
+const cutText = (t, n) => (t.length > n ? t.slice(0, n) + '…' : t);
+/* Q・hits：search の結果（当たった記録すべて）、pool：探した記録。→ { cands, head } */
+function rankCands(Q, hits, pool) {
+  if (!hits.length) return { cands: [], head: null };
+  const byId = new Map(pool.map(r => [r.id, r]));
+  // いちばん近い記録のまとまりが先頭。ほかは、次に近い記録のまとまりから2つまで
+  const flows = flowsOf(buildFlows(pool), hits.map(h => h.r.id)).slice(0, 3);
+  const line = Q.lines[0] || '';   // 号機は、探す言葉に書いてあるときだけ（前回の号機は使わない）
+  const keys = new Set(), out = [];
+  flows.forEach((f, fi) => {
+    const fkey = f.area + '|' + norm(canonEquip(f.equipment)) + '|' + norm(f.symptom);
+    const list = f.causes.map(c => {
+      const recs = c.ids.map(id => byId.get(id)).filter(Boolean);   // 新しい順
+      const n = v => recs.filter(r => r.result === v).length;
+      // いちばんよい対処：直った件数 → 件数 → 新しさ（対処が書いてあるものから）
+      const newest = a => ((byId.get(a.ids[0]) || {}).occurredAt || '');
+      const best = c.actions.filter(a => a.label).sort((a, b) => b.fixed - a.fixed || b.count - a.count || newest(b).localeCompare(newest(a)))[0];
+      // 効かなかった対処：同じ書き方をまとめて、多い順に2つまで
+      const fm = new Map();
+      for (const r of recs) { const t = String(r.failed || '').replace(/\s+/g, ' ').trim(); if (t) fm.set(t, (fm.get(t) || 0) + 1); }
+      // 同じ原因の書き方が1つのまとまりに2つある（原因の種類が違う）ときも、印が混ざらないよう key を分ける
+      let key = fkey + '|' + norm(c.label);
+      for (let k = 2; keys.has(key); k++) key = fkey + '|' + norm(c.label) + '#' + k;
+      keys.add(key);
+      const cand = { key, label: c.label, causeType: c.causeType || '', where: { area: f.area, equipment: f.equipment, symptom: f.symptom }, main: fi === 0,
+        count: recs.length, fixed: n('fixed'), watch: n('watch'), notfixed: n('notfixed'),
+        last: { at: (recs[0] && recs[0].occurredAt) || '', line: (recs[0] && recs[0].line) || '' },
+        // ids：その対処の記録（AIに渡すときに、サンプルを除いて数え直すため）
+        action: best ? { label: best.label, count: best.count, fixed: best.fixed, parts: best.parts.slice(0, 2).map(p => ({ name: p.name, model: p.model, count: p.count })), ids: best.ids.slice() } : null,
+        failed: [...fm].sort((a, b) => b[1] - a[1]).slice(0, 2).map(([t, count]) => ({ text: cutText(t, 40), count })),
+        sample: recs.length > 0 && recs.every(r => r.sample), ids: c.ids.slice() };
+      // 同じ号機の記録がある原因は、直った件数に 0.5 足して比べる（少しだけ上にする）
+      return { cand, w: cand.fixed + (line && recs.some(r => r.line === line) ? 0.5 : 0) };
+    });
+    list.sort((a, b) => (!a.cand.label) - (!b.cand.label) || b.w - a.w || b.cand.count - a.cand.count || b.cand.last.at.localeCompare(a.cand.last.at));
+    out.push(...list.map(x => x.cand));
+  });
+  const f = flows[0];
+  return { cands: out.slice(0, CANDS_MAX), head: f ? { area: f.area, equipment: f.equipment, symptom: f.symptom, count: f.count } : null };
+}
+/* 吹き出しの候補。候補を持たない前の吹き出しは、その場で作って固める（印が同じ候補を指し続けるように） */
+function candidatesOf(m) {
+  if (!m) return [];
+  if (!Array.isArray(m.cands)) {
+    const pool = visibleRecords(), s = m.kind === 'hit' && m.query ? search(m.query, null, pool) : null;
+    const rk = s ? rankCands(s.Q, s.hits, pool) : { cands: [], head: null };
+    m.cands = rk.cands;
+    m.candsHead = rk.head;
+  }
+  return m.cands;
+}
+/* 確かめて違った候補 →「効かなかった対処」の文（確認したが違った：原因、原因…）。原因未記入は対処の文（無ければ入れない） */
+const failedName = c => c.label || (c.action && c.action.label) || '';
+function failedFromMarks(m) {
+  const done = (m && m.done) || [];
+  if (!done.length) return '';
+  const names = [];
+  for (const c of candidatesOf(m)) {
+    if (!done.includes(c.key)) continue;
+    const t = failedName(c);
+    if (t && !names.includes(t)) names.push(t);
+  }
+  return names.length ? ('確認したが違った：' + names.join('、')).slice(0, 300) : '';
+}
+
+/* =========================================================
    9. 共有（Google Apps Script）
    ・記録するとまず端末に保存 → 送れるときに送る（未送信は自動で再送）
    ・他の人の記録は、開いたとき／画面に戻ったときに取り込む
    ========================================================= */
-const SYNC = { state: 'idle', at: '', msg: '', ai: false, configOk: null, version: null };   // configOk：サーバーが設定の共有に対応しているか（前の版の Code.gs は false）   // ai：サーバーにAIの鍵が登録されているか
+const SYNC = { state: 'idle', at: '', msg: '', ai: false, configOk: null, version: null, features: {} };   // configOk：サーバーが設定の共有に対応しているか（前の版の Code.gs は false）   // ai：サーバーにAIの鍵が登録されているか
 // version：一覧（list）の返事の版。3 未満（返さない）なら、記録の新しい項目（結果・原因の種類など）を保存できない前の版の Code.gs（null はまだ読んでいない）
+// features：サーバーで使える機能（一覧の返事。版5から { lookup：調べもの（Web）}。前の版の Code.gs は返さないので {}）
 const AUTO_SYNC_MS = 5 * 60 * 1000;   // 開きっぱなしの端末でも、他の人の記録を取り込み、未送信を送り直す間隔
 let syncBusy = false, syncAgain = false, lastSyncTry = 0;
 async function gasFetch(opts, query, timeoutMs) {
@@ -1175,7 +1522,10 @@ async function gasFetch(opts, query, timeoutMs) {
     if (data.error) { const err = new Error(data.error); err.code = data.code; throw err; }
     return data;
   } catch (e) {
-    throw e.name === 'AbortError' ? new Error('時間内に応答がありませんでした') : e;
+    if (e.name === 'AbortError') throw new Error('時間内に応答がありませんでした');
+    // つながらなかった（電波・待つ間に画面が消えた など）。ブラウザの英語の文（Load failed・Failed to fetch）は出さない
+    if (e instanceof TypeError) throw new Error('通信できませんでした（電波が弱い・画面が消えた など）');
+    throw e;
   } finally { clearTimeout(timer); }
 }
 function toWire(r) {
@@ -1225,7 +1575,7 @@ function cleanQuality(x) {
     autoFields: ids(x.autoFields, k => AUTO_IDS.includes(k)), rawText: s(x.rawText, 1000), context: s(x.context, 300), aiNote: s(x.aiNote, 200),
     photoText: s(x.photoText, 300), aiFilled: ids(x.aiFilled, k => AI_FILL_IDS.includes(k) || CUSTOM_ID.test(k)), equipCanon: s(x.equipCanon, 40),
     relatedId, relation: relatedId ? code(x.relation, RELATIONS) : '',   // つなぐ記録が無ければ、関連の種類も空
-    aiHistoryId: historyIdOf(x.aiHistoryId),
+    aiHistoryId: historyIdOf(x.aiHistoryId), lookupNote: s(x.lookupNote, 2000),
   };
 }
 /* 原因の種類（9つの候補のどれか）。前後の空白と、かっこの全角・半角の違いはそろえる（サーバーと同じ）。どれでもなければ空 */
@@ -1250,7 +1600,7 @@ const blankVal = v => v === undefined || v === '' || (Array.isArray(v) && !v.len
    ほかの端末があとで記録を直していても（更新が新しくても）入れる。共有先に値がある項目（ほかの端末が選んだ・シートで直した）は、その値を使う。
    印の項目（自動で入った欄・AIが入れた欄）は、もとの欄の値が同じものだけ戻す（ほかの端末で人が直した欄に、印を戻さない）。
    設備の正式名は、共有先のいまの設備から作り直す。関連する記録と関連の種類はそろえて入れる */
-const LOCAL_PICKED = ['result', 'failed', 'causeType', 'symptomTags', 'downtime', 'rawText', 'context', 'aiNote', 'photoText', 'aiHistoryId'];
+const LOCAL_PICKED = ['result', 'failed', 'causeType', 'symptomTags', 'downtime', 'rawText', 'context', 'aiNote', 'photoText', 'aiHistoryId', 'lookupNote'];
 function fillLocal(srv, local) {
   let n = 0;
   for (const k of LOCAL_PICKED) if (blankVal(srv[k]) && !blankVal(local[k])) { srv[k] = clone(local[k]); n++; }
@@ -1363,6 +1713,8 @@ async function syncNow(manual) {
     if (mergeList(res.records)) changed = true;
     if (SYNC.ai !== !!res.ai) { SYNC.ai = !!res.ai; changed = true; }   // AIボタンを出すかどうか
     SYNC.version = Math.max(0, Math.floor(Number(res.version)) || 0);   // 前の版の Code.gs は版を返さない（0）。記録する画面に一度だけ案内を出す（oldRecBanner）
+    const feats = res.features && typeof res.features === 'object' && !Array.isArray(res.features) ? res.features : {};
+    if (JSON.stringify(feats) !== JSON.stringify(SYNC.features)) { SYNC.features = feats; changed = true; }   // 調べもの（Web）の切り替えを出すかどうか
     // 設定（号機・場所・入力項目など）。前の版の Code.gs は設定を返さないので、そのときは共有しない
     SYNC.configOk = res.configRev !== undefined;
     if (res.configRev !== undefined) {
@@ -1391,6 +1743,7 @@ async function syncNow(manual) {
     // 入力中の画面は書き換えない（記録する画面・設定の画面で文字を入れている途中）
     if (changed && !(TAB === 'record' && !DETAIL) && !(TAB === 'settings' && !DETAIL && typingInView())) renderKeepFocus();
     renderSync();
+    renderCam();       // 入力欄の上の［探す］［調べる］（調べもの（Web）に対応したサーバーで、AIが使えるときだけ）
     syncDraftSlot();   // 記録する画面は描き直さないが、AIが使えるようになった（使えなくなった）ら「文章で書く」の欄だけ出し入れする
     if (syncAgain) { syncAgain = false; syncNow(); }
   }
@@ -1421,9 +1774,15 @@ function renderSync() {
   else if (SYNC.state === 'error') { txt = '送信エラー' + (n ? `・未送信${n}` : ''); cls = 'err'; }
   else if (SYNC.state === 'key') { txt = '合言葉を確認'; cls = 'err'; }
   else if (n) { txt = `未送信 ${n}件`; cls = 'warn'; }
-  else { txt = '同期済み ' + SYNC.at; cls = 'ok'; }
-  b.className = 'sync ' + cls;
-  b.textContent = txt;
+  else { txt = '同期済み'; cls = 'ok'; }
+  renderCam();   // 合言葉が違う・AIが使えなくなったときは、入力欄の上の切り替えも消す（評価・見ていないチャットの答えで分かったときも）
+  const two = txt.includes('・');   // 「オフライン・未送信1」など：スマホでは「・」のあとで2行に折る（.sync.two）
+  b.className = 'sync ' + cls + (two ? ' two' : '');
+  // 同期した時刻は、スマホでは出さない（.tm を隠す。上の「トラブル記録」が切れないように）
+  if (cls === 'ok') b.innerHTML = `同期済み<span class="tm"> ${esc(SYNC.at)}</span>`;
+  else if (two) b.innerHTML = esc(txt).replace('・', '・<wbr>');
+  else b.textContent = txt;
+  $('.top').classList.toggle('lng', cls !== 'ok' && txt.length >= 5);
 }
 async function askKey() {
   const k = window.prompt('共有データの合言葉を入力してください（管理者に確認してください）', KEY || '');
@@ -1439,11 +1798,12 @@ async function askKey() {
    9-2. AIの対処案
    チャットの結果に「AIに対処案を聞く」を出す。関係する記録（最大15件・文字だけ）を
    サーバー（GAS）経由でAI（Claude／Azure OpenAI／OpenAI のうち、サーバーで選んだもの）に渡し、記録を根拠にした確認と対処の手順を返してもらう。
+   新しい版のサーバー（版4）では、代わりに「AIに作業手順を聞く」「AIに聞く」（聞き直し）を出す（9-2-2）。前の版のサーバーでは今までのまま。
    AIの鍵はサーバー側だけにあり、このファイルには入っていない。
    ========================================================= */
 const aiAvailable = () => !!(GAS_URL && KEY && SYNC.ai && SYNC.state !== 'key');
 /* AIに渡す記録の形。結果・効かなかった対処・原因の種類・症状の種類・停止時間（名前）・写真から読み取ったこと・報告の原文（200字）・
-   前の記録とのつながり（related）・「設定」で足した項目（extras）も入れる。前の版の Code.gs は extras を読まないので、そのときは今までの文（extra）で渡す */
+   前の記録とのつながり（related）・「設定」で足した項目（extras）・調べたこと（lookupNote。300字）も入れる。前の版の Code.gs は extras を読まないので、そのときは今までの文（extra）で渡す */
 const aiRecord = r => {
   const out = {
     date: r.occurredAt, line: r.line, area: r.area, equipment: r.equipment, symptom: r.symptom, cause: r.cause, action: r.action,
@@ -1452,6 +1812,9 @@ const aiRecord = r => {
     downtime: labelOf(DOWNTIMES, r.downtime), photoText: String(r.photoText || '').slice(0, 150), rawText: String(r.rawText || '').slice(0, 200),
     related: relatedText(r), extras: extrasOf(r),
   };
+  // 調べたこと（Webなど・未確認）。あるときだけ渡す（サーバーは記録された事実とは分けてAIに渡す。前の版のサーバーは読まない）
+  const ln = String(r.lookupNote || '').trim();
+  if (ln) out.lookupNote = ln.slice(0, 300);
   if (!(SYNC.version >= REC_VERSION)) out.extra = extraText(r);
   return out;
 };
@@ -1490,7 +1853,7 @@ function extrasStats(recs) {
   }
   return out;
 }
-/* AIに渡す記録（最大15件）と集計。吹き出しの「これまでに○件」「まず確認」と同じまとまりの内訳を渡し、
+/* AIに渡す記録（最大15件）と集計。いちばん近い記録のまとまりの内訳を渡し、
    記録は原因ごとの代表（新しい順）を先に入れる（似ている順の上位だけだと、多い原因が抜けることがあるため）。
    サンプルは、表示の設定にかかわらず渡さない（試用のための架空の例なので。サンプルしかなければ記録0件として聞く）。画面の検索結果・フローはそのまま */
 function aiInput(m) {
@@ -1531,9 +1894,12 @@ async function askAi(m) {
   // 押した時点の記録で探し直す（同期の前に送った質問でも、チームの最新の記録で聞く。吹き出しの一覧も新しくなる）
   const fresh = answer(m.query);
   for (const k of ['kind', 'ids', 'total', 'near', 'nearLabel']) m[k] = fresh[k];
+  // 候補も新しくする。ただし「違った」の印を付けたあとは、印を付けた候補のまま（印が別の候補を指したり消えたりしないように）
+  if (!(m.done && m.done.length)) for (const k of ['cands', 'candsHead']) m[k] = fresh[k];
   const { recs, stats } = aiInput(m);
   const refIds = recs.map(r => r.id);   // AIが返す記録番号（1〜）→ この順の記録
   m.ai = { state: 'loading', refIds };
+  chatChanged(m);
   render();
   const box = document.getElementById('ai-' + CHAT.indexOf(m));
   if (box) box.scrollIntoView({ block: 'nearest' });
@@ -1549,36 +1915,64 @@ async function askAi(m) {
     m.ai = { state: 'error', refIds, msg: e.message };
     if (e.code === 'key') SYNC.state = 'key';
   }
-  if (TAB === 'search' && !DETAIL) render();   // 別の画面を見ていたら書き換えない（戻ったときに表示される）
+  aiAnswered(m);   // 別の画面・別のチャットを見ていたら書き換えない（戻ったときに表示される）
 }
 /* 対処案の評価（任意）。AIの枠の下に小さく出す。押すとすぐ「ありがとうございます」に変える（押したかどうかはメッセージに覚える）。
-   オフライン・送れなかったときは toast で知らせるだけ（作業は止めない。送れなかったときは、また押せるように戻す） */
-function feedbackHtml(m) {
-  const a = m.ai, mi = CHAT.indexOf(m);
+   オフライン・送れなかったときは toast で知らせるだけ（作業は止めない。送れなかったときは、また押せるように戻す）。
+   k・i：作業手順（'p' とタブの番号）・聞き直し（'n' と回の番号）・調べもの（'l' と 0）の評価。無ければ今までの対処案（m.ai） */
+const rateTarget = (m, k, i) => (!m ? null : k === 'p' ? (m.proc && m.proc.items[i]) || null : k === 'n' ? (m.narrow && m.narrow.rounds[i]) || null
+  : k === 'l' ? (m.kind === 'lookup' && m.look) || null : m.ai);
+const fbId = (m, k, i) => 'fb-' + CHAT.indexOf(m) + (k ? '-' + k + i : '');   // タブ・回ごとに別の ID（その所だけ描き直すため）
+function feedbackHtml(m, k, i) {
+  const a = rateTarget(m, k, i), mi = CHAT.indexOf(m);
   if (!a || a.state !== 'done' || !a.historyId) return '';
-  return `<div class="aifb" id="fb-${mi}">${a.rated ? 'ありがとうございます' : 'この案は' + RATINGS.map(([v, l]) =>
-    `<button type="button" class="chip sug" data-act="ai-rate" data-mi="${mi}" data-v="${v}">${esc(l)}</button>`).join('')}</div>`;
+  const at = `data-mi="${mi}"` + (k ? ` data-k="${k}" data-ti="${esc(i)}"` : '');
+  return `<div class="aifb${k ? ' in' : ''}" id="${fbId(m, k, i)}">${a.rated ? 'ありがとうございます' : (k === 'l' ? 'この答えは' : 'この案は') + RATINGS.map(([v, l]) =>
+    `<button type="button" class="chip sug" data-act="ai-rate" ${at} data-v="${v}">${esc(l)}</button>`).join('')}</div>`;
 }
-async function rateAi(m, rating) {
-  const a = m && m.ai;
+async function rateAi(m, rating, k, i) {
+  const a = rateTarget(m, k, i);
   if (!a || a.state !== 'done' || !a.historyId || a.rated || !labelOf(RATINGS, rating)) return;
   if (!navigator.onLine) { toast('オフラインのため、評価は送れませんでした'); return; }
-  const redraw = () => { const box = document.getElementById('fb-' + CHAT.indexOf(m)); if (box) box.outerHTML = feedbackHtml(m); };   // 描き直さずに、その所だけ（読んでいる位置を動かさない）
+  const redraw = () => { const box = document.getElementById(fbId(m, k, i)); if (box) box.outerHTML = feedbackHtml(m, k, i); };   // 描き直さずに、その所だけ（読んでいる位置を動かさない）
   a.rated = rating;
   redraw();
+  chatChanged(m, true);
   try {
     await gasFetch({ method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'feedback', key: KEY, historyId: a.historyId, rating }) });
   } catch (e) {
     a.rated = '';
     redraw();
+    chatChanged(m, true);
     toast('評価を送れませんでした（' + e.message + '）');
     if (e.code === 'key') { SYNC.state = 'key'; renderSync(); }
   }
 }
 /* 写真を送ったときは、写真の読み取りが終わってから（探す言葉があるときだけ）対処案を聞ける */
 const canAsk = m => !m.photo || (m.kind !== 'photo' && !(m.vision && m.vision.state === 'loading'));
-function aiBlock(m) {
+/* 記録の番号（1〜。refIds の順）→ 記録のチップ（記録2：10/23 4号）。消した記録は出さない */
+const liveNums = (refIds, nums) => (Array.isArray(nums) ? nums : []).filter(n => { const id = (refIds || [])[n - 1], r = id && findRec(id); return !!(r && !r.deleted); });
+const refChips = (refIds, nums) => liveNums(refIds, nums).map(n => {
+  const id = refIds[n - 1], r = findRec(id);
+  return `<button type="button" class="rchip" data-rid="${esc(id)}">記録${n}：${esc(fmtDay(r.occurredAt))} ${esc((r.line || '').replace('ライン', ''))}${r.sample ? '（サンプル）' : ''}</button>`;
+}).join('');
+/* 吹き出しの下のAIの部分。新しい版のサーバー（版4）：候補があれば「AIに作業手順を聞く」、候補が無ければ「AIに聞く」（聞き直し）。
+   前の版のサーバー：今までの「AIに対処案を聞く」。panel：次の手（①〜③がどれも違った）を出す（AIを聞くボタンは出さず、次の手の中の「AIに聞き直す」から）。
+   もう出ている答え（対処案・作業手順・聞き直し）は、いつも出したまま */
+function aiBlock(m, panel) {
+  const mi = CHAT.indexOf(m), has = m.kind === 'hit' && candidatesOf(m).length > 0;
+  const fresh = procServer(), can = aiAvailable() && canAsk(m);
+  const btn = (act, label) => `<div class="chips"><button type="button" class="chip aichip" data-act="${act}" data-mi="${mi}">${ICON.bulb}${label}</button></div>`;
+  let html = m.ai || (!fresh && !panel) ? suggestBlock(m) : '';
+  if (has) html += hasProc(m) ? procHtml(m) : fresh && can && !panel ? btn('proc', 'AIに作業手順を聞く') : '';
+  html += hasNarrow(m) ? narrowHtml(m) : !has && fresh && can ? btn('narrow', 'AIに聞く') : '';
+  // 次の手は聞き直しの質問の下に出す（質問に答えたあとの「この内容で記録する」が、いちばん下の近くにあるように）
+  if (panel) html += nextHtml(m);
+  return html;
+}
+/* 今までの「AIの対処案」（前の版のサーバーのとき。もう出ている答えも、これで出す） */
+function suggestBlock(m) {
   const mi = CHAT.indexOf(m), a = m.ai;
   if (!a) return aiAvailable() && canAsk(m) ? `<div class="chips"><button type="button" class="chip aichip" data-act="ai" data-mi="${mi}">${ICON.bulb}AIに対処案を聞く</button></div>` : '';
   if (a.state === 'loading') return `<div class="aibox busy" id="ai-${mi}"><div class="aih">${ICON.bulb}AIが記録を読んで考えています…</div><div class="muted" style="font-size:14px">10〜60秒ほどかかります</div></div>`;
@@ -1587,21 +1981,533 @@ function aiBlock(m) {
       <div class="chips"><button type="button" class="chip" data-act="ai" data-mi="${mi}">もう一度聞く</button></div></div>`;
   }
   const d = a.data || {};
-  const refChips = nums => (nums || []).map(n => {
-    const id = a.refIds[n - 1], r = id && findRec(id);
-    return r && !r.deleted ? `<button type="button" class="rchip" data-rid="${esc(id)}">記録${n}：${esc(fmtDay(r.occurredAt))} ${esc((r.line || '').replace('ライン', ''))}${r.sample ? '（サンプル）' : ''}</button>` : '';
-  }).join('');
   const steps = Array.isArray(d.steps) ? d.steps : [], general = Array.isArray(d.general) ? d.general : [];
   return `<div class="aibox" id="ai-${mi}">
     <div class="aih">${ICON.bulb}AIの対処案<span class="badge">参考</span></div>
     ${d.summary ? `<div class="ais">${esc(d.summary)}</div>` : ''}
     ${steps.length ? `<div class="h3">記録にもとづく確認と対処（上から順に）</div><ol class="aisteps">${steps.map(s => `<li><b>${esc(s.check)}</b>
-      ${s.action ? `<div>→ ${esc(s.action)}</div>` : ''}${s.reason ? `<div class="air">${esc(s.reason)}</div>` : ''}<div class="rchips">${refChips(s.records)}</div></li>`).join('')}</ol>` : ''}
+      ${s.action ? `<div>→ ${esc(s.action)}</div>` : ''}${s.reason ? `<div class="air">${esc(s.reason)}</div>` : ''}<div class="rchips">${refChips(a.refIds, s.records)}</div></li>`).join('')}</ol>` : ''}
     ${general.length ? `<div class="h3">記録にはない確認（一般的な考え・要確認）</div><ul class="aigen">${general.map(g => `<li>${esc(g)}</li>`).join('')}</ul>` : ''}
     ${d.enough_records ? '' : '<div class="muted" style="font-size:13px">関係する記録が少ないため、一般的な内容が中心です。</div>'}
     ${d.safety ? `<div class="aisafe">${ICON.warn}<span>${esc(d.safety)}</span></div>` : ''}
     <div class="aifoot">AIによる提案です。作業前に必ず設備を止めて安全を確認し、最終判断は担当者が行ってください。${a.by ? `<br>回答したAI：${esc(a.by)}` : ''}</div>
   </div>${feedbackHtml(m)}`;
+}
+
+/* =========================================================
+   9-2-2. AIの作業手順（①②③）・聞き直し（新しい版のサーバー：版4）
+   候補があれば「AIに作業手順を聞く」：候補ごとに、安全 → 確認 → 判断 → 対処 → 復旧確認 の手順を出す（m.proc）。
+   ①〜③がどれも違ったとき（次の手の「AIに聞き直す」）と、候補が無いとき（「AIに聞く」）は、
+   絞り込みの質問と次に確かめることを出す（m.narrow。質問に答えて、もう一度聞ける。3回まで）。
+   AIは押したときだけ聞く（②③の手順も、そのタブか「直らないときは…」を押したときだけ。費用のため）。
+   答えは吹き出しに持つ（待っている間に次の質問を送っても、答えは元の吹き出しに入る）
+   ========================================================= */
+const PROC_VERSION = 4;   // 作業手順・聞き直しに対応したサーバーの版（一覧の version がこれ以上）
+const procServer = () => SYNC.version !== null && SYNC.version >= PROC_VERSION;
+const OLD_PROC_MSG = 'サーバーの Code.gs が前の版のため、作業手順と聞き直しは使えません。Code.gs を新しい版に貼り替えて、デプロイを更新してください（管理者へ）';
+const PROC_STAGES = ['安全', '確認', '判断', '対処', '復旧確認'];   // 手順の段階（サーバーの PROC_STAGES と同じ）
+const CAND_MARKS = ['①', '②', '③'];
+const NARROW_MAX = 3;   // 聞き直しは3回まで（それ以上は詳しい人に相談）
+/* もう聞いたか（手順が1つでもある・聞き直しが1回でもある）。答えの無い入れ物（待っている途中の答えを除いて残したもの）は、聞いていない扱い */
+const hasProc = m => !!(m && m.proc && m.proc.items && Object.keys(m.proc.items).length);
+const hasNarrow = m => !!(m && m.narrow && Array.isArray(m.narrow.rounds) && m.narrow.rounds.length);
+/* タブなどに出す候補の短い名前（8字まで。原因未記入は対処の名前） */
+const candShort = c => cutText(c.label || (c.action && c.action.label) || '原因未記入', 8);
+/* 「AIに作業手順を聞く」で手順を作る候補：①〜③のうち、まだ「違った」の印が無い最初の候補（カードで「次に確認」と強調している候補。
+   ①に印を付けてから押したのに①の手順を作らないように）。全部に印があれば ① */
+const firstOpenCand = m => (!m ? 0 : Math.max(0, (m.kind === 'hit' ? candidatesOf(m) : []).slice(0, 3).findIndex(c => !(m.done || []).includes(c.key))));
+/* 送る質問（写真のときは、ひとこと。無ければその旨。今の対処案と同じ） */
+const aiQuestion = m => (m.photo ? (m.text || PHOTO_ONLY_Q) : m.query);
+/* まだAIに聞いていない（印も無い）吹き出しは、押した時点の記録で探し直す（同期の前に送った質問でも、チームの最新の記録で聞く）。
+   聞いたあと・印を付けたあとは、固めた候補のまま（タブ①②③や印が、別の候補を指さないように） */
+function refreshForAi(m) {
+  if ((m.done && m.done.length) || hasProc(m) || hasNarrow(m)) return;
+  const fresh = answer(m.query);
+  for (const k of ['kind', 'ids', 'total', 'near', 'nearLabel', 'cands', 'candsHead']) m[k] = fresh[k];
+}
+/* AIに渡す候補（①②③）と記録。target：手順を作る候補（0〜2。聞き直しは -1）。
+   候補の根拠の記録からは、サンプル・消した記録を除く（今の aiInput と同じ決まり。件数もサンプルを除いて数え直す）。
+   記録は 手順を作る候補（6件まで）→ ほかの候補（3件ずつ）→ aiInput の記録 の順で、重ならないように15件まで */
+function procInput(m, target) {
+  const base = aiInput(m), top = (m.kind === 'hit' ? candidatesOf(m) : []).slice(0, 3), marks = m.done || [];
+  const real = ids => (ids || []).map(findRec).filter(r => r && !r.deleted && !r.sample);
+  const lists = top.map(c => real(c.ids));
+  const recs = [], seen = new Set();
+  const add = r => { if (recs.length < 15 && !seen.has(r.id)) { seen.add(r.id); recs.push(r); } };
+  if (lists[target]) lists[target].slice(0, 6).forEach(add);
+  lists.forEach((l, i) => { if (i !== target) l.slice(0, 3).forEach(add); });
+  base.recs.forEach(add);
+  const candidates = top.map((c, i) => {
+    const rs = lists[i], n = v => rs.filter(r => r.result === v).length;
+    const act = c.action ? real(c.action.ids) : [];   // いちばんよい対処の記録（サンプルを除く）
+    const fm = new Map();
+    for (const r of rs) { const t = String(r.failed || '').replace(/\s+/g, ' ').trim(); if (t) fm.set(t, (fm.get(t) || 0) + 1); }
+    return {
+      label: c.label, causeType: c.causeType || '', count: rs.length, fixed: n('fixed'), watch: n('watch'), notfixed: n('notfixed'),
+      action: c.action ? c.action.label : '', actionFixed: act.filter(r => r.result === 'fixed').length,
+      parts: partsOf(act).slice(0, 2).map(p => (p.name || '') + (p.model ? '（' + p.model + '）' : '')).filter(Boolean).join('、'),
+      failed: [...fm].sort((a, b) => b[1] - a[1]).map(x => x[0]).join('、').slice(0, 150),
+      records: rs.map(r => recs.indexOf(r) + 1).filter(k => k > 0),   // 根拠の記録（送る記録の番号 1〜）
+      sampleOnly: !rs.length,   // サンプルしかない候補（記録の根拠が無いことを、サーバーがAIに伝える）
+      // ほかのまとまり（別の設備・症状）の候補は、どこの記録かを添える（AIが、いまの設備の原因と取り違えないように）
+      other: c.main === false && c.where ? (c.where.area + ' › ' + c.where.equipment + '「' + c.where.symptom + '」').slice(0, 80) : '',
+    };
+  });
+  return { recs, stats: base.stats, candidates, done: top.map((c, i) => (marks.includes(c.key) ? i : -1)).filter(i => i >= 0) };
+}
+/* 作業手順・聞き直しの依頼の中身（refIds：渡した記録の ID。AI履歴に残すだけで、AIには送らない） */
+const chatBody = (m, action, inp, extra) => JSON.stringify(Object.assign({ action, key: KEY, question: aiQuestion(m), records: inp.recs.map(aiRecord),
+  stats: inp.stats, vision: visionWire(m), refIds: inp.recs.map(r => r.id), candidates: inp.candidates, done: inp.done }, extra));
+const chatPost = (m, action, inp, extra) => gasFetch({ method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: chatBody(m, action, inp, extra) }, null, 100000);   // サーバーは80秒以内に必ず返すので、それより長く待つ
+/* 答えが返らなかったとき。前の版の Code.gs は作業手順・聞き直しを知らない（「知らない操作です」） */
+function chatError(e) {
+  if (e.code === 'key') SYNC.state = 'key';
+  return /知らない操作/.test(e.message) ? OLD_PROC_MSG : e.message;
+}
+/* AIの答えが返ったとき：答えは、その吹き出しのチャットに残す（待っている間に別のチャットを開いても）。
+   その吹き出しがいまの会話にあって「探す」を見ているときだけ描き直す（別の画面・別のチャットなら、履歴の一覧だけ。開いたときに出る） */
+function aiAnswered(m) {
+  chatChanged(m);
+  if (TAB === 'search' && !DETAIL && CHAT.includes(m)) render();
+  else { renderSync(); renderHist(); }
+}
+/* 答えの形を確かめる（サーバーでも整えているが、念のため。番号は1〜15の整数だけ） */
+const aiStr = (x, n) => (typeof x === 'string' ? x.replace(/\s+/g, ' ').trim().slice(0, n) : '');
+const aiNums = v => [...new Set((Array.isArray(v) ? v : []).filter(k => Number.isInteger(k) && k >= 1 && k <= 15))];
+const aiList = (v, n) => (Array.isArray(v) ? v : []).filter(x => x && typeof x === 'object').slice(0, n);
+function procData(d) {
+  d = d && typeof d === 'object' ? d : {};
+  const steps = aiList(d.steps, 8).map(x => ({ stage: PROC_STAGES.includes(x.stage) ? x.stage : '確認', title: aiStr(x.title, 60), detail: aiStr(x.detail, 200),
+    normal: aiStr(x.normal, 100), abnormal: aiStr(x.abnormal, 100), records: aiNums(x.records) })).filter(x => x.title || x.detail);
+  return { summary: aiStr(d.summary, 300), steps, safety: aiStr(d.safety, 300), enough_records: d.enough_records === true };
+}
+function narrowData(d) {
+  d = d && typeof d === 'object' ? d : {};
+  const questions = aiList(d.questions, 3).map(x => ({ q: aiStr(x.q, 60), options: [...new Set((Array.isArray(x.options) ? x.options : []).map(o => aiStr(o, 20)).filter(Boolean))].slice(0, 4) }))
+    .filter(x => x.q && x.options.length >= 2);   // ボタンで答えられる質問だけ
+  const checks = aiList(d.checks, 5).map(x => ({ text: aiStr(x.text, 120), records: aiNums(x.records) })).filter(x => x.text);
+  return { summary: aiStr(d.summary, 300), questions, checks, safety: aiStr(d.safety, 300) };
+}
+
+/* 「AIに作業手順を聞く」・タブ②③・「もう一度聞く」。ti：候補の番号（0〜2） */
+async function askProc(m, ti) {
+  if (!m) return;
+  const cur = m.proc && m.proc.items[ti];
+  if (cur && cur.state === 'loading') return;
+  if (!aiAvailable()) { toast('いまはAIを使えないため、手順を聞けません'); return; }
+  if (!navigator.onLine) { toast('オフラインのため、AIには聞けません'); return; }
+  const first = !hasProc(m);
+  refreshForAi(m);
+  if (ti < 0 || ti >= Math.min(3, m.kind === 'hit' ? candidatesOf(m).length : 0)) { render(); return; }   // 探し直したら候補が無くなった
+  const inp = procInput(m, ti);
+  const item = { state: 'loading', refIds: inp.recs.map(r => r.id) };   // AIが返す記録番号（1〜）→ この順の記録
+  const P = m.proc && m.proc.items ? m.proc : (m.proc = { tab: ti, items: {} });
+  if (first) P.first = ti;   // 「AIに作業手順を聞く」で聞いた候補（記録する画面に渡すAI履歴の ID は、この候補の手順）
+  P.tab = ti;
+  P.items[ti] = item;
+  chatChanged(m);
+  redrawKeep();
+  const box = first && document.getElementById('pr-' + CHAT.indexOf(m));
+  if (box) box.scrollIntoView({ block: 'nearest' });
+  try {
+    const res = await chatPost(m, 'procedure', inp, { target: ti });
+    const d = procData(res.procedure);
+    if (!d.steps.length) throw new Error('AIの回答に手順がありませんでした。もう一度聞いてください');
+    Object.assign(item, { state: 'done', data: d, by: typeof res.by === 'string' ? res.by : '', historyId: historyIdOf(res.historyId) });
+  } catch (e) {
+    Object.assign(item, { state: 'error', msg: chatError(e) });
+  }
+  aiAnswered(m);
+}
+/* タブ①②③・「直らないときは…」。まだ聞いていない候補なら、ここで聞く。toTop：手順の枠の上まで動かす（次の候補の手順を、手順1から読めるように） */
+function procTab(m, ti, toTop) {
+  if (!hasProc(m) || !candidatesOf(m)[ti]) return;
+  if (m.proc.items[ti]) { m.proc.tab = ti; redrawKeep(); }
+  else askProc(m, ti);   // 描き直しまでは、すぐ（答えを待たずに）終わる
+  const box = toTop && m.proc.tab === ti && document.getElementById('pr-' + CHAT.indexOf(m));
+  if (box) box.scrollIntoView({ block: 'start' });
+}
+/* AIの作業手順の枠（見本2）：見出し・まとめ・タブ①②③・手順（段階・正常／異常・根拠の記録か「一般（要確認）」）・次の候補へ・安全・評価 */
+function procHtml(m) {
+  const mi = CHAT.indexOf(m), P = m.proc, top = candidatesOf(m).slice(0, 3), marks = m.done || [];
+  // 選んでいるタブの答えが無ければ（待っている途中で閉じて残らなかった など）、答えのあるタブを出す
+  let ti = Math.min(Math.max(0, Math.floor(+P.tab) || 0), Math.max(0, top.length - 1));
+  if (!P.items[ti]) ti = Math.max(0, top.findIndex((c, i) => !!P.items[i]));
+  const it = P.items[ti] || null, d = it && it.state === 'done' ? it.data || {} : null;
+  const tabs = top.map((c, i) => `<button type="button" class="${i === ti ? 'on' : ''}${marks.includes(c.key) ? ' done' : ''}" data-act="proc-tab" data-mi="${mi}" data-ti="${i}" aria-pressed="${i === ti}">${CAND_MARKS[i]} ${esc(candShort(c))}</button>`).join('');
+  let body = '';
+  if (!it) body = '<div class="muted" style="font-size:14px">この候補の手順は、まだ聞いていません。</div>';
+  else if (it.state === 'loading') body = '<div class="pload"><b>AIが記録を読んで手順を作っています…</b><span class="muted" style="font-size:14px">10〜60秒ほどかかります</span></div>';
+  else if (it.state === 'error') {
+    body = `<div class="perr"><div>${esc(it.msg)}</div><div class="chips"><button type="button" class="chip" data-act="proc" data-mi="${mi}" data-ti="${ti}">もう一度聞く</button></div></div>`;
+  } else {
+    const steps = Array.isArray(d.steps) ? d.steps : [];
+    body = `<ol class="proc">${steps.map((s, k) => {
+      const nums = liveNums(it.refIds, s.records);
+      return `<li><div class="pn">${k + 1}</div><div class="pb"><div class="pk">${esc(s.stage)}</div>${s.title ? `<div class="pt">${esc(s.title)}</div>` : ''}${s.detail ? `<div class="pd">${esc(s.detail)}</div>` : ''}
+        ${s.normal || s.abnormal ? `<div class="judge">${s.normal ? `<b class="okk">正常</b><span>${esc(s.normal)}</span>` : ''}${s.abnormal ? `<b class="ngk">異常</b><span>${esc(s.abnormal)}</span>` : ''}</div>` : ''}
+        <div class="src">${nums.length ? refChips(it.refIds, nums) : '<span class="gen">一般（要確認）</span>'}</div></div></li>`;
+    }).join('')}</ol>
+      ${d.enough_records ? '' : '<div class="muted" style="font-size:13px">関係する記録が少ないため、一般的な内容が中心です。</div>'}
+      ${ti + 1 < top.length ? `<button type="button" class="nextc" data-act="proc-next" data-mi="${mi}" data-ti="${ti + 1}"><span>直らないときは <b>${CAND_MARKS[ti + 1]}${esc(candShort(top[ti + 1]))}</b> の手順へ</span>${ICON.more}</button>` : ''}
+      ${d.safety ? `<div class="aisafe">${ICON.warn}<span>${esc(d.safety)}</span></div>` : ''}
+      <div class="aifoot">AIによる提案です。「一般（要確認）」の手順は記録に無い内容です。最終判断は担当者が行ってください。${it.by ? `<br>回答したAI：${esc(it.by)}` : ''}</div>
+      ${feedbackHtml(m, 'p', ti)}`;
+  }
+  return `<div class="aibox${it && it.state === 'loading' ? ' busy' : ''}" id="pr-${mi}">
+    <div class="aih">${ICON.bulb}AIの作業手順<span class="badge">参考</span></div>
+    ${d && d.summary ? `<div class="ais">${esc(d.summary)}</div>` : ''}
+    <div class="ptabs">${tabs}</div>
+    ${body}
+  </div>`;
+}
+
+/* 聞き直し：いままでの答え（送った答え）と、いま選んでいる答え [{ q, a }] */
+function narrowAnswers(m) {
+  const N = hasNarrow(m) ? m.narrow : null, last = N && N.rounds[N.rounds.length - 1];
+  if (!last) return [];
+  const out = (last.answers || []).slice();
+  const qs = last.state === 'done' && last.data ? last.data.questions || [] : [];
+  qs.forEach((q, qi) => { const a = own(N.picks || {}, qi); if (a) out.push({ q: String(q.q || '').slice(0, 60), a: String(a).slice(0, 20) }); });
+  return out;
+}
+/* 聞き直しの1回目（次の手の「AIに聞き直す」・候補が無いときの「AIに聞く」） */
+function startNarrow(m) {
+  if (!m || hasNarrow(m)) return;
+  if (!aiAvailable()) { toast('いまはAIを使えないため、聞けません'); return; }
+  if (!navigator.onLine) { toast('オフラインのため、AIには聞けません'); return; }
+  refreshForAi(m);
+  m.narrow = { rounds: [], picks: {} };
+  const r = { state: 'loading', answers: [] };
+  m.narrow.rounds.push(r);
+  runNarrow(m, r);
+}
+/* 「この答えでAIに聞く」：いままでの答えと、いま選んだ答えを添えて、次の回を聞く */
+function nextNarrow(m) {
+  const N = hasNarrow(m) ? m.narrow : null, last = N && N.rounds[N.rounds.length - 1];
+  if (!last || last.state !== 'done' || N.rounds.length >= NARROW_MAX || !Object.keys(N.picks || {}).length) return;
+  if (!navigator.onLine) { toast('オフラインのため、AIには聞けません'); return; }
+  const r = { state: 'loading', answers: narrowAnswers(m).slice(0, 6) };
+  N.rounds.push(r);
+  N.picks = {};
+  runNarrow(m, r);
+}
+/* 「もう一度聞く」（いちばん新しい回が失敗したとき。同じ答えで聞き直す） */
+function retryNarrow(m, ri) {
+  const N = hasNarrow(m) ? m.narrow : null, r = N && N.rounds[ri];
+  if (!r || r.state !== 'error' || ri !== N.rounds.length - 1) return;
+  if (!navigator.onLine) { toast('オフラインのため、AIには聞けません'); return; }
+  r.state = 'loading';
+  delete r.msg;
+  runNarrow(m, r);
+}
+async function runNarrow(m, r) {
+  const inp = procInput(m, -1);
+  r.refIds = inp.recs.map(x => x.id);
+  chatChanged(m);
+  redrawKeep();
+  const box = document.getElementById('nr-' + CHAT.indexOf(m) + '-' + m.narrow.rounds.indexOf(r));
+  if (box) box.scrollIntoView({ block: 'nearest' });
+  try {
+    const res = await chatPost(m, 'narrow', inp, { answers: r.answers });
+    const d = narrowData(res.narrow);
+    if (!d.questions.length && !d.checks.length) throw new Error('AIの回答に質問も確認もありませんでした。もう一度聞いてください');
+    Object.assign(r, { state: 'done', data: d, by: typeof res.by === 'string' ? res.by : '', historyId: historyIdOf(res.historyId) });
+  } catch (e) {
+    Object.assign(r, { state: 'error', msg: chatError(e) });
+  }
+  aiAnswered(m);
+}
+/* 質問の答えを選ぶ（もう一度押すと外す）。答えられるのは、いちばん新しい回の質問だけ */
+function pickNarrow(m, qi, v) {
+  const N = hasNarrow(m) ? m.narrow : null, last = N && N.rounds[N.rounds.length - 1];
+  const q = last && last.state === 'done' && last.data && (last.data.questions || [])[qi];
+  if (!q || !(q.options || []).includes(v)) return;
+  const picks = N.picks || (N.picks = {});
+  if (picks[qi] === v) delete picks[qi]; else picks[qi] = v;
+  chatChanged(m);   // 選んだ答えも履歴に残す
+  redrawKeep();
+}
+/* AIからの質問の枠（見本6）。回ごとに1つ。前の回の質問は、次の回で送った答えを選んだ形で出す（押せない） */
+function narrowHtml(m) {
+  const mi = CHAT.indexOf(m), N = m.narrow, rs = N.rounds || [];
+  return rs.map((r, ri) => {
+    const id = `nr-${mi}-${ri}`, last = ri === rs.length - 1;
+    if (r.state === 'loading') return `<div class="aibox busy" id="${id}"><div class="aih">${ICON.bulb}AIが記録を読んで質問を考えています…</div><div class="muted" style="font-size:14px">10〜60秒ほどかかります</div></div>`;
+    if (r.state === 'error') {
+      return `<div class="aibox err" id="${id}"><div class="aih">${ICON.bulb}AIからの質問を出せませんでした</div><div>${esc(r.msg)}</div>
+        ${last ? `<div class="chips"><button type="button" class="chip" data-act="narrow-retry" data-mi="${mi}" data-ri="${ri}">もう一度聞く</button></div>` : ''}</div>`;
+    }
+    const d = r.data || {}, qs = Array.isArray(d.questions) ? d.questions : [], checks = Array.isArray(d.checks) ? d.checks : [];
+    // 次の回の answers は、いままでの答え（この回の answers）＋この回で選んだ答え。同じ質問がまた出たときに前の回の答えを出さないよう、この回の分だけを見る
+    const sent = (((rs[ri + 1] || {}).answers) || []).slice((r.answers || []).length);
+    const chosen = (q, qi) => (last ? own(N.picks || {}, qi) : (sent.find(a => a.q === String(q.q || '').slice(0, 60)) || {}).a);
+    const qhtml = qs.map((q, qi) => `<div class="qa"><div class="qt">${qi + 1}. ${esc(q.q)}</div><div class="chips">${(q.options || []).map(o => {
+      const on = chosen(q, qi) === o;
+      return `<button type="button" class="chip${on ? ' on' : ''}" aria-pressed="${on}"${last ? ` data-act="narrow-pick" data-mi="${mi}" data-qi="${qi}" data-v="${esc(o)}"` : ' disabled'}>${esc(o)}</button>`;
+    }).join('')}</div></div>`).join('');
+    const withRec = checks.filter(c => liveNums(r.refIds, c.records).length), general = checks.filter(c => !liveNums(r.refIds, c.records).length);
+    const picked = last && Object.keys(N.picks || {}).length;
+    return `<div class="aibox" id="${id}">
+      <div class="aih">${ICON.bulb}AIからの質問<span class="badge">参考</span></div>
+      ${d.summary ? `<div class="ais" style="font-size:15px">${esc(d.summary)}</div>` : ''}
+      ${qhtml}
+      ${withRec.length ? `<div class="h3">記録にもとづく確認</div><ol class="nchk">${withRec.map(c => `<li>${esc(c.text)}<div class="rchips">${refChips(r.refIds, c.records)}</div></li>`).join('')}</ol>` : ''}
+      ${general.length ? `<div class="h3">記録にない確認<span class="gen">一般（要確認）</span></div><ul class="aigen">${general.map(c => `<li>${esc(c.text)}</li>`).join('')}</ul>` : ''}
+      ${d.safety ? `<div class="aisafe">${ICON.warn}<span>${esc(d.safety)}</span></div>` : ''}
+      <div class="aifoot">「一般（要確認）」は記録に無い内容です。最終判断は担当者が行ってください。${r.by ? `<br>回答したAI：${esc(r.by)}` : ''}</div>
+      ${feedbackHtml(m, 'n', ri)}
+    </div>${!last ? '' : rs.length >= NARROW_MAX ? '<div class="nend">これ以上は、詳しい人に相談してください。</div>'
+      : picked ? `<div class="chips naskb"><button type="button" class="chip aichip" data-act="narrow-next" data-mi="${mi}">${ICON.bulb}この答えでAIに聞く</button></div>` : ''}`;
+  }).join('');
+}
+/* 記録する画面に渡すAI履歴の ID：「AIに作業手順を聞く」で聞いた候補の手順（ふつうは①。①に印を付けてから聞いたら②など）、
+   なければ いちばん新しい聞き直し、なければ 今までの対処案 */
+function aiHistoryOf(m) {
+  const p = m.proc && m.proc.items && m.proc.items[m.proc.first || 0];
+  if (p && p.state === 'done' && p.historyId) return p.historyId;
+  const rs = ((m.narrow && m.narrow.rounds) || []).filter(r => r.state === 'done' && r.historyId);
+  if (rs.length) return rs[rs.length - 1].historyId;
+  return m.ai && m.ai.state === 'done' && m.ai.historyId ? m.ai.historyId : '';
+}
+
+/* =========================================================
+   9-2-3. 調べもの（Web）（新しい版のサーバー：版5）
+   入力欄の上の［調べる］にして送ると、AI（Claude）がWebで型式・定格などを調べ、出典つきで答える（1〜3分）。
+   AIは、送ったときと「もう一度調べる」を押したときだけ聞く。答えは吹き出しに持ち、この端末の履歴に残す（サーバーの「AI履歴」にも残る）。
+   トラブルのチャットで調べたことは、「この内容で記録する」で記録の「調べたこと」に入る（ほかには残さない）。
+   切り替えは、サーバーが調べものに対応していて（一覧の features.lookup）、AIが使えるときだけ出す（前の版のサーバー・端末内のみでは出さない）
+   ========================================================= */
+const LOOKUP_VERSION = 5;   // 調べものに対応したサーバーの版（一覧の version がこれ以上）
+const lookupOn = () => aiAvailable() && SYNC.version !== null && SYNC.version >= LOOKUP_VERSION && !!(SYNC.features && SYNC.features.lookup);
+// 入力欄の送り方：search（探す）・lookup（調べる）。新しいチャット・別のチャットを開いたら「探す」に戻す（タブを替えても残す）
+let MODE = 'search';
+const curMode = () => (MODE === 'lookup' && lookupOn() ? 'lookup' : 'search');   // 使えなくなったら「探す」として動く
+const LOOK_LOST = '調べている途中でアプリを閉じたため、答えを受け取れませんでした';
+const OLD_LOOK_MSG = 'サーバーの Code.gs が前の版のため、調べもの（Web）は使えません。Code.gs を新しい版に貼り替えて、デプロイを更新してください（管理者へ）';
+// もう一度押しても変わらない失敗（上限・設定・合言葉・前の版のサーバー）。ほかの失敗（AI・時間切れ・通信）は「もう一度調べる」を出す
+const LOOK_NO_RETRY = ['lookup-limit', 'ai-limit', 'lookup-off', 'key', 'setup', 'ai-setup', 'old'];
+const lookRetry = l => !!l && l.state === 'error' && !LOOK_NO_RETRY.includes(l.code);
+// 「終わっていればすぐ出ます（費用は増えません）」は、アプリがサーバーの答えを受け取れなかったときだけ（通信が切れた・待ちきれなかった・
+// 待つ間にアプリを閉じた・同じ調べものをサーバーがまだ処理中）。サーバーが失敗を返したとき（時間切れ・控えた・長すぎた など）は控えに残らないので、
+// もう一度押すとAIにもう一度聞く（費用もかかる）
+const lookLate = l => l.code === 'net' || l.code === 'ai-busy' || l.msg === LOOK_LOST;
+const LOOK_PH = '例：FR-E820-7.5K の定格電流は？', LOOK_PH_NEXT = '続けて聞く（例：LD と ND はどう選ぶ？）';
+/* https のリンクだけ（500字まで）。使えなければ null */
+function httpsUrl(u) {
+  if (typeof u !== 'string' || u.length > 500 || !/^https:\/\//i.test(u)) return null;
+  try { const x = new URL(u); return x.protocol === 'https:' && x.hostname ? x : null; } catch (e) { return null; }
+}
+const isPdf = u => /\.pdf$/i.test(u.pathname);
+/* 調べものの答えを確かめて整える（サーバーでも整えているが、念のため）。リンクは https だけ・出す場所の名前（ホスト）はリンクから作り直す
+   （出す名前と開く先を同じにする）・長さと数の上限・出典の番号（1〜10）。答えの文が無ければ null。
+   サーバーは http の出典も返すことがある（LOOKUP_SPEC 1-5）。https でない出典を除いたら、番号を 1, 2, … に詰め直す（出典の番号が飛ばないように） */
+function lookData(d) {
+  if (!isObj(d)) return null;
+  const num = (v, max) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.min(max, Math.round(v)) : 0);
+  const sources = [], nums = new Map();   // サーバーの番号 → 出す番号
+  for (const x of (Array.isArray(d.sources) ? d.sources : []).slice(0, 10)) {
+    const u = isObj(x) ? httpsUrl(x.url) : null, n = isObj(x) ? x.n : 0;
+    if (!u || !Number.isInteger(n) || n < 1 || n > 10 || nums.has(n)) continue;
+    nums.set(n, sources.length + 1);
+    const title = (typeof x.title === 'string' ? x.title : '').replace(/\s+/g, ' ').trim().slice(0, 120);
+    sources.push({ n: sources.length + 1, title: title || u.hostname, url: u.href, host: u.hostname, pdf: isPdf(u) });
+  }
+  // 答え：区切りごとの文（改行は残す）と、その区切りの出典の番号（ある出典だけ・小さい順）。あわせて2000字まで（超えたら最後を「…」）
+  const answer = [];
+  let left = 2000;
+  for (const x of (Array.isArray(d.answer) ? d.answer : []).slice(0, 80)) {
+    if (!isObj(x) || typeof x.text !== 'string' || left <= 0) continue;
+    let text = x.text.replace(/\r\n?/g, '\n');
+    if (text.length > left) text = text.slice(0, left - 1) + '…';
+    left -= text.length;
+    const cites = [...new Set((Array.isArray(x.cites) ? x.cites : []).filter(n => nums.has(n)).map(n => nums.get(n)))].sort((a, b) => a - b);
+    if (text || cites.length) answer.push({ text, cites });
+  }
+  if (!answer.some(x => x.text.trim())) return null;
+  const read = [], seen = new Set();
+  for (const x of (Array.isArray(d.read) ? d.read : []).slice(0, 5)) {
+    const u = isObj(x) ? httpsUrl(x.url) : null;
+    if (!u || seen.has(u.href)) continue;
+    seen.add(u.href);
+    read.push({ url: u.href, host: u.hostname, pdf: isPdf(u) });
+  }
+  const searches = (Array.isArray(d.searches) ? d.searches : []).filter(x => typeof x === 'string').map(x => x.replace(/\s+/g, ' ').trim().slice(0, 100)).filter(Boolean).slice(0, 5);
+  return { answer, sources, read, searches, partial: d.partial === true, seconds: num(d.seconds, 9999), searchCount: num(d.searchCount, 99), fetchCount: num(d.fetchCount, 99) };
+}
+/* 答えの文だけ（区切りをつないで、空行はまとめる。太字の印 ** は、チャットと同じように除く） */
+const lookPlain = d => d.answer.map(x => x.text).join('').replace(/\*\*/g, '').replace(/[ \t　]+/g, ' ').replace(/\s*\n\s*/g, '\n').trim();
+/* そのチャットで、いちばん新しい「答えの出た調べもの」（before より前）。続けて聞くときに、その問いと答えを添える */
+function lastLook(msgs, before) {
+  const end = before ? msgs.indexOf(before) : msgs.length;
+  for (let i = (end < 0 ? msgs.length : end) - 1; i >= 0; i--) {
+    const m = msgs[i];
+    if (m && m.role === 'bot' && m.kind === 'lookup' && m.look && m.look.state === 'done') return m;
+  }
+  return null;
+}
+const lookCtx = m => (m ? { q: m.query.slice(0, 300), a: lookPlain(m.look.data).slice(0, 1500) } : null);
+/* 送る（入力欄の［調べる］のとき。sendChat から）。続けて聞くときは、同じチャットの前の調べもの（問いと答え）を添える（「もう一度調べる」でも同じものを送る） */
+function lookupMessages(text) {
+  const prev = lastLook(CHAT);
+  const me = { role: 'me', text, mode: 'lookup' };
+  const bot = { role: 'bot', kind: 'lookup', query: text, look: { state: 'loading' } };
+  const ctx = lookCtx(prev);
+  if (ctx) bot.ctx = ctx;
+  return { me, bot };
+}
+/* 調べものを待つ間（1〜3分）は、画面を消さない（Screen Wake Lock。iPhone の Safari 16.4 以降・Android の Chrome）。
+   画面が消えると、待っている通信が切れて答えを受け取れないことがある。使えない端末では何もしない（「画面を消さずに」の案内のまま）。
+   いくつか待っていれば、全部の答えが来るまで。別のアプリ・別のタブにすると端末が外すので、戻ったときにまだ待っていれば付け直す（visibilitychange） */
+let LOOK_WAITING = 0, WAKE = null, WAKE_ASKING = false;
+async function keepAwake() {
+  if (!LOOK_WAITING || WAKE || WAKE_ASKING || document.hidden || !navigator.wakeLock) return;
+  WAKE_ASKING = true;
+  try {
+    const w = await navigator.wakeLock.request('screen');
+    w.addEventListener('release', () => { if (WAKE === w) WAKE = null; });
+    WAKE = w;
+  } catch (e) { /* 使えない（電池の節約・許されていない など）。案内のまま */ }
+  WAKE_ASKING = false;
+  letSleep();   // 頼んでいる間に、答えが全部来ていた
+}
+function letSleep() {
+  if (LOOK_WAITING || !WAKE) return;
+  const w = WAKE;
+  WAKE = null;
+  Promise.resolve().then(() => w.release()).catch(() => {});   // 外せなくても、答えの表示は止めない
+}
+async function runLookup(m) {
+  const body = { action: 'lookup', key: KEY, question: m.query };
+  if (m.ctx) body.context = m.ctx;
+  LOOK_WAITING++;
+  keepAwake();
+  try {
+    // サーバーは3分ほどで必ず返す（時間切れも理由つきで返る）ので、それより長く待つ
+    const res = await gasFetch({ method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) }, null, 200000);
+    const d = lookData(res.lookup);
+    if (!d) { const err = new Error('AIの答えを読み取れませんでした。もう一度調べてください'); err.code = 'ai'; throw err; }
+    m.look = { state: 'done', data: d, by: typeof res.by === 'string' ? res.by.slice(0, 100) : '', historyId: historyIdOf(res.historyId), cached: res.cached === true, rated: '' };
+  } catch (e) {
+    const old = /知らない操作/.test(e.message);   // アプリだけ新しくして、サーバーの Code.gs が前のまま
+    // 通信の失敗・時間切れ（理由の番号が無い）は、もう一度押せる
+    m.look = { state: 'error', msg: old ? OLD_LOOK_MSG : e.message, code: old ? 'old' : typeof e.code === 'string' ? e.code : 'net' };
+    if (e.code === 'key') SYNC.state = 'key';
+  } finally {
+    LOOK_WAITING--;
+    letSleep();
+  }
+  aiAnswered(m);   // 別の画面・別のチャットを見ていたら書き換えない（戻ったときに表示される）
+}
+/* 「もう一度調べる」：同じ問い・同じ添えもので送り直す（サーバーの控えに答えがあれば、すぐ返る） */
+function retryLookup(m) {
+  if (!m || m.kind !== 'lookup' || !lookRetry(m.look)) return;
+  if (!lookupOn()) { toast('いまは調べもの（Web）を使えません'); return; }
+  if (!navigator.onLine) { toast('オフラインのため、Webで調べられません'); return; }
+  m.look = { state: 'loading' };
+  chatChanged(m);
+  redrawKeep();
+  runLookup(m);
+}
+/* 出典の番号を押す：その出典の行まで動かして、少しのあいだ色を付ける */
+function showCite(mi, n) {
+  const li = document.getElementById('lks-' + mi + '-' + n);
+  if (!li) return;
+  li.scrollIntoView({ block: 'center' });
+  li.classList.add('hl');
+  setTimeout(() => li.classList.remove('hl'), 1600);
+}
+/* 読んだページの短い書き方：ホスト／…／いちばん後ろの名前（40字まで） */
+function shortUrl(u) {
+  try {
+    const x = new URL(u), segs = x.pathname.split('/').filter(Boolean);
+    let last = segs.length ? segs[segs.length - 1] : '';
+    try { last = decodeURIComponent(last); } catch (e) { /* そのまま */ }
+    if (last.length > 40) last = last.slice(0, 39) + '…';
+    return x.hostname + (!segs.length ? '' : segs.length === 1 ? '/' + last : '/…/' + last);
+  } catch (e) { return String(u); }
+}
+/* 何をしたか：Webで2回検索し、1ページ（PDF）を読みました・約45秒（0 の所は出さない。控えから返った答えは「控えから」） */
+function lookMeta(d, cached) {
+  const s = d.searchCount ? d.searchCount + '回検索' : '';
+  const f = d.fetchCount ? d.fetchCount + 'ページ' + (d.read.length && d.read.every(r => r.pdf) ? '（PDF）' : '') + 'を読みました' : '';
+  const web = s && f ? `Webで${s}し、${f}` : s ? `Webで${s}しました` : f ? `Webで${f}` : '';
+  return [web, d.seconds ? '約' + d.seconds + '秒' : '', cached ? '控えから' : ''].filter(Boolean).join('・');
+}
+/* 答えの文（区切りごと。改行で段落を分け、区切りの出典の番号をその文のあとに出す）。** で囲んだ所は太字（AIが付けたとき） */
+function lookParas(d, mi) {
+  const bold = t => esc(t).replace(/\*\*([^*\n]{1,80})\*\*/g, '<b>$1</b>').replace(/\*\*/g, '');
+  const cite = n => `<button type="button" class="cite" data-act="lk-cite" data-mi="${mi}" data-n="${n}" aria-label="出典${n}を見る">${n}</button>`;
+  const paras = [[]];
+  for (const s of d.answer) {
+    const parts = s.text.split(/\n+/);
+    let last = parts.length - 1;
+    while (last > 0 && !parts[last].trim()) last--;   // 改行で終わる区切りは、改行の前に番号を出す
+    parts.forEach((t, k) => {
+      if (k > 0) paras.push([]);
+      if (t) paras[paras.length - 1].push(bold(t));
+      if (k === last && s.cites.length) paras[paras.length - 1].push(s.cites.map(cite).join(''));
+    });
+  }
+  return paras.map(p => p.join('')).filter(h => h.replace(/<[^>]*>/g, '').trim()).map(h => `<p>${h}</p>`).join('');
+}
+/* 調べものの吹き出し（見本7・8）：待っている間・失敗・答え（出典・読んだページ・確かめる案内・評価）と「この内容で記録する」 */
+function lookHtml(m) {
+  const mi = CHAT.indexOf(m), l = m.look || { state: 'error', msg: LOOK_LOST, code: 'ai' };
+  if (l.state === 'loading') {
+    return `<div class="aibox busy" id="lk-${mi}"><div class="aih">${ICON.globe}AIがWebで調べています…</div>
+      <div class="muted lkwait">1〜3分ほどかかります。<b>画面を消さずに</b>お待ちください。</div><div class="waitbar" aria-hidden="true"><i></i></div></div>`;
+  }
+  if (l.state !== 'done') {
+    const again = lookRetry(l) && lookupOn();
+    return `<div class="aibox err" id="lk-${mi}"><div class="aih">${ICON.globe}調べきれませんでした</div>
+      <div class="lkerr"><div>${esc(l.msg)}</div>${again && lookLate(l) ? '<div class="lkagain">もう一度押すと、終わっていればすぐ出ます（費用は増えません）</div>' : ''}</div>
+      ${again ? `<div class="chips"><button type="button" class="chip" data-act="lk-retry" data-mi="${mi}">もう一度調べる</button></div>` : ''}</div>`;
+  }
+  const d = l.data, meta = lookMeta(d, l.cached), link = u => `href="${esc(u)}" target="_blank" rel="noopener noreferrer"`;
+  const srcs = d.sources.length
+    ? `<ol class="srcs">${d.sources.map(s => `<li id="lks-${mi}-${s.n}"><a ${link(s.url)}><span class="n">${s.n}</span><span class="t">${esc(s.title)}${s.pdf ? '<span class="tag">PDF</span>' : ''}</span><span class="u">${ICON.ext}${esc(s.host)}</span></a></li>`).join('')}</ol>`
+    // 出典が付かなかったとき：読んだページ（サーバーが検索で見つかったページを入れることもある）があれば、そこで確かめてもらう
+    : `<div class="lknone">${d.read.length ? '答えの文に出典が付きませんでした。下の「参考に読んだページ」で確かめてください' : '出典が見つかりませんでした。答えは参考にとどめてください'}</div>`;
+  const read = d.read.length ? `<div class="read"><b>参考に読んだページ</b><span class="rdl">${d.read.map(r => `<a ${link(r.url)}>${esc(shortUrl(r.url))}</a>`).join('')}</span></div>` : '';
+  return `<div class="aibox" id="lk-${mi}">
+    <div class="aih">${ICON.globe}Webで調べた結果<span class="badge">参考</span></div>
+    ${meta ? `<div class="lkmeta">${esc(meta)}</div>` : ''}
+    <div class="lk">${lookParas(d, mi)}</div>
+    ${d.partial ? '<div class="lkpart">時間の都合で、途中までの答えです</div>' : ''}
+    <div class="h3">出典</div>${srcs}${read}
+    <div class="lkinfo">${ICON.info}<span>AIがWebで調べた内容です。型式・定格は、出典の資料で確かめてください。</span></div>
+    ${l.by ? `<div class="aifoot">回答したAI：${esc(l.by)}</div>` : ''}
+    ${feedbackHtml(m, 'l', 0)}
+  </div><div class="chips"><button type="button" class="chip" data-act="rec-from-chat" data-mi="${mi}">${ICON.plus}この内容で記録する</button></div>`;
+}
+/* 記録の「調べたこと」：そのチャットで答えの出た調べものを順に（問い・答え（400字まで）・出典の題名とリンク）。あわせて2000字まで */
+function lookupNoteOf(msgs) {
+  const cut = (t, n) => (t.length > n ? t.slice(0, n - 1) + '…' : t);
+  const blocks = msgs.filter(x => x && x.role === 'bot' && x.kind === 'lookup' && x.look && x.look.state === 'done').map(x => {
+    const d = x.look.data, src = d.sources.slice(0, 5).map(s => `[${s.n}] ${s.title} ${s.url}`);
+    return [x.query, cut(lookPlain(d).replace(/([。！？])\n/g, '$1').replace(/\s+/g, ' '), 400), '出典：' + (src.length ? src.join('\n') : '見つかりませんでした')].join('\n');
+  });
+  return cut(blocks.join('\n\n'), 2000);
+}
+/* 入力欄の上の切り替え［探す］［調べる］（見本7・9）。調べものを使えないときは出さない（「探す」として動く） */
+function renderMode() {
+  const on = lookupOn(), lk = curMode() === 'lookup', bar = $('#modeBar');
+  document.body.classList.toggle('lkon', on);
+  document.body.classList.toggle('lkmode', lk);
+  bar.hidden = !on;
+  const html = !on ? '' : [['search', ICON.search, '探す'], ['lookup', ICON.web, '調べる']].map(([v, ic, label]) =>
+    `<button type="button" data-act="mode" data-v="${v}" aria-pressed="${(v === 'lookup') === lk}">${ic}${label}</button>`).join('')
+    + (lk ? '<span class="mnote">Webで調べます（1〜3分）</span>' : '');
+  if (bar._h !== html) { bar.innerHTML = html; bar._h = html; }
+  $('#camBtn').hidden = lk;   // 「調べる」の間は写真を送らない
+  return lk;
+}
+function setMode(v) {
+  if (!['search', 'lookup'].includes(v) || (v === 'lookup' && !lookupOn())) return;
+  MODE = v;
+  renderCam();
+  if (WIDE.matches) $('#chatIn').focus({ preventScroll: true });
 }
 
 /* =========================================================
@@ -1611,10 +2517,14 @@ function aiBlock(m) {
    読み取ってもらい、それとひとことで過去の記録を探し直す。写真は「この内容で記録する」で記録にも付けられる。
    ========================================================= */
 const PHOTO_ONLY_Q = '（ひとことはありません。写真から読み取ったことをもとに考えてください）';
+/* 入力欄のまわり（切り替え［探す］［調べる］・撮った写真・入力欄の案内）。「調べる」の間は、撮った写真は出さずに残しておく（「探す」に戻すと出す。調べものでは送らない） */
 function renderCam() {
-  const box = $('#camPrev'), p = PENDING;
+  const box = $('#camPrev'), p = PENDING, lk = renderMode(), inp = $('#chatIn');
   document.body.classList.toggle('campending', !!p);
-  $('#chatIn').placeholder = p ? 'ひとこと（なくてもOK）' : '例：3号 充填部で袋を吸わない';
+  box.classList.toggle('lkhide', lk);
+  inp.maxLength = lk ? 300 : 200;
+  inp.setAttribute('aria-label', lk ? 'Webで調べることを入力' : '起きているトラブルや設備を入力');
+  inp.placeholder = lk ? (lastLook(CHAT) ? LOOK_PH_NEXT : LOOK_PH) : p ? 'ひとこと（なくてもOK）' : '例：3号 充填部で袋を吸わない';
   if (!p) { box.hidden = true; box.textContent = ''; return; }
   box.hidden = false;
   box.innerHTML = `<img src="${esc(thumbSrc(p))}" alt="送る写真"><div class="ct"><b>この写真を送ります</b>${aiAvailable()
@@ -1622,12 +2532,13 @@ function renderCam() {
     <button type="button" class="x2" data-act="cam-clear" aria-label="この写真をやめる">✕</button>`;
 }
 function openCamera() {
+  if (notReady()) return;   // 起動の前に撮った写真は、起動の続きで消えるので撮らせない
   const ci = $('#camIn');
   ci.value = '';
   ci.click();
 }
 function photoAnswer(text, photo) {
-  const m = text ? answer(text) : { role: 'bot', kind: 'photo', query: '', ids: [], total: 0, prefill: prefillFrom(parseQuery('')) };
+  const m = text ? answer(text) : { role: 'bot', kind: 'photo', query: '', ids: [], total: 0, cands: [], candsHead: null, prefill: prefillFrom(parseQuery('')) };
   m.text = text;
   m.photo = photo;
   m.vision = { state: !aiAvailable() ? 'off' : navigator.onLine ? 'loading' : 'offline' };
@@ -1670,15 +2581,20 @@ function visionSearch(text, d) {
 }
 async function runVision(m) {
   try {
-    // サーバーは80秒以内に必ず返すので、それより長く待つ
+    // サーバーは80秒以内に必ず返すので、それより長く待つ。履歴から開いたチャットの写真は小さい写真だけ（それで読み取る）
     const res = await gasFetch({ method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'analyze', key: KEY, image: m.photo.data, question: m.text, masters: AREAS }) }, null, 100000);
+      body: JSON.stringify({ action: 'analyze', key: KEY, image: m.photo.data || m.photo.thumb, question: m.text, masters: AREAS }) }, null, 100000);
     const d = visionData(res.analysis);
+    photoTitle(m, d);
     const s = visionSearch(m.text, d);
-    m.vision = { state: 'done', data: d, by: typeof res.by === 'string' ? res.by : '', conflict: s.conflict, unsure: s.unsure };
-    if (s.q) {
+    // 読み取りを待つ間に「違った」の印を付けた・作業手順や聞き直しを聞いたあとは、探し直さず候補を固めたまま（refreshForAi と同じ決まり。
+    // 入れ替えると、印やタブ①②③が別の候補を指したり、消えたりする）
+    const acted = (m.done && m.done.length) || hasProc(m) || hasNarrow(m);
+    // kept：写真の見立てで探し直すはずだったが、上の理由で、ひとことで探した候補のまま（「写真から探しました」と出さない）
+    m.vision = { state: 'done', data: d, by: typeof res.by === 'string' ? res.by : '', conflict: s.conflict, unsure: s.unsure, kept: !!(s.q && acted && s.q !== m.query) };
+    if (s.q && !acted) {
       const fresh = answer(s.q);
-      for (const k of ['kind', 'ids', 'total', 'near', 'nearLabel', 'query']) m[k] = fresh[k];
+      for (const k of ['kind', 'ids', 'total', 'near', 'nearLabel', 'query', 'cands', 'candsHead']) m[k] = fresh[k];
     }
     m.prefill = s.prefill;
     // 読み取りに失敗したあとで、ひとことだけで対処案を聞いていた場合：探し直した記録と合わないので、写真の内容も添えて聞き直せるようにする
@@ -1689,7 +2605,7 @@ async function runVision(m) {
     m.vision = { state: 'error', msg: old ? 'サーバーの Code.gs が前の版のため、写真を読み取れません。Code.gs を新しい版に貼り替えて、デプロイを更新してください（管理者へ）' : e.message };
     if (e.code === 'key') SYNC.state = 'key';
   }
-  if (TAB === 'search' && !DETAIL) render();   // 別の画面を見ていたら書き換えない（戻ったときに表示される）
+  aiAnswered(m);   // 別の画面・別のチャットを見ていたら書き換えない（戻ったときに表示される。履歴の題名は変わる）
 }
 /* 「読み取る」「もう一度読み取る」 */
 function analyzePhoto(m) {
@@ -1697,6 +2613,7 @@ function analyzePhoto(m) {
   if (!aiAvailable()) { toast('いまはAIを使えないため、写真を読み取れません'); return; }
   if (!navigator.onLine) { toast('オフラインのため、写真を読み取れません'); return; }
   m.vision = { state: 'loading' };
+  chatChanged(m);
   render();
   runVision(m);
 }
@@ -1801,6 +2718,19 @@ const ICON = {
   next: svg('<path d="M9 6l6 6-6 6"/>', 20, 2),
   back: svg('<path d="M15 6l-6 6 6 6"/>', 18, 2),
   pen: svg('<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>', 22),
+  more: svg('<path d="M9 6l6 6-6 6"/>', 18, 2),
+  check: svg('<path d="M5 12l4 4 10-10"/>', 16, 2.4),
+  list: svg('<path d="M8 6h12"/><path d="M8 12h12"/><path d="M8 18h12"/><path d="M4 6h.01"/><path d="M4 12h.01"/><path d="M4 18h.01"/>', 22, 2),
+  user: svg('<circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.2-3.6 4-5.5 7-5.5s5.8 1.9 7 5.5"/>', 22),
+  add: svg('<path d="M12 5v14"/><path d="M5 12h14"/>', 20, 2.2),   // チャットの履歴（新しいチャット・消す・写真あり）
+  x: svg('<path d="M6 6l12 12"/><path d="M18 6L6 18"/>', 16, 2),
+  cam: svg('<path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>', 14, 2),
+  // 調べもの（Web）：切り替えの［探す］［調べる］・答えの見出し・出典のリンク・確かめる案内
+  search: svg('<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>', 16, 2),
+  web: svg('<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9s1.3-6.4 3.8-9z"/>', 16, 2),
+  globe: svg('<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9s1.3-6.4 3.8-9z"/>', 22),
+  ext: svg('<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>', 14, 2),
+  info: svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/>', 20, 2),
 };
 /* note：行に添える小さな札（詳細の「この記録につながる記録」の 続き／また起きた など） */
 function recCard(r, hl, note) {
@@ -1847,18 +2777,18 @@ const flowsOf = (flows, ids) => { const out = []; for (const id of ids) { const 
    12. 画面：探す（チャット）
    ========================================================= */
 function renderSearch() {
-  const flows = buildFlows(visibleRecords());
   let html = '';
   if (GAS_URL && (!KEY || SYNC.state === 'key')) {
     html += `<div class="banner">${KEY ? '合言葉が違うようです。' : '共有データ（チーム全員の記録）に接続するには、合言葉の入力が必要です。'}
       <button type="button" class="btn sub sm" data-act="key">合言葉を入力</button></div>`;
   }
   html += renderIntro();
-  html += CHAT.map(m => m.role === 'me' ? renderMe(m) : `<div class="msg bot"><div class="bub">${renderBot(m, flows)}</div></div>`).join('');
+  html += CHAT.map(m => m.role === 'me' ? renderMe(m) : `<div class="msg bot"><div class="bub">${renderBot(m)}</div></div>`).join('');
   $('#view').innerHTML = html;
 }
 /* 送った吹き出し。写真があれば写真の下にひとことを出す（吹き出しは改行をそのまま出すので、中に余計な空白を入れない） */
 function renderMe(m) {
+  if (m.mode === 'lookup') return `<div class="msg me"><div class="bub"><span class="mtag">${ICON.web}調べる</span>${esc(m.text)}</div></div>`;   // 調べもの（Web）で送った
   if (!m.photo) return `<div class="msg me"><div class="bub">${esc(m.text)}</div></div>`;
   return `<div class="msg me"><div class="bub img"><img class="chatimg" src="${esc(safeData(m.photo.view) || thumbSrc(m.photo))}" alt="送った写真" data-photo="chat:${esc(m.photo.id)}">`
     + (m.text ? `<div class="ct">${esc(m.text)}</div>` : '') + '</div></div>';
@@ -1879,9 +2809,10 @@ function renderIntro() {
     <div class="chips">${examples.map(q => `<button type="button" class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>
   </div></div>`;
 }
-function renderBot(m, flows) {
-  const live = ids => (ids || []).map(findRec).filter(r => r && !r.deleted && (!r.sample || META.showSamples));
-  const recs = live(m.ids);
+const liveRecs = ids => (ids || []).map(findRec).filter(r => r && !r.deleted && (!r.sample || META.showSamples));   // いまもあって、画面に出している記録
+function renderBot(m) {
+  if (m.kind === 'lookup') return lookHtml(m);   // 調べもの（Web）の答え
+  const live = liveRecs;
   const recBtn = aiBlock(m) + `<div class="chips"><button type="button" class="chip" data-act="rec-from-chat" data-mi="${CHAT.indexOf(m)}">${ICON.plus}この内容で記録する${m.photo ? '（写真付き）' : ''}</button></div>`;
   const found = n => `<div class="found">過去の記録を探しました<span class="mono">${n}件</span></div>`;
   // 写真を送ったときは、先頭に「写真から読み取ったこと」と、何の言葉で探したかを出す
@@ -1889,27 +2820,17 @@ function renderBot(m, flows) {
   const how = !read || m.kind === 'photo' ? ''
     : m.vision.conflict ? `ひとことの「${esc(m.query)}」で探しました（写真の見立てと設備・場所が違うため、ひとことを優先）`
     : m.vision.unsure ? `写真がはっきりしないので、ひとことの「${esc(m.query)}」で探しました`
+    : m.vision.kept ? `ひとことの「${esc(m.query)}」で探しました（写真を読み取る前に候補を確かめ始めたので、写真では探し直していません）`
     : `写真${m.text ? 'とひとこと' : ''}から「${esc(m.query)}」で探しました`;
   const head = !m.photo ? '' : visionBlock(m) + (how ? `<div class="vq">${how}</div>` : '');
   if (m.kind === 'photo') {   // 探す言葉がまだ無い（写真だけで、読み取る前・読み取れなかった）
     return head + (read ? '<p class="lead">写真から探す手がかりが見つかりませんでした。何が起きているかを文字で送ってください。</p>' : '') + recBtn;
   }
-  if (m.kind === 'hit' && recs.length) {
-    const fl = flowsOf(flows, recs.slice(0, 3).map(r => r.id)).slice(0, 2);
-    const f = fl[0];
-    let html = head + found(m.total) + (f
-      ? `<p class="lead">「${esc(f.area)}・${esc(f.equipment)}」の「${esc(f.symptom)}」は、これまでに <b>${f.count}件</b> あります。</p>`
-      : `<p class="lead">関連する記録が <b>${recs.length}件</b> 見つかりました。</p>`);
-    if (f && f.causes[0]) {
-      const c = f.causes[0], a = c.actions[0], p = a && a.parts[0];
-      html += `<div class="tip"><div class="tipk">まず確認</div><div class="tipv"><b>${c.label ? esc(c.label) : '原因未記入'}</b>（${c.count}件）</div>`
-        + (a && a.label ? `<div class="tipa">対処：${esc(a.label)}</div>` : '')
-        + (p ? `<div class="pchips">${partChip(p)}</div>` : '') + '</div>';
-      html += `<div class="h3">原因の内訳（${f.count}件）</div>${breakdown(f)}`;
-    }
-    if (fl[1]) html += `<div class="h3">ほかのまとまり</div>${flowCard(fl[1], false)}`;
-    html += `<div class="h3">該当する記録（${m.total}件${m.total > 6 ? '・上位6件を表示' : ''}）</div>` + recs.slice(0, 6).map(r => recCard(r)).join('');
-    return html + recBtn;
+  const cands = m.kind === 'hit' ? candidatesOf(m) : [];
+  if (cands.length) {
+    // ①②③の候補。3つとも「違った」なら、AIの枠（もう答えがあれば）と「次の手」を出す（AIを聞くボタン・記録するボタンは「次の手」の中へ）
+    const rk = rankHtml(m);
+    return head + found(m.total) + rk.html + (rk.allDone ? aiBlock(m, true) : recBtn);
   }
   let html = head + found(0) + '<p class="lead">該当する記録は見つかりませんでした。</p>';
   const near = live(m.near);
@@ -1917,30 +2838,445 @@ function renderBot(m, flows) {
   else html += '<div class="muted" style="font-size:13px;margin-top:6px">設備名（例：ボビン、チャック開口吸盤）や症状（例：異音、吸着しない）を入れると見つかりやすくなります。</div>';
   return html + recBtn;
 }
-/* 原因ごとの件数を棒で見せる（いちばん多い原因だけ強調色） */
-function breakdown(f) {
-  const rows = f.causes.slice(0, 5).map(c => {
-    const a = c.actions[0], w = Math.max(4, Math.round(c.count / f.count * 100));
-    return `<div class="bd-row"><div class="bd-top"><span>${c.label ? `<b>${esc(c.label)}</b>` : '<span class="muted">原因未記入</span>'}</span><span class="mono">${c.count}件</span></div>
-      <div class="bd-bar"><i style="width:${w}%"></i></div>
-      ${a && a.label ? `<div class="bd-act">→ ${esc(a.label)}（${a.count}件）</div>` : ''}</div>`;
-  }).join('');
-  const more = f.causes.length > 5 ? `<div class="muted" style="font-size:13px">ほかに ${f.causes.length - 5} 種類の原因（「フロー」で見られます）</div>` : '';
-  return `<div class="bd">${rows}${more}</div>`;
+/* 「可能性の高い順」の部分（見出し・①②③のカード・ほかの候補・どれでもなかった）。allDone：①〜③（3つ未満ならそのすべて）に「違った」の印がある */
+function rankHtml(m) {
+  const mi = CHAT.indexOf(m), cands = candidatesOf(m), done = new Set(m.done || []);
+  const h = m.candsHead || cands[0].where;
+  const top3 = cands.slice(0, 3), rest = cands.slice(3);
+  const anyDone = top3.some(c => done.has(c.key)), allDone = top3.every(c => done.has(c.key));
+  // 印が無いうちは ① を強調。印があれば、まだ印の無い最初の候補を「次に確認」として強調
+  const first = top3.findIndex(c => !done.has(c.key));
+  const label = i => (!anyDone ? ['いちばん可能性が高い', '次に確認', '可能性あり'][i] : i === first ? '次に確認' : '可能性あり');
+  let html = `<p class="rk-lead">「${esc(h.area)}・${esc(h.equipment)}」の「${esc(h.symptom)}」に近い記録から、<b>可能性の高い順</b>に並べました。</p>
+    <p class="rk-how">並べ方：直った件数 → 件数 → 新しさ。同じ号機の記録を少し上にします。</p>
+    <div class="rk">${top3.map((c, i) => candCard(m, c, i, label(i), anyDone ? i === first : i === 0)).join('')}</div>`;
+  if (rest.length) {
+    html += `<details class="rkmore" id="rkm-${mi}" data-mi="${mi}"${m.moreOpen ? ' open' : ''}><summary>ほかの候補（${rest.length}件）</summary>
+      <div class="rk">${rest.map((c, j) => candCard(m, c, j + 3, '可能性あり', false)).join('')}</div></details>`;
+  }
+  if (!allDone) html += `<div class="chips"><button type="button" class="chip none" data-act="rk-none" data-mi="${mi}">どれでもなかった</button></div>`;
+  return { html, allDone };
 }
-function sendChat(text, photo) {
-  text = String(text || '').trim();
-  if (!text && !photo) return;
-  CHAT.push(photo ? { role: 'me', text, photo } : { role: 'me', text });
-  const bot = photo ? photoAnswer(text, photo) : answer(text);
+/* 候補のカード1枚。i：0 からの番号、label：小さな札、top：強調する（いま確かめる候補） */
+function candCard(m, c, i, label, top) {
+  const at = `data-mi="${CHAT.indexOf(m)}" data-ci="${i}"`;
+  const title = (c.label ? esc(c.label) : '<span class="muted">原因未記入</span>') + (c.sample ? '<span class="badge sample">サンプル</span>' : '');
+  if ((m.done || []).includes(c.key)) {   // 確かめて違った：番号・札・原因・対処と［元に戻す］だけ
+    return `<div class="rcard done"><div class="rn">${i + 1}</div><div class="rbody"><span class="donel">${ICON.check}確認した：違った</span>
+      <div class="rt">${title}</div>${c.action ? `<div class="ra">対処：${esc(c.action.label)}</div>` : ''}
+      <div class="rbtn"><button type="button" class="chip ngb" data-act="rk-undo" ${at}>元に戻す</button></div></div></div>`;
+  }
+  const pct = Math.round(c.fixed / Math.max(1, c.count) * 100);
+  const res = c.fixed ? `うち直った <b>${c.fixed}件</b>` : c.watch ? `様子見 ${c.watch}件` : c.notfixed ? `直らなかった ${c.notfixed}件` : '結果の記録なし';
+  const when = [fmtDay(c.last.at), String(c.last.line || '').replace('ライン', '')].filter(Boolean).join(' ');
+  const ev = liveRecs(c.ids), open = (m.evOpen || []).includes(c.key);
+  return `<div class="rcard${top ? ' rnow' : ''}"><div class="rn">${i + 1}</div><div class="rbody">
+    <div class="rl">${esc(label)}</div>
+    <div class="rt">${title}</div>
+    ${c.main ? '' : `<div class="rwhere">別の設備：${esc(c.where.area)} › ${esc(c.where.equipment)}「${esc(c.where.symptom)}」</div>`}
+    <div class="rmeta"><span>${c.count}件</span><span class="fix"><span class="fixbar" aria-hidden="true"><i style="width:${pct}%"></i><u style="width:${100 - pct}%"></u></span><span>${res}</span></span>${when ? `<span>最近：${esc(when)}</span>` : ''}</div>
+    ${c.action ? `<div class="ra">対処：${esc(c.action.label)}${c.action.fixed ? `<span class="ok">${c.action.fixed}件で直った</span>` : ''}</div>`
+      + (c.action.parts.length ? `<div class="pchips">${c.action.parts.map(partChip).join('')}</div>` : '') : ''}
+    ${c.failed.map(f => `<div class="rng">効かなかった：${esc(f.text)}（${f.count}件）</div>`).join('')}
+    <div class="rbtn">${ev.length ? `<button type="button" class="chip" data-act="rk-ev" ${at} aria-expanded="${open}">根拠の記録 ${ev.length}件 ${ICON.more}</button>` : ''}<button type="button" class="chip ngb" data-act="rk-done" ${at}>${ICON.check}確認した：違った</button></div>
+    ${open && ev.length ? `<div class="rkev">${ev.slice(0, 6).map(r => recCard(r)).join('')}${ev.length > 6 ? `<div class="more">ほかに ${ev.length - 6}件（「フロー」で見られます）</div>` : ''}</div>` : ''}
+  </div></div>`;
+}
+/* 次の手（①〜③がどれも違ったとき）。人の名前は出さない。
+   「AIに聞き直す」は、新しい版のサーバー（作業手順・聞き直しに対応）でAIが使えて、まだ聞き直していないときだけ（聞き直したら、その答えが下に出る） */
+function nextHtml(m) {
+  const mi = CHAT.indexOf(m), cands = candidatesOf(m), n = Math.min(3, cands.length), rest = cands.length - 3;
+  const head = n === 1 ? '①は違いました' : n === 2 ? '①②は、どちらも違いました' : '①〜③は、どれも違いました';
+  const row = (act, icon, title, sub, cls) => `<button type="button" class="nxa${cls ? ' ' + cls : ''}" data-act="${act}" data-mi="${mi}"><span class="ic">${icon}</span><span class="nt">${title}</span><span class="ar">${ICON.more}</span><span class="ns">${sub}</span></button>`;
+  const which = ['①', '①②', '①〜③'][n - 1];
+  // 「効かなかった対処」へ入るのは、原因か対処の書いてある候補だけ（failedFromMarks と同じ決まり。入らないものを入ると言わない）
+  const k = cands.slice(0, n).filter(c => (m.done || []).includes(c.key) && failedName(c)).length;
+  const sub = k === n ? `確かめた${n}つは、記録するときに「効かなかった対処」へ自動で入ります。`
+    : k ? `確かめた${n}つのうち${k}つは、記録するときに「効かなかった対処」へ自動で入ります（原因も対処も書いていない候補は入りません）。`
+    : '原因も対処も書いていない候補なので、「効かなかった対処」には自動では入りません。';
+  return `<div class="nx" id="nx-${mi}">
+    <div class="nxh">${head}</div>
+    <p class="nxs">${sub}</p>
+    ${aiAvailable() && procServer() && canAsk(m) && !hasNarrow(m) ? row('narrow', ICON.bulb, 'AIに聞き直す', `${which}が違ったことを伝え、絞り込みの質問と、記録に無い一般的な確認を出します`, 'pri') : ''}
+    ${rest > 0 ? row('rk-more', ICON.list, `ほかの候補を見る（${rest}件）`, '4件目以降と、ほかの設備の似たトラブル') : ''}
+    <div class="nxa info"><span class="ic">${ICON.user}</span><span class="nt">詳しい人に相談</span><span class="ns">主任やこの設備に詳しい人に聞いてください。分かったことを記録に残すと、次から候補に出ます。</span></div>
+    ${row('rec-from-chat', ICON.plus, 'この内容で記録する', '直ったら、本当の原因と対処を書く。次からは候補に出ます')}
+  </div>`;
+}
+/* 候補の印（違った）・根拠の記録の開け閉めのあと：読んでいる位置を動かさずに描き直す */
+function redrawKeep() { const y = window.scrollY; render(); window.scrollTo(0, y); }
+function markCand(m, ci, on) {
+  const c = candidatesOf(m)[ci];
+  if (!c) return;
+  m.done = (m.done || []).filter(k => k !== c.key).concat(on ? [c.key] : []);   // 印を付けた順に持つ
+  chatChanged(m);
+  redrawKeep();
+}
+/* どれでもなかった：①〜③をまとめて「違った」にする */
+function markNone(m) {
+  if (!m) return;
+  const done = (m.done || []).slice();
+  for (const c of candidatesOf(m).slice(0, 3)) if (!done.includes(c.key)) done.push(c.key);
+  m.done = done;
+  chatChanged(m);
+  redrawKeep();
+}
+function toggleEvidence(m, ci) {
+  const c = candidatesOf(m)[ci];
+  if (!c) return;
+  const open = (m.evOpen || []).includes(c.key);
+  m.evOpen = (m.evOpen || []).filter(k => k !== c.key).concat(open ? [] : [c.key]);
+  chatChanged(m, true);   // 開け閉めは残すが、履歴の並び順は変えない
+  redrawKeep();
+}
+/* 次の手の「ほかの候補を見る」：たたんである「ほかの候補」を開いて、そこまで動かす */
+function showMoreCands(m) {
+  if (!m) return;
+  m.moreOpen = true;
+  chatChanged(m, true);
+  redrawKeep();
+  const el = document.getElementById('rkm-' + CHAT.indexOf(m));
+  if (el) el.scrollIntoView({ block: 'start' });
+}
+/* how：'lookup' なら調べもの（Web）で送る（入力欄の［調べる］のとき。写真は送らない）。ほか（例文のチップ・似たトラブル）は、いつも過去の記録を探す */
+function sendChat(text, photo, how) {
+  const lk = how === 'lookup';
+  text = lk ? String(text || '').replace(/\s+/g, ' ').trim().slice(0, 300) : String(text || '').trim();
+  if (lk ? !text : !text && !photo) return;
+  // 新しいチャットは、最初に送ったときに作る（何も送っていない空のチャットは、履歴に残さない）
+  if (!CUR) {
+    const now = new Date().toISOString();
+    setCur({ id: newId('c'), title: '', createdAt: now, updatedAt: now, recorded: false, photo: false, messages: [] });
+    CHATS.unshift(CUR);
+    capChats();
+  }
+  const L = lk ? lookupMessages(text) : null;
+  const me = L ? L.me : photo ? { role: 'me', text, photo } : { role: 'me', text };
+  CHAT.push(me);
+  if (!CUR.title) CUR.title = chatTitleOf(me);
+  const bot = L ? L.bot : photo ? photoAnswer(text, photo) : answer(text);
   CHAT.push(bot);
-  if (CHAT.length > 40) CHAT = CHAT.slice(-40);
+  if (CHAT.length > 40) CHAT = CUR.messages = CHAT.slice(-40);
+  chatChanged(CUR);
   DETAIL = null; TAB = 'search';
   render();
   const last = document.querySelectorAll('.msg.me');
   if (last.length) last[last.length - 1].scrollIntoView({ block: 'start' });
   if (bot.vision && bot.vision.state === 'loading') runVision(bot);   // 写真はAIが使えるときだけ、送ったらすぐ読み取る
+  if (L) runLookup(bot);
 }
+
+/* =========================================================
+   12-2. チャットの履歴（この端末だけ。直近50件）
+   送ったチャットは端末（IndexedDB の trouble_log_chats の chats。記録とは別の保存：4.）に残し、パソコンは左のメニューの下、スマホは上の［≡］から開き直せる。
+   開き直したときは、残した答え（候補①②③・印・AIの答え）をそのまま出す（AIに聞き直したり、探し直したりしない）。
+   写真は小さい写真（thumb）だけ残す。待っている途中の答えは残さない（開き直したら、もう一度押せるように）
+   ========================================================= */
+const CHATS_MAX = 50;
+const PHOTO_TITLE = '（写真）';
+const VISION_LOST = '読み取りの途中でアプリを閉じたため、読み取れませんでした';
+const CHAT_SAVE_MS = 300;
+const byUpdated = (a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''));
+/* 開いているチャットを変える（CHAT はいつも開いているチャットの吹き出し） */
+function setCur(c) { CUR = c || null; CHAT = CUR ? CUR.messages : []; }
+/* 題名：最初に送った言葉（空白をまとめて40字まで）。写真だけなら「（写真）」（読み取れたら、見えた異常か設備を足す） */
+const chatTitleOf = me => (String(me.text || '').replace(/\s+/g, ' ').trim() || (me.photo ? PHOTO_TITLE : '')).slice(0, 40);
+function photoTitle(m, d) {
+  const c = chatOf(m);
+  if (!c || c.title !== PHOTO_TITLE) return;
+  const i = c.messages.indexOf(m), me = c.messages[i - 1];
+  const w = d.abnormality || d.equipment;
+  if (w && me && me.role === 'me' && !me.text && me === c.messages.find(x => x.role === 'me')) c.title = (PHOTO_TITLE + w).slice(0, 40);
+}
+/* 吹き出し（かチャット）から、そのチャットを探す。消したチャットなら null */
+const chatOf = x => (!x ? null : CHATS.find(c => c === x || c.messages.includes(x)) || null);
+/* チャットが変わった：時刻を新しくして並べ直し、少しまとめてから端末に書く。quiet：開け閉め・評価など（並び順は変えない）。
+   待っている間にチャットを消していたら、何もしない */
+const CHAT_SAVES = new Map();   // チャットの ID → 書き込みを待っているタイマー
+function chatChanged(x, quiet) {
+  const c = chatOf(x);
+  if (!c) return null;
+  if (!quiet) { c.updatedAt = new Date().toISOString(); CHATS.sort(byUpdated); }
+  c.photo = c.messages.some(m => !!m.photo);
+  clearTimeout(CHAT_SAVES.get(c.id));
+  CHAT_SAVES.set(c.id, setTimeout(() => writeChat(c), CHAT_SAVE_MS));
+  return c;
+}
+function writeChat(c) {
+  clearTimeout(CHAT_SAVES.get(c.id));
+  CHAT_SAVES.delete(c.id);
+  if (CHATS.includes(c)) idb('chats', 'readwrite', s => s.put(chatToStore(c)));
+}
+/* アプリを閉じる・裏に回るときは、待たずに書く */
+function flushChats() { for (const id of [...CHAT_SAVES.keys()]) { const c = CHATS.find(x => x.id === id); if (c) writeChat(c); else CHAT_SAVES.delete(id); } }
+window.addEventListener('pagehide', flushChats);
+document.addEventListener('visibilitychange', () => { if (document.hidden) flushChats(); });
+/* 端末から消す（メモリからも）。書き込み待ちも止める */
+function dropChat(c) {
+  CHATS = CHATS.filter(x => x !== c);
+  clearTimeout(CHAT_SAVES.get(c.id));
+  CHAT_SAVES.delete(c.id);
+  idb('chats', 'readwrite', s => s.delete(c.id));
+}
+/* 50件をこえたら、いちばん古いチャットから消す（開いているチャットは消さない） */
+function capChats() {
+  while (CHATS.length > CHATS_MAX) {
+    const old = CHATS.filter(c => c !== CUR).sort(byUpdated).pop();
+    if (!old) break;
+    dropChat(old);
+  }
+}
+/* 端末に残す形：写真は小さい写真だけ（大きい写真・吹き出し用・ドライブの ID は残さない）。待っている途中の答えは残さない */
+const thinPhoto = p => ({ id: String(p.id || ''), thumb: safeData(p.thumb) });
+function chatToStore(c) {
+  const s = JSON.parse(JSON.stringify(c, (k, v) => (k === 'photo' && v && typeof v === 'object' ? thinPhoto(v) : v)));
+  s.messages = (s.messages || []).map(settleMsg);
+  return s;
+}
+function settleMsg(m) {
+  if (!m || typeof m !== 'object') return m;
+  if (m.ai && m.ai.state === 'loading') delete m.ai;
+  // 調べもの（Web）を待っている途中：開き直したら「もう一度調べる」を押せるように（サーバーで終わっていれば、控えからすぐ出る）
+  if (m.kind === 'lookup' && m.look && m.look.state === 'loading') m.look = { state: 'error', msg: LOOK_LOST, code: 'ai' };
+  if (m.vision && m.vision.state === 'loading') m.vision = { state: 'error', msg: VISION_LOST };
+  if (m.proc && m.proc.items && typeof m.proc.items === 'object') {
+    for (const k of Object.keys(m.proc.items)) if (!m.proc.items[k] || m.proc.items[k].state === 'loading') delete m.proc.items[k];
+  }
+  if (m.narrow && Array.isArray(m.narrow.rounds)) {
+    const rs = m.narrow.rounds, last = rs[rs.length - 1];
+    // 次の回を待っている途中なら、その回で送った答えを、前の回の選んだ答えに戻す（開き直して、もう一度「この答えでAIに聞く」を押せるように）
+    if (last && last.state === 'loading' && rs.length > 1) {
+      const prev = rs[rs.length - 2], qs = (prev && prev.data && Array.isArray(prev.data.questions)) ? prev.data.questions : [], picks = {};
+      // 前の回で選んだ分だけ（それより前の回の答えは、同じ質問がまた出ても、前の回で選んだことにしない）
+      (Array.isArray(last.answers) ? last.answers : []).slice(((prev && Array.isArray(prev.answers)) ? prev.answers : []).length).forEach(a => {
+        const qi = qs.findIndex(q => q && String(q.q || '').slice(0, 60) === (a && a.q));
+        if (qi >= 0 && (qs[qi].options || []).includes(a.a)) picks[qi] = a.a;
+      });
+      m.narrow.picks = picks;
+    }
+    m.narrow.rounds = rs.filter(r => r && r.state !== 'loading');
+  }
+  return m;
+}
+/* 端末から読んだチャットを確かめて整える（壊れていたら使わない・足りない項目は空にする。残す形と同じ決まりも、もう一度かける） */
+const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
+const strList = v => (Array.isArray(v) ? v.filter(x => typeof x === 'string') : []);
+function candFromStore(c) {
+  if (!isObj(c) || typeof c.key !== 'string' || !Array.isArray(c.ids)) return null;
+  const n = v => (Number.isFinite(v) ? v : 0), s = v => (typeof v === 'string' ? v : '');
+  const w = isObj(c.where) ? c.where : {}, l = isObj(c.last) ? c.last : {}, a = isObj(c.action) ? c.action : null;
+  return { key: c.key, label: s(c.label), causeType: s(c.causeType), where: { area: s(w.area), equipment: s(w.equipment), symptom: s(w.symptom) }, main: c.main === true,
+    count: n(c.count), fixed: n(c.fixed), watch: n(c.watch), notfixed: n(c.notfixed), last: { at: s(l.at), line: s(l.line) },
+    action: a ? { label: s(a.label), count: n(a.count), fixed: n(a.fixed), parts: (Array.isArray(a.parts) ? a.parts : []).filter(isObj).map(p => ({ name: s(p.name), model: s(p.model), count: n(p.count) })), ids: strList(a.ids) } : null,
+    failed: (Array.isArray(c.failed) ? c.failed : []).filter(isObj).map(f => ({ text: s(f.text), count: n(f.count) })), sample: c.sample === true, ids: strList(c.ids) };
+}
+function msgFromStore(m) {
+  if (!isObj(m) || (m.role !== 'me' && m.role !== 'bot')) return null;
+  if (m.photo !== undefined) { if (isObj(m.photo)) m.photo = thinPhoto(m.photo); else delete m.photo; }
+  m.text = typeof m.text === 'string' ? m.text : '';
+  if (m.role === 'me') { if (m.mode !== 'lookup') delete m.mode; return m; }   // 調べもの（Web）で送った吹き出しは、その印を残す
+  if (m.kind === 'none' && isObj(m.look)) m.kind = 'lookup';   // 前の版のアプリが kind を none に書き換えて残した調べもの（look は調べものにしか無い）
+  m.kind = ['hit', 'none', 'photo', 'lookup'].includes(m.kind) ? m.kind : 'none';
+  m.query = typeof m.query === 'string' ? m.query : '';
+  m.ids = strList(m.ids);
+  m.total = Number.isFinite(m.total) ? m.total : m.ids.length;
+  if (m.near !== undefined) m.near = strList(m.near);
+  m.nearLabel = typeof m.nearLabel === 'string' ? m.nearLabel : '';
+  m.prefill = isObj(m.prefill) ? m.prefill : {};
+  if (m.cands !== undefined) { if (Array.isArray(m.cands)) m.cands = m.cands.map(candFromStore).filter(Boolean); else delete m.cands; }
+  if (m.candsHead !== undefined && !isObj(m.candsHead)) m.candsHead = null;
+  m.done = strList(m.done);
+  m.evOpen = strList(m.evOpen);
+  m.moreOpen = m.moreOpen === true;
+  for (const k of ['ai', 'vision', 'proc', 'narrow', 'look', 'ctx']) if (m[k] !== undefined && !isObj(m[k])) delete m[k];
+  if (m.kind === 'lookup') lookFromStore(m);
+  else { delete m.look; delete m.ctx; }
+  if (m.vision && m.vision.state === 'done') m.vision.data = visionData(m.vision.data);
+  if (m.ai && m.ai.state === 'done' && !isObj(m.ai.data)) m.ai.data = {};
+  if (m.proc) {
+    const items = isObj(m.proc.items) ? m.proc.items : {};
+    m.proc.items = {};
+    for (const k of ['0', '1', '2']) {
+      const it = items[k];
+      if (!isObj(it) || !['done', 'error', 'loading'].includes(it.state)) continue;
+      if (it.state === 'done') it.data = procData(it.data);
+      m.proc.items[k] = it;
+    }
+    if (![0, 1, 2].includes(m.proc.first)) delete m.proc.first;   // 前の版で残したチャットには無い（① とみなす）
+  }
+  if (m.narrow) {
+    m.narrow.rounds = (Array.isArray(m.narrow.rounds) ? m.narrow.rounds : []).filter(r => isObj(r) && ['done', 'error', 'loading'].includes(r.state)).map(r => {
+      if (r.state === 'done') r.data = narrowData(r.data);
+      r.answers = (Array.isArray(r.answers) ? r.answers : []).filter(a => isObj(a) && typeof a.q === 'string' && typeof a.a === 'string');
+      return r;
+    });
+    m.narrow.picks = isObj(m.narrow.picks) ? m.narrow.picks : {};
+  }
+  return settleMsg(m);
+}
+/* 調べもの（Web）の吹き出しを確かめる（答えは lookData で、リンクは https だけ。読めない答えは、もう一度調べられる失敗にする） */
+function lookFromStore(m) {
+  const l = isObj(m.look) ? m.look : {}, s = (v, n) => (typeof v === 'string' ? v.slice(0, n) : '');
+  if (l.state === 'done') {
+    const d = lookData(l.data);
+    m.look = d ? { state: 'done', data: d, by: s(l.by, 100), historyId: historyIdOf(l.historyId), cached: l.cached === true, rated: labelOf(RATINGS, l.rated) ? l.rated : '' }
+      : { state: 'error', msg: '残した答えを読めませんでした。もう一度調べてください', code: 'ai' };
+  } else if (l.state === 'loading') m.look = { state: 'loading' };   // settleMsg で「途中で閉じた」にする
+  else m.look = { state: 'error', msg: s(l.msg, 300) || LOOK_LOST, code: /^[a-z-]{1,20}$/.test(l.code) ? l.code : 'ai' };
+  // 続けて聞いたときに添えた、前の調べもの（もう一度調べるときも同じものを送る）
+  const c = isObj(m.ctx) ? m.ctx : null;
+  if (c && typeof c.q === 'string' && typeof c.a === 'string' && c.q.trim()) m.ctx = { q: c.q.slice(0, 300), a: c.a.slice(0, 1500) };
+  else delete m.ctx;
+  m.query = m.query.slice(0, 300);
+}
+function chatFromStore(x) {
+  try {
+    if (!isObj(x) || typeof x.id !== 'string' || !x.id) return null;
+    const c = clone(x);   // 読んだものは書き換えない
+    const messages = (Array.isArray(c.messages) ? c.messages : []).map(msgFromStore).filter(Boolean).slice(-40);
+    const first = messages.find(m => m.role === 'me');
+    const title = typeof c.title === 'string' && c.title.trim() ? c.title.slice(0, 40) : first ? chatTitleOf(first) : '';
+    if (!messages.length || !title) return null;
+    const at = v => (typeof v === 'string' && Number.isFinite(Date.parse(v)) ? v : '');
+    const createdAt = at(c.createdAt) || at(c.updatedAt) || new Date(0).toISOString();
+    return { id: c.id, title, createdAt, updatedAt: at(c.updatedAt) || createdAt, recorded: c.recorded === true, photo: messages.some(m => !!m.photo), messages };
+  } catch (e) { return null; }
+}
+/* 履歴の一覧（見本3・4）：［＋ 新しいチャット］、今日／昨日／今週／それより前 にまとめて、題名（2行まで）・時刻（今日と昨日は時:分、ほかは月/日）・写真・記録済み */
+function histHtml() {
+  const t0 = new Date();
+  const day = n => new Date(t0.getFullYear(), t0.getMonth(), t0.getDate() - n).getTime();
+  const groups = [['今日', day(0)], ['昨日', day(1)], ['今週', day(6)], ['それより前', -Infinity]];
+  let html = `<div class="hist"><button type="button" class="newc" data-act="chat-new">${ICON.add}新しいチャット</button>`;
+  if (!CHATS.length) html += '<div class="hnone">まだ履歴はありません</div>';
+  let g = -1;
+  for (const c of CHATS) {
+    const t = Date.parse(c.updatedAt), d = new Date(t);
+    const gi = Number.isFinite(t) ? groups.findIndex(x => t >= x[1]) : groups.length - 1;
+    if (gi !== g) { g = gi; html += `<div class="hg">${groups[gi][0]}</div>`; }
+    const when = !Number.isFinite(t) ? '' : gi <= 1 ? `${d.getHours()}:${pad(d.getMinutes())}` : `${d.getMonth() + 1}/${d.getDate()}`;
+    const on = c === CUR, cid = esc(c.id);
+    html += `<div class="hi${on ? ' on' : ''}" data-cid="${cid}"><button type="button" class="hio" data-act="chat-open" data-cid="${cid}"${on ? ' aria-current="true"' : ''}>`
+      + `<span class="t">${esc(c.title)}</span><span class="m">${when}${c.photo ? ICON.cam : ''}${c.recorded ? '<span class="rb">記録済み</span>' : ''}</span></button>`
+      + `<button type="button" class="del" data-act="chat-del" data-cid="${cid}" aria-label="このチャットを消す">${ICON.x}</button></div>`;
+  }
+  return html + '<div class="hnote">この端末だけに保存（直近50件）。写真は小さい写真だけ残します。</div></div>';
+}
+/* 一覧を出す所：パソコンは左のメニューの下、スマホは開いている引き出しの中だけ（同じ一覧を2つ置かない）。変わっていなければ書き換えない */
+const WIDE = window.matchMedia('(min-width:1024px)');
+let DRAWER_OPEN = false;
+function renderHist() {
+  const h = histHtml();
+  for (const [el, show] of [[$('#histSide'), WIDE.matches], [$('#histDrawer'), DRAWER_OPEN]]) {
+    const html = show ? h : '';
+    if (el._h === html) continue;
+    const y = el.scrollTop;
+    el.innerHTML = html;
+    el._h = html;
+    el.scrollTop = y;
+  }
+}
+/* スマホの引き出し。開いている間は、うしろの画面を動かさない・押せないようにする */
+const BEHIND = ['.top', '#view', '.chatbar', '.tabs'];
+function openDrawer() {
+  if (WIDE.matches || DRAWER_OPEN) return;
+  DRAWER_OPEN = true;
+  $('#scrim').hidden = false;
+  $('#drawer').hidden = false;
+  document.documentElement.classList.add('dlock');
+  BEHIND.forEach(s => { const el = $(s); if (el) el.inert = true; });
+  $('#histBtn').setAttribute('aria-expanded', 'true');
+  renderHist();
+  const on = $('#histDrawer .hi.on');
+  if (on) on.scrollIntoView({ block: 'nearest' });
+  $('#drawer .dh .hbtn').focus({ preventScroll: true });
+  // スマホの「戻る」（Android の戻る・iPhone の左端からのスワイプ）で、アプリから出ずに引き出しを閉じるよう、戻り先を1つ足す。
+  // 閉じて戻るときに、ブラウザが開いたときの位置へ画面を戻さないようにする（開いたチャットのいちばん下・新しいチャットの上を出したまま）
+  try { history.scrollRestoration = 'manual'; history.pushState({ drawer: 1 }, ''); } catch (e) { /* 足せなくても、✕・外側で閉じられる */ }
+}
+/* back：閉じたあと［≡］に戻す（✕・外側・Esc で閉じたとき）。popped：「戻る」で閉じた（足した戻り先は、もう戻った） */
+function closeDrawer(back, popped) {
+  if (!DRAWER_OPEN) return;
+  DRAWER_OPEN = false;
+  $('#scrim').hidden = true;
+  $('#drawer').hidden = true;
+  document.documentElement.classList.remove('dlock');
+  BEHIND.forEach(s => { const el = $(s); if (el) el.inert = false; });
+  $('#histBtn').setAttribute('aria-expanded', 'false');
+  renderHist();
+  if (back) $('#histBtn').focus({ preventScroll: true });
+  // ✕・外側・チャットを開いた などで閉じた：開いたときに足した戻り先を消す（残すと、次の「戻る」が何もしないように見える）
+  if (!popped && history.state && history.state.drawer) history.back();
+}
+window.addEventListener('popstate', () => { if (!(history.state && history.state.drawer)) closeDrawer(true, true); });
+// 引き出しを開いたまま再読み込みした：引き出しは閉じているので、その戻り先の印を消す（✕で閉じたときに、アプリから戻ってしまわないように）
+if (history.state && history.state.drawer) { try { history.replaceState(null, ''); } catch (e) { /* 何もしない */ } }
+const onWide = () => { closeDrawer(); renderHist(); };   // 画面が広くなったら引き出しは閉じて、左の一覧にする
+if (WIDE.addEventListener) WIDE.addEventListener('change', onWide); else WIDE.addListener(onWide);
+/* 新しいチャット：空のチャットにして「探す」の上から（いまのチャットが空なら、そのまま。空のチャットは残さない） */
+function newChat() {
+  closeDrawer();
+  setCur(null);
+  MODE = 'search';
+  TAB = 'search'; DETAIL = null; RETURN = null;
+  FT.touched.clear();
+  render();
+  window.scrollTo(0, 0);
+  if (WIDE.matches) $('#chatIn').focus({ preventScroll: true });
+}
+/* 履歴から開く：残した答えをそのまま出す（AIには聞かない・探し直さない）。いちばん下（最後の答え）を出す */
+function openChat(id) {
+  const c = CHATS.find(x => x.id === id);
+  if (!c) return;
+  closeDrawer();
+  setCur(c);
+  MODE = 'search';
+  TAB = 'search'; DETAIL = null; RETURN = null;
+  FT.touched.clear();
+  render();
+  window.scrollTo(0, document.body.scrollHeight);
+}
+/* 消す（確かめてから）。開いていたチャットなら、新しいチャットにする。press：長押しから */
+const LP = { timer: null, x: 0, y: 0, fired: false, at: 0 };   // 長押し（スマホ）
+function deleteChat(id, press) {
+  const c = CHATS.find(x => x.id === id);
+  if (!c) return;
+  const ok = confirm(`「${c.title}」を消しますか？`);
+  if (press) LP.at = Date.now();   // 確かめの画面を閉じた直後のタップ（長押しを離したとき）は、その下の行を開く操作にしない
+  if (!ok) return;
+  dropChat(c);
+  if (CUR === c) {
+    setCur(null);
+    MODE = 'search';   // 新しいチャットになる
+    if (TAB === 'search' && !DETAIL) { render(); window.scrollTo(0, 0); return; }
+    renderCam();
+  }
+  renderHist();
+}
+/* スマホ：一覧の行を長押し（0.55秒。10px 以上動かしたり離したりしたら、やめる）で消す。パソコン：右クリックでも消せる */
+document.addEventListener('pointerdown', e => {
+  LP.fired = false;
+  clearTimeout(LP.timer); LP.timer = null;
+  const it = e.pointerType !== 'mouse' && e.target.closest ? e.target.closest('.hi') : null;
+  if (!it) return;
+  LP.x = e.clientX; LP.y = e.clientY;
+  LP.timer = setTimeout(() => { LP.timer = null; LP.fired = true; deleteChat(it.dataset.cid, true); }, 550);
+});
+const lpStop = () => { clearTimeout(LP.timer); LP.timer = null; };
+document.addEventListener('pointermove', e => { if (LP.timer && Math.hypot(e.clientX - LP.x, e.clientY - LP.y) > 10) lpStop(); });
+document.addEventListener('pointerup', lpStop);
+document.addEventListener('pointercancel', lpStop);
+document.addEventListener('contextmenu', e => {
+  const it = e.target.closest ? e.target.closest('.hi') : null;
+  if (!it) return;
+  e.preventDefault();
+  if (LP.fired) return;   // 長押しのほうで、もう聞いた
+  // スマホの長押しの途中（Android は長押しでもこれが来る）：ここで聞く（長押しの時間を待たない・2回聞かない）
+  const press = !!LP.timer;
+  lpStop();
+  if (press) LP.fired = true;
+  deleteChat(it.dataset.cid, press);
+});
 
 /* =========================================================
    13. 画面：記録する
@@ -1969,6 +3305,7 @@ function formFromRecord(r) {
     draftText: '', context: r.context || '', draft: null, aiFilled: (r.aiFilled || []).slice(), aiNote: r.aiNote || '', rawText0: r.rawText || '', modelHints: [],
     autoLine: auto.includes('line') && !!r.line, autoAt: auto.includes('occurredAt') });
   for (const k of FORM_KEYS) if (r[k] !== undefined) F[k] = clone(r[k]);
+  F.lookupShown = !!String(r.lookupNote || '').trim();   // 調べたことのある記録は、消して直していても欄を出したまま
   F.orig = formSnap(F);   // 開いたときの値（直している途中の入力があるかを見分ける。formHasInput）
   return F;
 }
@@ -1983,7 +3320,8 @@ const formHasInput = () => {
   if (FORM.editId) return !!FORM.orig && JSON.stringify(formSnap(FORM)) !== JSON.stringify(FORM.orig);
   return !!(FORM.equipment || FORM.symptom || FORM.cause || FORM.action || FORM.parts.length || FORM.photos.length
     || Object.values(FORM.extra || {}).some(v => String(v).trim()) || String(FORM.draftText || '').trim()
-    || String(FORM.failed || '').trim() || FORM.causeType || FORM.result || FORM.downtime || (FORM.symptomTags || []).length || FORM.relatedId);
+    || String(FORM.failed || '').trim() || FORM.causeType || FORM.result || FORM.downtime || (FORM.symptomTags || []).length || FORM.relatedId
+    || String(FORM.lookupNote || '').trim());
 };
 /* 入力中の記録を破棄してよいか聞く（入力が無ければ聞かずに true）。what：「新しく書きます」「この記録を直します」 */
 const discardOk = what => !formHasInput() || confirm((FORM.editId ? '直している途中の記録があります。破棄して' : '入力中の記録があります。破棄して') + what + 'か？');
@@ -2151,6 +3489,8 @@ function renderForm() {
   const F = FORM;
   refreshAutoAt();
   FORM_SHOWN = new Set(FIELDS.filter(inForm).map(f => f.id));
+  // 調べたこと（入っているときだけ）は「効かなかった対処」のあと（その欄を使っていなければ、対処・原因・症状のあと）
+  const lkAt = lookupShown(F) ? ['failed', 'action', 'cause', 'symptom'].find(id => FORM_SHOWN.has(id)) : '';
   const need = FIELDS.filter(f => inForm(f) && f.required && f.id !== 'occurredAt').map(shortLabel);
   $('#view').innerHTML = `
     <h2 class="ttl">${F.editId ? '記録を直す' : 'トラブルを記録する'}</h2>
@@ -2158,7 +3498,7 @@ function renderForm() {
     <button type="button" class="linkbtn" data-tab="settings" style="margin-top:0">入力項目や選択肢を変える（設定）</button>
     ${oldRecBanner(F)}${relBar(F)}
     <div id="draftSlot">${draftBox(F)}</div>
-    ${FIELDS.filter(inForm).map(f => (FORM_PARTS[f.id] || customPart)(f, F)).join('')}
+    ${FIELDS.filter(inForm).map(f => (FORM_PARTS[f.id] || customPart)(f, F) + (f.id === lkAt ? lookupField(F) : '')).join('')}
     <div id="formErr" class="err" role="alert"></div>
     <div class="savebar">
       ${F.editId
@@ -2170,6 +3510,14 @@ function renderForm() {
   // 続けて押したときに別のチップ・すき間を押してしまう）。文字を打っている間は、今までどおり少し待ってから入れる（input の updateHint）
   clearTimeout(hintTimer);
   showHint();
+}
+/* 記録する画面の「調べたこと」（見本10）。チャットの「この内容で記録する」で入ったとき・調べたことのある記録を直すときだけ出す。
+   入力項目（「設定」で変える項目）ではない（写真から読み取ったこと と同じ扱い） */
+const lookupShown = F => !!(F && (F.lookupShown || String(F.lookupNote || '').trim()));
+function lookupField(F) {
+  return `<div class="f" data-fid="lookupNote"><label class="l" for="fLookup">調べたこと<span class="lnote2">AIがWebで調べた内容（未確認）。違っていたら直してください</span></label>
+    <textarea id="fLookup" class="inp lkfield" maxlength="2000">${esc(F.lookupNote)}</textarea>
+    <div class="lkhint">次からAIに渡すときは「調べたこと（Webなど・未確認）」として渡し、記録された事実とは分けて扱います。</div></div>`;
 }
 /* いま画面に出している部品の並び（data-i の番号 → 部品。AIの下書きで FORM.parts が入れ替わっても、画面の行がどの部品かを探せるように） */
 let PARTS_SHOWN = [];
@@ -2269,6 +3617,7 @@ async function saveForm() {
     autoFields: [F.autoAt || !F.occurredAt ? 'occurredAt' : '', F.autoLine && rec.line ? 'line' : ''].filter(Boolean),
     rawText: tr(F.draftText) || F.rawText0 || '', context: F.context || '', aiNote: F.aiNote || '', photoText: use('photos') ? F.photoText : '',
     aiFilled: F.aiFilled || [], equipCanon: canonEquip(rec.equipment), relatedId: F.relatedId, relation: F.relation, aiHistoryId: F.aiHistoryId,
+    lookupNote: tr(F.lookupNote),   // 調べたこと（入力項目ではないので、いつも入れる）
   });
   for (const k of QUALITY_KEYS) {
     // 前の版のアプリで作った記録（この端末にキーが無い）を直して、その項目が空のままなら、キーを作らない（送らない＝サーバーはシートの値を残す）
@@ -2276,6 +3625,8 @@ async function saveForm() {
     rec[k] = q[k];
   }
   await dbPut(rec);
+  // チャットの「この内容で記録する」から書いた新しい記録：そのチャットに「記録済み」を付ける（chatId は画面の中だけ。送らない）
+  if (isNew && F.chatId) { const c = CHATS.find(x => x.id === F.chatId); if (c) { c.recorded = true; chatChanged(c); } }
   if (FORM_SHOWN.has('author')) { META.author = rec.author; metaSet('author', rec.author); }
   if (FORM_SHOWN.has('line')) { META.lastLine = rec.line; metaSet('lastLine', rec.line); }
   showSaved(F.editId ? 'edit' : 'new', rec.id);
@@ -3042,6 +4393,7 @@ function renderDetail() {
       ${resultL || want('result') ? `<div class="arrow">↓</div><div class="step"><span class="k res">${tag('result')}</span><div class="v">${resultL ? `<b class="rs ${esc(r.result)}">${esc(resultL)}</b>` : none}</div></div>` : ''}
     </div>
     ${r.rawText ? `<details class="rawd"${RAW_OPEN === r.id ? ' open' : ''}><summary>話した原文を見る</summary><p class="rawt">${esc(r.rawText)}</p></details>` : ''}
+    ${r.lookupNote ? `<div class="h3">調べたこと</div><p class="lkd">${esc(r.lookupNote)}</p><p class="lkdn">AIがWebで調べた内容です（未確認）。型式・定格は、出典の資料で確かめてください。</p>` : ''}
     ${extras ? `<div class="h3">そのほかの項目</div><div class="xbox">${extras}</div>` : ''}
     ${photos || r.photoText ? `<div class="h3">写真</div>${photos ? `<div class="photos">${photos}</div>` : ''}${r.photoText ? `<div class="dv ptx"><span class="dk">写真から読み取ったこと：</span>${esc(r.photoText)}</div>` : ''}` : ''}
     ${prevBlock}${nextBlock}
@@ -3078,7 +4430,7 @@ function followPre(r, relation) {
    16. 画面の切りかえと操作
    ========================================================= */
 function render() {
-  document.querySelectorAll('.tabs button').forEach(b => {
+  document.querySelectorAll('.tabs button[data-tab]').forEach(b => {
     const on = b.dataset.tab === TAB && !DETAIL;
     b.classList.toggle('on', b.dataset.tab === TAB);
     if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
@@ -3095,6 +4447,7 @@ function render() {
   else renderFlowTab();
   renderSync();
   renderCam();
+  renderHist();
 }
 function goTab(tab) {
   TAB = tab; DETAIL = null; RETURN = null;
@@ -3138,6 +4491,8 @@ $('#fileIn').addEventListener('change', async e => {
 
 document.addEventListener('click', e => {
   if ($('#lb').classList.contains('show')) { $('#lb').classList.remove('show'); return; }
+  // チャットの履歴を長押しして離したときのタップ（確かめの画面を閉じた直後）は、何もしない（その下の行を開かない）
+  if (LP.fired || (LP.at && Date.now() - LP.at < 600)) { LP.fired = false; LP.at = 0; e.preventDefault(); return; }
   const t = e.target.closest('[data-tab],[data-rid],[data-q],[data-act],[data-f],[data-photo]');
   if (!t) return;
   if (t.dataset.photo && (t.closest('.ph') || t.classList.contains('chatimg')) && !t.closest('[data-act]') && t.tagName === 'IMG') { openLightbox(t.dataset.photo); return; }
@@ -3159,8 +4514,32 @@ document.addEventListener('click', e => {
   const i = +t.dataset.i;
   switch (act) {
     case 'key': askKey(); break;
+    // チャットの履歴（12-2）
+    case 'hist-open': openDrawer(); break;
+    case 'hist-close': closeDrawer(true); break;
+    case 'chat-new': newChat(); break;
+    case 'chat-open': openChat(t.dataset.cid); break;
+    case 'chat-del': deleteChat(t.dataset.cid); break;
     case 'ai': askAi(CHAT[+t.dataset.mi]); break;
+    // AIの作業手順（①②③のタブ・直らないときは…・もう一度聞く）と聞き直し（質問の答え・この答えでAIに聞く・もう一度聞く）
+    case 'proc': { const m = CHAT[+t.dataset.mi]; askProc(m, t.dataset.ti !== undefined ? +t.dataset.ti : firstOpenCand(m)); break; }
+    case 'proc-tab': procTab(CHAT[+t.dataset.mi], +t.dataset.ti, false); break;
+    case 'proc-next': procTab(CHAT[+t.dataset.mi], +t.dataset.ti, true); break;
+    case 'narrow': startNarrow(CHAT[+t.dataset.mi]); break;
+    case 'narrow-pick': pickNarrow(CHAT[+t.dataset.mi], +t.dataset.qi, t.dataset.v); break;
+    case 'narrow-next': nextNarrow(CHAT[+t.dataset.mi]); break;
+    case 'narrow-retry': retryNarrow(CHAT[+t.dataset.mi], +t.dataset.ri); break;
+    // 可能性の高い順：［確認した：違った］［元に戻す］［どれでもなかった］［根拠の記録］、次の手の［ほかの候補を見る］
+    case 'rk-done': markCand(CHAT[+t.dataset.mi], +t.dataset.ci, true); break;
+    case 'rk-undo': markCand(CHAT[+t.dataset.mi], +t.dataset.ci, false); break;
+    case 'rk-none': markNone(CHAT[+t.dataset.mi]); break;
+    case 'rk-ev': toggleEvidence(CHAT[+t.dataset.mi], +t.dataset.ci); break;
+    case 'rk-more': showMoreCands(CHAT[+t.dataset.mi]); break;
     case 'vision': analyzePhoto(CHAT[+t.dataset.mi]); break;
+    // 調べもの（Web）：入力欄の上の切り替え・もう一度調べる・出典の番号
+    case 'mode': setMode(t.dataset.v); break;
+    case 'lk-retry': retryLookup(CHAT[+t.dataset.mi]); break;
+    case 'lk-cite': showCite(+t.dataset.mi, +t.dataset.n); break;
     case 'cam': openCamera(); break;
     case 'cam-clear': PENDING = null; renderCam(); break;
     case 'back': {
@@ -3192,25 +4571,8 @@ document.addEventListener('click', e => {
     case 'save': saveForm(); break;
     case 'draft': runDraft(); break;
     case 'draft-use': useDraft(t.dataset.k); break;
-    case 'rec-from-chat': {
-      const m = CHAT[+t.dataset.mi];
-      if (!m) break;
-      if (!discardOk('新しく書きます')) break;
-      FORM = newForm(m.prefill);
-      // チャットで聞いた内容（写真のときは、ひとこと。無ければ写真から読み取った探す言葉）も、文章からの下書きのときにAIに渡す
-      FORM.context = String((m.photo ? m.text || m.query : m.query) || '').replace(/\s+/g, ' ').trim().slice(0, 300);
-      if (m.photo) FORM.photos = [{ id: newId('p'), data: m.photo.data, thumb: m.photo.thumb, driveId: null }];   // 送った写真も記録に付ける
-      // 写真から読み取ったこと（読み取りが終わっていて、確かさが low でないときだけ）と、読めた文字からの型式の候補
-      const v = m.photo && m.vision && m.vision.state === 'done' ? m.vision.data : null;
-      if (v && v.confidence !== 'low') {
-        FORM.photoText = [v.abnormality ? '見えた異常：' + v.abnormality : '', v.texts.length ? '読めた文字：' + v.texts.join('、') : ''].filter(Boolean).join('／').slice(0, 300);
-        FORM.modelHints = modelCandidates(v.texts);
-      }
-      if (m.ai && m.ai.state === 'done' && m.ai.historyId) FORM.aiHistoryId = m.ai.historyId;   // このメッセージのAIの対処案（AI履歴の ID）も記録に残す
-      TAB = 'record'; DETAIL = null; render(); window.scrollTo(0, 0);
-      break;
-    }
-    case 'ai-rate': rateAi(CHAT[+t.dataset.mi], t.dataset.v); break;
+    case 'rec-from-chat': recFromChat(CHAT[+t.dataset.mi]); break;
+    case 'ai-rate': rateAi(CHAT[+t.dataset.mi], t.dataset.v, t.dataset.k, t.dataset.k ? +t.dataset.ti : undefined); break;
     case 'rel-link': {   // 7日以内の同じトラブルに［つなぐ］（もう一度押すと外す）
       const r = findRec(t.dataset.v);
       if (!FORM || !r) break;
@@ -3247,6 +4609,46 @@ document.addEventListener('click', e => {
     case 'toggle-samples': META.showSamples = !META.showSamples; metaSet('showSamples', META.showSamples); render(); break;
   }
 });
+/* 「この内容で記録する」：その吹き出しの検索から記録する画面の下書きを作る。
+   調べもの（Web）の吹き出しからは、その前のトラブルの検索（いちばん近いもの）を使う（無ければ、ほかの欄は入れない：人が書く）。
+   そのチャットで調べたこと（答えの出た調べもの）は、どの吹き出しから押しても「調べたこと」に入れる */
+function recFromChat(m) {
+  if (!m) return;
+  if (!discardOk('新しく書きます')) return;
+  const c = chatOf(m), msgs = c ? c.messages : CHAT;
+  const base = m.kind !== 'lookup' ? m : msgs.slice(0, Math.max(0, msgs.indexOf(m))).reverse().find(x => x && x.role === 'bot' && x.kind !== 'lookup') || null;
+  FORM = newForm(base ? base.prefill : undefined);
+  if (base) {
+    // チャットで聞いた内容（写真のときは、ひとこと。無ければ写真から読み取った探す言葉）も、文章からの下書きのときにAIに渡す
+    FORM.context = String((base.photo ? base.text || base.query : base.query) || '').replace(/\s+/g, ' ').trim().slice(0, 300);
+    // 送った写真も記録に付ける（履歴から開いたチャットは小さい写真だけなので、それを付ける）
+    if (base.photo) FORM.photos = [{ id: newId('p'), data: base.photo.data || base.photo.thumb, thumb: base.photo.thumb, driveId: null }];
+    // 写真から読み取ったこと（読み取りが終わっていて、確かさが low でないときだけ）と、読めた文字からの型式の候補
+    const v = base.photo && base.vision && base.vision.state === 'done' ? base.vision.data : null;
+    if (v && v.confidence !== 'low') {
+      FORM.photoText = [v.abnormality ? '見えた異常：' + v.abnormality : '', v.texts.length ? '読めた文字：' + v.texts.join('、') : ''].filter(Boolean).join('／').slice(0, 300);
+      FORM.modelHints = modelCandidates(v.texts);
+    }
+    // 聞き直しの質問に答えていれば、その答えもチャットで聞いた内容に足す（300字まで）
+    const qa = narrowAnswers(base);
+    if (qa.length) FORM.context = (FORM.context + '／AIの質問への答え：' + qa.map(x => x.q + '→' + x.a).join('、')).slice(0, 300);
+    // このメッセージのAIの答え（AI履歴の ID）も記録に残す：作業手順①、なければ いちばん新しい聞き直し、なければ 対処案
+    const hid = aiHistoryOf(base);
+    if (hid) FORM.aiHistoryId = hid;
+    // 確かめて違った候補は「効かなかった対処」へ（人が確かめたことなので、AIが入れた欄にはしない）
+    const tried = failedFromMarks(base);
+    if (tried) FORM.failed = tried;
+  }
+  // 調べたこと（Webなど・未確認）。AI履歴の ID がまだ無ければ、いちばん新しい調べもの
+  const note = lookupNoteOf(msgs);
+  if (note) { FORM.lookupNote = note; FORM.lookupShown = true; }
+  if (!FORM.aiHistoryId) {
+    const lk = msgs.filter(x => x && x.kind === 'lookup' && x.look && x.look.state === 'done' && x.look.historyId).pop();
+    if (lk) FORM.aiHistoryId = lk.look.historyId;
+  }
+  FORM.chatId = (c || {}).id || '';   // 保存したら、このチャットに「記録済み」を付ける
+  TAB = 'record'; DETAIL = null; render(); window.scrollTo(0, 0);
+}
 function onFormChip(kind, v) {
   const F = FORM;
   // 1つだけ選ぶ欄は、もう一度押すと外す。ただし、自動で入った号機・AIの印の欄で、選んである値を押したときは、外さずに「人が確かめた」にする
@@ -3291,7 +4693,7 @@ function onFormChip(kind, v) {
   window.scrollTo(0, y);
 }
 /* 記録する画面の文字の欄と、FORM の項目。fDraft：文章からの下書き（13-2）の文章。描き直しても消えないよう、FORM に持つ */
-const FORM_INPUTS = { fDate: 'occurredAt', fAuthor: 'author', fEquip: 'equipment', fSym: 'symptom', fCause: 'cause', fAction: 'action', fFailed: 'failed', fDraft: 'draftText' };
+const FORM_INPUTS = { fDate: 'occurredAt', fAuthor: 'author', fEquip: 'equipment', fSym: 'symptom', fCause: 'cause', fAction: 'action', fFailed: 'failed', fDraft: 'draftText', fLookup: 'lookupNote' };
 /* かな漢字変換の途中の欄（AIの結果で描き直すときに、その欄の値は書き換えない） */
 let COMPOSING = null;
 document.addEventListener('compositionstart', e => { COMPOSING = e.target; });
@@ -3330,11 +4732,20 @@ document.addEventListener('toggle', e => {
   if (el.classList.contains('dguide')) DRAFT_GUIDE_OPEN = el.open;
   if (el.classList.contains('rawd')) RAW_OPEN = el.open ? DETAIL : null;
   if (el.classList.contains('sarea')) { if (el.open) OPEN_AREAS.add(el.dataset.area); else OPEN_AREAS.delete(el.dataset.area); }
+  if (el.classList.contains('rkmore')) { const m = CHAT[+el.dataset.mi]; if (m && m.moreOpen !== el.open) { m.moreOpen = el.open; chatChanged(m, true); } }   // 「ほかの候補」の開け閉めは吹き出しに覚える
 }, true);
 $('#chatForm').addEventListener('submit', e => {
   e.preventDefault();
   const inp = $('#chatIn'), photo = PENDING;
+  if (curMode() === 'lookup') {   // 調べもの（Web）：文字だけ送る（撮った写真は残しておく）。オフラインなら送らずに知らせる（入れた文字は残す）
+    if (!inp.value.trim() || notReady()) return;
+    if (!navigator.onLine) { toast('オフラインのため、Webで調べられません'); return; }
+    sendChat(inp.value, null, 'lookup');
+    inp.value = '';
+    return;
+  }
   if (!inp.value.trim() && !photo) return;
+  if (notReady()) return;
   PENDING = null;
   sendChat(inp.value, photo);
   inp.value = '';
@@ -3346,6 +4757,7 @@ $('#camIn').addEventListener('change', async e => {
   toast('写真を準備しています…');
   try {
     PENDING = await makePhoto(f, true);
+    MODE = 'search';   // 写真は「探す」で送る（「調べる」の間に［撮り直す］で撮ったときも、写真が見えるように）
     renderCam();
     $('#toast').classList.remove('show');   // 入力欄の上に写真が出たので「準備しています」は消す
   } catch (err) { toast(err.message); }
@@ -3355,7 +4767,7 @@ $('#syncChip').addEventListener('click', () => {
   if (!KEY || SYNC.state === 'key') { askKey(); return; }
   syncNow(true);
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#lb').classList.remove('show'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('#lb').classList.remove('show'); closeDrawer(true); } });
 async function deleteRecord(id) {
   const r = RECORDS.find(x => x.id === id);
   if (!r) return;
@@ -3427,16 +4839,23 @@ function buildSamples() {
       if (GAS_URL && cfg.local && CFG.base) { CFG.pending = [{ op: 'seed', config: CFG.base }]; CFG.base = null; CFG.rev = 0; }
     }
     applyConfig();
+    // チャットの履歴（12-2。記録とは別の保存 trouble_log_chats から。開けなかったときは空）。壊れたものは使わない。開いたときは、いつも新しいチャット（はじめの画面）から
+    CHATS = ((await idb('chats', 'readonly', s => s.getAll())) || []).map(chatFromStore).filter(Boolean).sort(byUpdated);
+    setCur(null);
+    capChats();
     if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
   } catch (e) {
     toast('この端末ではデータを保存できません（プライベートブラウズ等）');
   }
+  document.body.inert = false;   // 版を上げるのを、ほかのタブを閉じるまで待っていた間は押せなかった（4. の onblocked。いまは版を上げないので起きない）。読み終えたので戻す
+  BOOTED = true;                 // ここからチャットを送れる（inert が効かない古い iPhone でも、送るのはここまで待たせる）
   FORM = newForm();
   render();
   syncNow();
   window.addEventListener('online', () => syncNow());
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) return;
+    keepAwake();   // 調べものを待っている途中に戻った：画面を消さない印を付け直す
     // 開いたままの記録する画面に戻ったとき：何も入れていなければ、自動の発生日時をいまにする（描き直さずに、日時の欄だけ）
     if (TAB === 'record' && !DETAIL && refreshAutoAt()) { const d = $('#fDate'); if (d) d.value = FORM.occurredAt; updateHint(); }
     if (Date.now() - lastSyncTry > 15000) syncNow();
